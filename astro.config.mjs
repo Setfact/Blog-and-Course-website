@@ -6,16 +6,16 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import pagefind from "astro-pagefind";
 import keystatic from '@keystatic/astro';
-import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
-  output: 'static',
-  adapter: vercel(),
+  output: 'server',
+  adapter: node({
+    mode: 'standalone'
+  }),
   vite: {
     plugins: [tailwindcss()],
-    envPrefix: ['VITE_', 'KEYSTATIC_']
-  },
 
   i18n: {
     defaultLocale: "id",
