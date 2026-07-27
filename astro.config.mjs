@@ -13,7 +13,10 @@ export default defineConfig({
   output: 'static',
   adapter: vercel(),
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    define: {
+      'import.meta.env.KEYSTATIC_SECRET': 'process.env.KEYSTATIC_SECRET'
+    }
   },
 
   i18n: {
