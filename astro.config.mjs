@@ -14,14 +14,7 @@ export default defineConfig({
   adapter: vercel(),
   vite: {
     plugins: [tailwindcss()],
-    define: {
-      'import.meta.env.KEYSTATIC_SECRET': 'process.env.KEYSTATIC_SECRET',
-      'import.meta.env.KEYSTATIC_GITHUB_CLIENT_ID': 'process.env.KEYSTATIC_GITHUB_CLIENT_ID',
-      'import.meta.env.KEYSTATIC_GITHUB_CLIENT_SECRET': 'process.env.KEYSTATIC_GITHUB_CLIENT_SECRET'
-    },
-    ssr: {
-      noExternal: ['@keystatic/astro']
-    }
+    envPrefix: ['VITE_', 'KEYSTATIC_']
   },
 
   i18n: {
