@@ -1,0 +1,565 @@
+---
+title: "Single-Area OSPFv2 Concepts"
+description: "CCNA ENSA v7 - Module 1"
+order: 4
+---
+
+# CCNA ENSA v7 — Module 1
+## Single-Area OSPFv2 Concepts
+
+## Referensi
+- **Sumber utama:** https://itexamanswers.net/ccna-3-v7-0-curriculum-module-1-single-area-ospfv2-concepts.html
+- **Bahasa:** Indonesia, dengan istilah teknis asli tetap dipertahankan
+- **Tujuan note:** dokumentasi belajar yang ngikutin struktur asli modul, lengkap dengan gambar dan video
+
+<Callout type="info" title="Catatan">
+Ini adalah dokumentasi belajar. Istilah teknis seperti **OSPF**, **LSDB**, **LSA**, **DR**, **BDR**, **SPF**, **ABR**, **DBD**, **LSR**, **LSU**, dan **LSAck** sengaja tetap dipakai biar konsisten dengan materi Cisco.
+</Callout>
+
+---
+
+# 1.0 Introduction
+
+Bagian ini memperkenalkan **Single-Area OSPFv2 Concepts**. Modul ini adalah modul pertama dalam **CCNA Enterprise Networking, Security, and Automation v7.0 (ENSA)**.
+
+Fokus utamanya adalah membantu kamu memahami kenapa **OSPF (Open Shortest Path First)** dipakai sebagai routing protocol yang lebih modern dibanding protocol lama seperti **RIP**.
+
+## 1.0.1 Why should I take this module?
+
+Kamu perlu belajar modul ini karena OSPF adalah salah satu routing protocol paling penting di networking enterprise.
+
+### Inti pembelajarannya
+- **OSPF** memilih **fastest available path** untuk mengirim packet dari source ke destination.
+- OSPF termasuk **link-state routing protocol**.
+- OSPF lebih cocok untuk network yang besar dan kompleks dibanding routing protocol berbasis hop count seperti **RIP**.
+- OSPF mendukung konsep **area** untuk mengatur routing domain agar lebih efisien.
+- Modul ini membahas **single-area OSPFv2**, terutama pada:
+  - **point-to-point network**
+  - **broadcast multiaccess network**
+
+### Kenapa OSPF penting?
+Kalau di network ada banyak jalur menuju destination, router harus memilih jalur terbaik. OSPF melakukan ini berdasarkan **cost**, lalu memilih path dengan total cost paling kecil.
+
+### Analogi sederhana
+Kalau kamu lagi perjalanan:
+- ada jalan cepat
+- ada jalan macet
+- ada jalan muter jauh
+
+OSPF akan memilih jalur yang paling efisien, bukan sekadar jalur yang “kelihatan enak” atau paling santai.
+
+## 1.0.2 What will I learn to do in this module?
+
+Di modul ini, kamu akan belajar untuk:
+- memahami **OSPF features and characteristics**
+- mengenali **OSPF packets**
+- menjelaskan **OSPF operation**
+- memahami cara kerja OSPF pada:
+  - **point-to-point topology**
+  - **broadcast multiaccess topology**
+- menjelaskan kenapa **DR (Designated Router)** dan **BDR (Backup Designated Router)** dibutuhkan pada jaringan multiaccess
+- memahami proses OSPF membangun:
+  - **neighbor adjacency**
+  - **link-state database (LSDB)**
+  - **routing table**
+
+## 1.0.5 Packet Tracer – Logical and Physical Mode Exploration
+
+Bagian ini adalah aktivitas **Packet Tracer** untuk mengeksplorasi jaringan kecil sampai menengah.
+
+### Tujuan aktivitas
+- membedakan **logical mode** dan **physical mode**
+- memahami struktur jaringan secara visual
+- menjawab pertanyaan berdasarkan topologi yang ditampilkan
+
+### Fokus yang dipelajari
+- hubungan antar device
+- posisi fisik perangkat
+- bagaimana topologi logis merepresentasikan alur komunikasi
+
+### Link aktivitas
+Di halaman sumber, bagian ini mengarah ke aktivitas Packet Tracer dan link jawaban.
+
+---
+
+# 1.1 OSPF Features and Characteristics
+
+Bagian ini menjelaskan apa itu OSPF, kenapa dipakai, dan bagaimana konsep dasarnya bekerja.
+
+## 1.1.1 Introduction to OSPF
+
+**OSPF (Open Shortest Path First)** adalah **link-state routing protocol**. Protokol ini dibuat sebagai alternatif dari **RIP (Routing Information Protocol)** yang hanya memakai **hop count**.
+
+### Kenapa OSPF lebih unggul dibanding RIP?
+- **Faster convergence**: OSPF lebih cepat menyesuaikan diri saat ada perubahan topologi.
+- **Better scalability**: OSPF lebih cocok untuk network besar dan kompleks.
+- OSPF bisa mempertimbangkan **kecepatan link** dan **cost**, bukan cuma jumlah hop.
+
+### Inti cara kerja OSPF
+OSPF tidak cuma melihat “berapa langkah” ke tujuan, tapi melihat **kualitas jalur**.
+
+Kalau RIP bilang, “yang hop-nya paling sedikit itu terbaik,” OSPF lebih pintar karena menghitung **cost total** dari setiap link.
+
+## 1.1.2 Components of OSPF
+
+Seperti routing protocol lain, OSPF punya 3 komponen utama:
+1. **Routing protocol messages**
+2. **Data structures**
+3. **Algorithm**
+
+### OSPF messages
+OSPF memakai 5 jenis packet:
+- **Hello**
+- **DBD (Database Description)**
+- **LSR (Link-State Request)**
+- **LSU (Link-State Update)**
+- **LSAck (Link-State Acknowledgment)**
+
+### OSPF databases / tables
+| Database | Table | Fungsi | Command |
+|---|---|---|---|
+| **Adjacency Database** | Neighbor Table | Menyimpan daftar neighbor yang sudah punya komunikasi dua arah | `show ip ospf neighbor` |
+| **Link-State Database (LSDB)** | Topology Table | Menyimpan topologi jaringan; semua router dalam area punya LSDB yang sama | `show ip ospf database` |
+| **Forwarding Database** | Routing Table | Menyimpan route hasil perhitungan SPF | `show ip route` |
+
+### Kenapa tiga database ini penting?
+Karena OSPF itu kerja bertahap:
+- pertama mengenal **neighbor**
+- lalu menyusun **topologi**
+- lalu hasilnya dipakai untuk **routing decision**
+
+Jadi bukan langsung belajar route, tapi dibangun dari bawah dulu.
+
+## 1.1.3 Link-State Operation
+
+OSPF bekerja dengan cara membangun gambaran topologi jaringan terlebih dulu, lalu menghitung jalur terbaik.
+
+### Alur dasarnya
+1. **Establish Neighbor Adjacencies**
+2. **Exchange Link-State Advertisements**
+3. **Build the Link State Database**
+4. **Execute the SPF Algorithm**
+5. **Choose the Best Route**
+
+### Penjelasan langkah demi langkah
+
+#### 1) Establish Neighbor Adjacencies
+
+![Establish Neighbor Adjacencies](https://itexamanswers.net/wp-content/uploads/2020/04/Establish-Neighbor-Adjacencies.jpg)
+
+Router mengirim **Hello packet** untuk menemukan neighbor. Kalau ada router lain yang cocok, mereka mulai membentuk adjacency.
+
+#### 2) Exchange Link-State Advertisements
+
+![Exchange Link-State Advertisements](https://itexamanswers.net/wp-content/uploads/2020/04/Exchange-Link-State-Advertisements.jpg)
+
+Setelah adjacency terbentuk, router saling bertukar **LSA**. LSA berisi informasi link-state dari interface yang terhubung langsung.
+
+#### 3) Build the Link State Database
+
+![Build the Link State Database](https://itexamanswers.net/wp-content/uploads/2020/04/Build-the-Link-State-Database.jpg)
+
+Setiap router menyusun **LSDB** dari LSA yang diterima. Di tahap ini, router mulai punya gambaran topologi jaringan yang lengkap.
+
+#### 4) Execute the SPF Algorithm
+
+![Execute the SPF Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/Execute-the-SPF-Algorithm.jpg)
+
+Setelah LSDB siap, router menjalankan **SPF algorithm** untuk menghitung jalur dengan cost paling kecil.
+
+#### 5) Choose the Best Route
+
+![Choose the Best Route](https://itexamanswers.net/wp-content/uploads/2020/04/Choose-the-Best-Route.jpg)
+
+Hasil SPF dimasukkan ke routing table. Dari sini router bisa memilih next-hop terbaik untuk setiap destination.
+
+### Gambar referensi tambahan
+
+![Routing Protocol Messages](https://itexamanswers.net/wp-content/uploads/2020/04/Routing-Protocol-Messages.jpg)
+
+![Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/Algorithm.jpg)
+
+## 1.1.4 Single-Area and Multiarea OSPF
+
+Bagian ini menjelaskan perbedaan antara **single-area OSPF** dan **multiarea OSPF**. Ini penting karena konsep area adalah salah satu alasan utama OSPF lebih scalable dibanding routing protocol yang lebih sederhana.
+
+### Single-Area OSPF
+
+![Single-Area OSPF](https://itexamanswers.net/wp-content/uploads/2020/04/Single-Area-OSPF1.jpg)
+
+Dalam **single-area OSPF**, semua router berada di **satu area yang sama**.
+
+Artinya:
+- semua router berbagi **link-state information** yang sama
+- semua router punya **LSDB** yang sama untuk area itu
+- proses routing lebih sederhana karena tidak ada pemisahan area
+
+**Best practice**-nya adalah memakai **area 0** sebagai area tunggal.
+
+Single-area OSPF cocok untuk:
+- network kecil
+- desain yang tidak terlalu kompleks
+- environment yang ingin konfigurasi lebih simpel
+
+### Multiarea OSPF
+
+![Multiarea OSPF](https://itexamanswers.net/wp-content/uploads/2020/04/Multiarea-OSPF.jpg)
+
+Kalau network makin besar, OSPF bisa dibagi menjadi beberapa area.
+
+Konsep utamanya:
+- network besar dibagi menjadi beberapa **area** yang lebih kecil
+- setiap area punya LSDB sendiri
+- perubahan di satu area tidak harus membebani seluruh network sekaligus
+
+Semua area harus terhubung ke **backbone area 0**.
+
+Kenapa?
+- area 0 adalah pusat utama OSPF
+- semua area lain wajib punya jalur ke backbone
+- backbone ini menjaga konektivitas antar-area tetap konsisten
+
+Router yang menghubungkan satu area ke area lain disebut **ABR (Area Border Router)**.
+
+ABR punya peran penting karena:
+- menerima routing information dari satu area
+- meneruskannya ke area lain
+- membantu summarization antar area
+- menjaga agar desain OSPF tetap rapi dan efisien
+
+### Kenapa multiarea itu berguna?
+
+![Link Change Impacts Local Area Only](https://itexamanswers.net/wp-content/uploads/2020/04/Link-Change-Impacts-Local-Area-Only.jpg)
+
+Multiarea OSPF dipakai supaya network besar tidak berat hanya karena semua router harus tahu semua detail topologi secara penuh.
+
+Keuntungannya:
+- **routing table lebih kecil** karena ada **summarization**
+- **LSA flooding lebih terbatas**
+- **SPF tidak harus dihitung ulang di seluruh network** saat ada perubahan kecil di satu area
+- troubleshooting lebih gampang kalau pembagian area rapi
+
+### Penjelasan gambar
+
+Gambar-gambar ini nunjukin bahwa OSPF tidak cuma soal router bisa ngomong, tapi juga soal sejauh mana informasi link-state disebarkan.
+
+Di **single-area**, semua router saling berbagi informasi dalam satu ruang yang sama, jadi semua perubahan topologi akan lebih terasa ke seluruh area.
+
+Di **multiarea**, jaringan dipisah supaya dampak perubahan bisa lebih terkontrol. Kalau ada link berubah di satu area, efek terbesarnya biasanya tetap di area itu dulu, bukan langsung ke semua area.
+
+### Hubungan dengan gambar LSAs
+
+Gambar diagram **Routers Exchange LSAs** menunjukkan proses ketika router-router bertukar **LSA (Link-State Advertisement)** yang berisi:
+- network prefix
+- prefix length
+- cost
+- informasi langsung dari link yang terhubung
+
+Dari gambar itu kelihatan bahwa:
+- setiap router mengirim informasi link-state ke neighbor-nya
+- neighbor yang menerima LSA akan meneruskannya lagi
+- proses ini disebut **flooding**
+- flooding berlanjut sampai semua router di area punya LSDB yang lengkap
+
+Ini inti kenapa OSPF bisa membangun topologi dengan akurat.
+
+### Contoh makna gambar
+Kalau sebuah router mempelajari link baru atau cost baru, informasi itu tidak disimpan diam-diam sendiri. Informasi itu dibungkus dalam LSA, dikirim ke neighbor, lalu neighbor meneruskannya ke router lain sampai semua router dalam area mengetahui update tersebut.
+
+Jadi yang dibagikan bukan sekadar "ada router A ke router B", tapi juga detail seperti:
+- prefix jaringan
+- panjang prefix
+- cost link
+
+Itulah sebabnya OSPF disebut link-state routing protocol.
+
+## 1.1.5 Multiarea OSPF
+
+Saat network dibagi ke beberapa area, perubahan topologi di satu area biasanya hanya berdampak besar pada area tersebut saja.
+
+Contoh dampaknya:
+- kalau ada perubahan link di Area 10, router di Area 20 tidak selalu perlu mengolah detail yang sama secara penuh
+- informasi bisa diringkas lewat **ABR**
+- beban SPF dan flooding jadi lebih efisien
+
+Jadi, multiarea OSPF bukan cuma bagi-bagi area doang, tapi memang strategi untuk bikin routing protocol tetap scalable saat jumlah router dan link makin banyak.
+
+## 1.1.6 OSPFv3
+
+**OSPFv3** adalah versi OSPF untuk **IPv6**.
+
+Perbandingan singkat:
+- **OSPFv2** → IPv4
+- **OSPFv3** → IPv6
+
+Meskipun sama-sama pakai konsep SPF, OSPFv3 punya dukungan address family yang lebih modern. Namun itu di luar fokus modul ini.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/OSPFv2-and-OSPFv3-Data-Structures.jpg)
+
+---
+
+# 1.2 OSPF Packets
+
+Bagian ini membahas packet yang dipakai OSPF untuk membentuk adjacency dan bertukar informasi routing.
+
+## 1.2.1 Video – OSPF Packets
+
+Section video ini ada di halaman sumber.
+
+<Callout type="info" title="Video">
+Link video aslinya belum tampil jelas di snapshot yang aku ambil, jadi untuk sementara aku tandai sebagai section video sumber.
+</Callout>
+
+## 1.2.2 Types of OSPF Packets
+
+OSPF memakai 5 packet type:
+
+| Type | Packet | Fungsi |
+|---|---|---|
+| **1** | **Hello** | Menemukan neighbor dan membangun adjacency |
+| **2** | **DBD** | Menyinkronkan ringkasan database |
+| **3** | **LSR** | Meminta detail link-state tertentu |
+| **4** | **LSU** | Mengirim update link-state |
+| **5** | **LSAck** | Mengakui penerimaan packet OSPF |
+
+### Kenapa packet-packet ini diperlukan?
+Karena OSPF itu bukan cuma ngirim route, tapi juga membangun hubungan bertahap:
+- pertama saling kenal
+- lalu saling cek database
+- lalu saling minta data yang kurang
+- lalu saling update
+
+Itulah kenapa OSPF punya beberapa packet berbeda.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/LSUs-Contain-LSAs.jpg)
+
+## 1.2.3 Link-State Updates
+
+**LSU (Link-State Update)** membawa satu atau lebih **LSA (Link-State Advertisement)**.
+
+Intinya:
+- **LSA** = isi informasi link-state
+- **LSU** = wadah packet yang membawa LSA
+
+Kalau dipikir sederhana, **LSA** itu datanya, sedangkan **LSU** itu paket pengantarnya.
+
+### Apa yang biasanya dibawa LSA?
+LSA bisa berisi informasi seperti:
+- network prefix
+- prefix length
+- cost
+- informasi link langsung yang dipelajari router
+
+## 1.2.4 Hello Packet
+
+**Hello packet** dipakai untuk:
+- menemukan neighbor
+- menjaga adjacency tetap hidup
+- memastikan dua router saling melihat satu sama lain
+
+### Informasi penting dalam Hello packet
+- **Router ID**
+- **Hello interval**
+- **Dead interval**
+- network mask / subnet info
+- area ID
+- list neighbor yang sudah dikenali
+
+### Nilai timer penting
+- Pada multiaccess network, **Hello interval** umumnya **10 seconds**
+- **Dead interval** umumnya **4x Hello interval**
+
+### Kenapa Hello packet krusial?
+Kalau Hello packet berhenti datang, router akan menganggap neighbor-nya mati setelah Dead Interval habis. Jadi Hello packet itu bukan cuma sapaan awal, tapi juga semacam “heartbeat” untuk memastikan tetangga masih aktif.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Hello-Packet-Content.jpg)
+
+---
+
+# 1.3 OSPF Operation
+
+Bagian ini menjelaskan proses kerja OSPF dari awal sampai jaringan dianggap converged.
+
+## 1.3.1 Video – OSPF Operation
+
+Section ini juga tercantum sebagai video di halaman sumber.
+
+<Callout type="info" title="Video">
+Link video aslinya belum tampil jelas di snapshot yang aku ambil, jadi untuk sementara aku tandai sebagai section video sumber.
+</Callout>
+
+## 1.3.2 OSPF Operational States
+
+OSPF adjacency berkembang lewat beberapa state. Yang paling penting untuk dipahami adalah:
+- **Down**
+- **Init**
+- **Two-Way**
+- **ExStart**
+- **Exchange**
+- **Loading**
+- **Full**
+
+### Gambaran singkat
+
+![Down State to Init State](https://itexamanswers.net/wp-content/uploads/2020/04/Down-State-to-Init-State.jpg)
+
+- **Down**: belum ada Hello yang diterima
+- **Init**: Hello sudah diterima, tapi belum dua arah
+
+![The Init State](https://itexamanswers.net/wp-content/uploads/2020/04/The-Init-State.jpg)
+
+![Two-Way State](https://itexamanswers.net/wp-content/uploads/2020/04/Two-Way-State.jpg)
+
+- **Two-Way**: komunikasi dua arah sudah terbentuk
+- **ExStart**: mulai negosiasi DBD
+- **Exchange**: tukar DBD
+- **Loading**: minta LSA yang belum lengkap
+- **Full**: adjacency selesai dan database sinkron
+
+### Kenapa state ini penting?
+Karena OSPF itu tidak langsung "connect" gitu aja. Dia punya tahapan supaya router yakin:
+- neighbor valid
+- database sinkron
+- informasi route akurat
+
+## 1.3.3 Establish Neighbor Adjacencies
+
+![Creating Adjacencies With Every Neighbor](https://itexamanswers.net/wp-content/uploads/2020/04/Creating-Adjacencies-With-Every-Neighbor.jpg)
+
+Router OSPF membentuk adjacency lewat **Hello packets**.
+
+Pada jaringan **point-to-point**, adjacency biasanya terbentuk langsung antar dua router.
+
+Pada jaringan **broadcast multiaccess**, tidak semua router harus membentuk adjacency penuh satu sama lain. Di sinilah **DR** dan **BDR** dibutuhkan.
+
+### Kenapa tidak semua router bikin adjacency full ke semua router?
+Kalau ada banyak router dalam satu LAN, jumlah hubungan yang harus dibangun bisa meledak. Itu bikin overhead besar.
+
+Makanya OSPF pakai konsep **Two-Way state** dan pemilihan **DR/BDR** untuk mengefisienkan proses adjacency.
+
+## 1.3.4 Synchronizing OSPF Databases
+
+Setelah adjacency terbentuk, router saling menyinkronkan database mereka.
+
+![Exchange DBDs](https://itexamanswers.net/wp-content/uploads/2020/04/Exchange-DBDs.jpg)
+
+Alurnya biasanya:
+1. tukar **DBD**
+2. kirim **LSR** jika ada data yang kurang
+
+![Getting Additional Route Information](https://itexamanswers.net/wp-content/uploads/2020/04/Getting-Additional-Route-Information.jpg)
+
+3. balas dengan **LSU**
+4. akhiri dengan **LSAck**
+
+### Apa tujuan sinkronisasi ini?
+Supaya semua router punya gambaran topologi yang konsisten. Kalau database belum sama, SPF calculation bisa beda hasil. Karena itu sinkronisasi harus rapi dulu sebelum routing dianggap siap.
+
+## 1.3.5 The Need for a DR
+
+Di jaringan multiaccess, kalau ada banyak router, jumlah adjacency bisa meledak.
+
+Rumusnya:
+
+```text
+n (n – 1) / 2
+```
+
+Contoh:
+- kalau ada **5 router**
+- maka adjacency yang mungkin terjadi adalah:
+
+```text
+5 (5 – 1) / 2 = 10 adjacencies
+```
+
+Supaya lebih efisien, OSPF memilih:
+
+![Elect the DR and BDR](https://itexamanswers.net/wp-content/uploads/2020/04/Elect-the-DR-and-BDR.jpg)
+
+- **DR (Designated Router)**
+- **BDR (Backup Designated Router)**
+
+### Kenapa DR dibutuhkan?
+
+![Decide Which Router](https://itexamanswers.net/wp-content/uploads/2020/04/Decide-Which-Router.jpg)
+
+- mengurangi jumlah adjacency penuh
+- mengurangi overhead pertukaran LSA
+- membuat flooding lebih efisien
+
+### Makna DR dan BDR
+- **DR** jadi pusat distribusi LSA di network broadcast
+- **BDR** jadi cadangan kalau DR gagal
+- router lain cukup fokus bertukar dengan DR/BDR sesuai aturan OSPF
+
+## 1.3.6 LSA Flooding With a DR
+
+Dengan adanya **DR**:
+- router lain tidak perlu membentuk full adjacency satu sama lain
+- router cukup membentuk adjacency ke DR/BDR sesuai aturan OSPF
+- LSA disebarkan lewat DR sehingga flooding jadi lebih terkontrol
+
+Ini penting banget buat broadcast network yang isinya banyak router.
+
+### Gambar / animasi referensi
+
+![Flooding LSAs](https://itexamanswers.net/wp-content/uploads/2020/04/1.3.6-Flooding-LSAs.gif)
+
+![LSAs and DR](https://itexamanswers.net/wp-content/uploads/2020/04/1.3.6-LSAs-and-DR.gif)
+
+### Penjelasan gambar
+Gambar-gambar ini nunjukin proses **LSA flooding** di network multiaccess.
+
+Intinya:
+- router mengirim LSA ke neighbor yang relevan
+- LSA diteruskan lagi ke router lain
+- flooding berlangsung sampai semua router dalam area punya informasi yang sama
+
+Kalau ada DR, alur flooding jadi lebih terpusat dan efisien.
+
+---
+
+# 1.4 Module Practice and Quiz
+
+Bagian ini berisi latihan dan kuis untuk menguji pemahaman kamu setelah mempelajari seluruh modul.
+
+## 1.4.1 What did I learn in this module?
+
+Setelah selesai modul ini, kamu seharusnya sudah paham:
+- apa itu **OSPF**
+- kenapa OSPF dipakai
+- packet apa saja yang dipakai OSPF
+- bagaimana OSPF membentuk adjacency
+- bagaimana OSPF membangun LSDB dan routing table
+- kenapa **DR** dan **BDR** penting di multiaccess network
+
+## 1.4.2 Module Quiz – Single-Area OSPFv2 Concepts
+
+Kuis ini dipakai untuk mengecek pemahaman kamu terhadap seluruh materi modul 1.
+
+### Fokus kuis biasanya mencakup
+- fungsi **Hello packet**
+- tujuan **LSU** dan **LSA**
+- peran **DR/BDR**
+- tahapan adjacency OSPF
+- penggunaan **area 0**
+- perbedaan **OSPFv2** dan **OSPFv3**
+
+### Kenapa bagian quiz tetap penting di dokumentasi?
+Karena quiz itu membantu kamu ngecek apakah kamu cuma “ngehafal istilah” atau benar-benar paham alur kerja OSPF dari awal sampai akhir.
+
+---
+
+# Ringkasan modul 1
+
+| Bagian | Isi utama |
+|---|---|
+| 1.0 | Pengenalan OSPF dan tujuan modul |
+| 1.1 | Karakteristik OSPF, database, area, OSPFv3 |
+| 1.2 | Jenis-jenis OSPF packets |
+| 1.3 | Proses operasi OSPF, state, DR/BDR, flooding |
+| 1.4 | Review dan quiz modul |

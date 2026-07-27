@@ -1,8 +1,47 @@
 ---
 title: "Introduction to Networking"
+order: 2
 description: "Learn the fundamentals of computer networking and the OSI model."
 ---
 
 # Introduction to Networking
 
 This course covers the basics of networking.
+
+## Callouts
+
+<Callout type="warning" title="Pay Attention">
+Always ensure your subnet masks are configured properly, otherwise you will have routing loops or unreachable hosts!
+</Callout>
+
+<Callout type="info">
+This is just a regular info callout without a title.
+</Callout>
+
+## Code Examples
+
+Here is how you might configure a basic interface in Cisco IOS vs Linux:
+
+<Tabs>
+  <TabItem label="Cisco IOS">
+    ```cisco
+    interface GigabitEthernet0/1
+     ip address 192.168.1.1 255.255.255.0
+     no shutdown
+    ```
+  </TabItem>
+  <TabItem label="Linux">
+    ```bash
+    ip addr add 192.168.1.1/24 dev eth0
+    ip link set eth0 up
+    ```
+  </TabItem>
+</Tabs>
+
+## The OSI Model
+
+This is a dummy section to test the Table of Contents intersection observer.
+### Layer 1: Physical
+This is the physical layer.
+### Layer 2: Data Link
+This is the data link layer.

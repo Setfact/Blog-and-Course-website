@@ -1,8 +1,9 @@
 ---
 // src/components/Header.astro
+import Search from "astro-pagefind/components/Search.astro";
 ---
 
-<header class="border-b border-slate-200 bg-white">
+<header class="border-b border-slate-200 bg-white relative z-50">
   <div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6">
     <!-- Logo -->
     <div class="flex items-center">
@@ -20,16 +21,8 @@
 
     <!-- Right Side: Search, Sign In, Sign Up -->
     <div class="flex items-center space-x-4">
-      <div class="relative hidden sm:block">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input 
-          type="search" 
-          placeholder="Search..." 
-          class="w-64 rounded bg-slate-50 border border-slate-200 pl-9 pr-3 py-1.5 text-sm outline-none transition-colors focus:border-[#0056B3] focus:bg-white font-['Inter']"
-        />
+      <div class="relative hidden sm:block w-64 pagefind-custom-container">
+        <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false }} />
       </div>
       <a href="/signin" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Sign In</a>
       <a href="/signup" class="rounded bg-[#0056B3] px-4 py-2 font-['JetBrains_Mono'] text-[12px] font-semibold tracking-wider text-white uppercase transition-colors hover:bg-blue-800">
@@ -38,3 +31,62 @@
     </div>
   </div>
 </header>
+
+<style is:global>
+  /* Custom Pagefind UI Styling */
+  .pagefind-custom-container {
+    --pagefind-ui-scale: 0.75;
+    --pagefind-ui-primary: #0056B3;
+    --pagefind-ui-text: #475569;
+    --pagefind-ui-background: #f8fafc;
+    --pagefind-ui-border: #e2e8f0;
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 0.25rem;
+    --pagefind-ui-font: 'Inter', sans-serif;
+  }
+  
+  /* Make the input look exactly like the old static one */
+  .pagefind-custom-container .pagefind-ui__search-input {
+    font-weight: 400 !important;
+    color: #0f172a !important; /* slate-900 */
+    background-color: #f8fafc !important; /* slate-50 */
+    transition: all 0.2s;
+  }
+  .pagefind-custom-container .pagefind-ui__search-input:focus {
+    border-color: #0056B3 !important;
+    background-color: #ffffff !important;
+    outline: none !important;
+  }
+
+  /* Style the dropdown results */
+  .pagefind-custom-container .pagefind-ui__drawer {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.5rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  
+  .pagefind-ui__result-link {
+    color: #0056B3 !important;
+  }
+  .pagefind-ui__result-excerpt mark {
+    background-color: rgba(0, 86, 179, 0.1) !important;
+    color: #0056B3 !important;
+    font-weight: 600;
+  }
+  
+  /* Hide the clear button if it looks weird */
+  .pagefind-ui__search-clear {
+    padding: 0 !important;
+    width: 30px !important;
+  }
+</style>

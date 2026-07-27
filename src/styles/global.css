@@ -122,3 +122,33 @@
   -webkit-box-orient: vertical;  
   overflow: hidden;
 }
+
+/* Simple Terminal-Style Code Block */
+pre.astro-code {
+  border-radius: 0.25rem;
+  padding: 1.5rem !important;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  font-family: var(--font-code-block);
+  font-size: var(--text-code-block);
+  line-height: var(--text-code-block--line-height);
+  background-color: #111111 !important;
+}
+
+pre.astro-code code span {
+  color: #4ade80 !important; /* Green text override for all tokens */
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+pre.astro-code code {
+  color: #4ade80 !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}

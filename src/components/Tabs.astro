@@ -1,0 +1,58 @@
+---
+---
+<custom-tabs class="block my-6 border border-border-subtle rounded-lg overflow-hidden bg-surface-container-lowest shadow-sm">
+  <div class="tabs-header flex overflow-x-auto border-b border-border-subtle bg-surface-muted" role="tablist">
+    <!-- Tab buttons will be injected here by the script -->
+  </div>
+  <div class="tabs-content p-4">
+    <slot />
+  </div>
+</custom-tabs>
+
+<script>
+  class CustomTabs extends HTMLElement {
+    constructor() {
+      super();
+      const header = this.querySelector('.tabs-header');
+      const items = Array.from(this.querySelectorAll('custom-tab-item'));
+      
+      items.forEach((item, index) => {
+        const label = item.getAttribute('data-label') || `Tab ${index + 1}`;
+        const isActive = index === 0;
+        
+        // Setup initial visibility
+        if (!isActive) item.style.display = 'none';
+        
+        // Create tab button
+        const button = document.createElement('button');
+        button.role = 'tab';
+        button.setAttribute('aria-selected', isActive.toString());
+        button.className = `px-4 py-2.5 text-sm font-label-caps font-medium transition-colors border-b-2 whitespace-nowrap outline-none
+          ${isActive 
+            ? 'text-primary border-primary bg-surface-container-lowest' 
+            : 'text-on-surface-variant border-transparent hover:text-on-background hover:bg-surface-variant/50'
+          }`;
+        button.textContent = label;
+        
+        // Add click handler
+        button.addEventListener('click', () => {
+          // Reset all tabs
+          header?.querySelectorAll('button').forEach(btn => {
+            btn.setAttribute('aria-selected', 'false');
+            btn.className = `px-4 py-2.5 text-sm font-label-caps font-medium transition-colors border-b-2 whitespace-nowrap outline-none text-on-surface-variant border-transparent hover:text-on-background hover:bg-surface-variant/50`;
+          });
+          items.forEach(i => (i as HTMLElement).style.display = 'none');
+          
+          // Activate this tab
+          button.setAttribute('aria-selected', 'true');
+          button.className = `px-4 py-2.5 text-sm font-label-caps font-medium transition-colors border-b-2 whitespace-nowrap outline-none text-primary border-primary bg-surface-container-lowest`;
+          (item as HTMLElement).style.display = 'block';
+        });
+        
+        header?.appendChild(button);
+      });
+    }
+  }
+
+  customElements.define('custom-tabs', CustomTabs);
+</script>

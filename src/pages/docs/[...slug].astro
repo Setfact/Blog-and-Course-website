@@ -1,6 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import Callout from '../../components/Callout.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabItem from '../../components/TabItem.astro';
 
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
@@ -24,5 +27,5 @@ const { Content, headings } = await render(entry);
 ---
 
 <DocsLayout entry={entry} headings={headings}>
-  <Content />
+  <Content components={{ Callout, Tabs, TabItem }} />
 </DocsLayout>

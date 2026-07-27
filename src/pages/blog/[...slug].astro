@@ -1,6 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Callout from '../../components/Callout.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabItem from '../../components/TabItem.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -52,7 +55,7 @@ const { Content } = await render(entry);
                 prose-code:text-secondary prose-code:bg-surface-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
                 prose-pre:bg-terminal-bg prose-pre:border prose-pre:border-border-subtle
                 prose-strong:text-on-background">
-      <Content />
+      <Content components={{ Callout, Tabs, TabItem }} />
     </div>
   </article>
 </BaseLayout>

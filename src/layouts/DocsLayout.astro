@@ -25,9 +25,11 @@ const categoryDocs = allDocs
     return {
       title: doc.data.title,
       slug: slug,
-      id: doc.id
+      id: doc.id,
+      order: doc.data.order || 999
     };
-  });
+  })
+  .sort((a, b) => a.order - b.order);
 
 // Format category name for display
 const categoryName = category.toUpperCase();
@@ -116,3 +118,26 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '');
     border-radius: 20px;
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const id = entry.target.getAttribute('id');
+        const tocLink = document.querySelector(`aside nav a[href="#${id}"]`);
+        if (tocLink) {
+          if (entry.intersectionRatio > 0) {
+            document.querySelectorAll('aside nav a').forEach(a => {
+              a.classList.remove('text-primary', 'font-semibold');
+            });
+            tocLink.classList.add('text-primary', 'font-semibold');
+          }
+        }
+      });
+    }, { rootMargin: '0px 0px -80% 0px' });
+
+    document.querySelectorAll('main h2, main h3').forEach((section) => {
+      observer.observe(section);
+    });
+  });
+</script>
