@@ -1,14 +1,14 @@
 ---
 import { getCollection, render } from 'astro:content';
-import DocsLayout from '../../layouts/DocsLayout.astro';
-import Callout from '../../components/Callout.astro';
-import Tabs from '../../components/Tabs.astro';
-import TabItem from '../../components/TabItem.astro';
-import CustomImage from '../../components/CustomImage.astro';
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import Tabs from '../../../components/Tabs.astro';
+import TabItem from '../../../components/TabItem.astro';
+import CustomImage from '../../../components/CustomImage.astro';
 
 export async function getStaticPaths() {
   const allDocs = await getCollection('docs');
-  const publishedDocs = allDocs.filter(doc => doc.data.draft !== true && doc.data.language === 'id');
+  const publishedDocs = allDocs.filter(doc => doc.data.draft !== true && doc.data.language === 'en');
   return publishedDocs.map(entry => {
     // Strip trailing 'index' so that e.g. 'network/index' becomes 'network'
     let slug = entry.id;

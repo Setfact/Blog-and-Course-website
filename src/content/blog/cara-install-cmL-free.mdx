@@ -1,0 +1,67 @@
+---
+title: cara install-CML-FREE
+language: id
+draft: false
+description: Tertanya CML UDAH FREE
+date: 2026-07-27
+category: Networking
+image: /images/blog/cara-install-cmL-free/image.jpg
+---
+Kabar gembira buat para pejuang sertifikasi CCNA dan CCNP! Cisco akhirnya mendengar doa "kaum mendang-mending" seperti kita.
+
+Dulu, kalau mau pakai emulator resmi **Cisco Modeling Labs (CML)**, kita harus merogoh kocek sebesar **$199 per tahun** (sekitar 3 jutaan Rupiah). Kalau tidak punya dana, opsinya cuma dua: pakai *Packet Tracer* (fitur terbatas) atau pakai GNS3/EVE-NG (tapi harus cari image IOS bajakan yang ilegal).
+
+Tapi sekarang cerita berubah. Cisco resmi merilis **CML Personal Free Tier**. Ya, Anda tidak salah baca. **GRATIS dan LEGAL.**
+
+Di artikel ini, saya akan bahas apa saja batasannya dan tutorial lengkap cara installnya di laptop Anda.
+
+## **Apa Itu CML Free Tier?**
+
+CML adalah platform simulasi jaringan resmi dari Cisco. Bedanya dengan Packet Tracer adalah CML menggunakan *image* asli (IOSv, IOS-XE, NX-OS) yang berjalan di atas virtualisasi. Jadi, *behavior* atau perilaku perangkatnya 99% sama dengan perangkat aslinya.
+
+<CustomImage src="../../assets/cara-install-cmL-free/277ac4c0-2fe7-4dd6-94d6-a420b7598d16.png" align="center" size="full" />
+
+### **Apa Batasannya?**
+
+Karena gratis, tentu ada bedanya dengan versi berbayar. Batasan utamanya adalah:
+
+1. **Maksimal 5 Node Aktif:** Anda hanya boleh menyalakan maksimal 5 perangkat Cisco (Router/Switch/Firewall) secara bersamaan.
+2. **Tidak Ada Support Teknis:** Kalau error, cari solusi sendiri di forum komunitas.
+
+**Apakah 5 Node Cukup?** Untuk belajar CCNA atau bahkan sebagian materi CCNP, **sangat cukup**. Lagipula, "Unmanaged Switch" dan "External Connector" di dalam CML **tidak dihitung** dalam kuota 5 node ini.
+
+## **Persiapan (System Requirements)**
+
+Karena CML ini berjalan sebagai Virtual Machine (VM) di laptop Anda, pastikan spesifikasi laptop memadai:
+
+* **RAM:** Minimal 8GB (Sangat disarankan **16GB** atau lebih).
+* **Disk:** SSD dengan sisa ruang minimal 20GB (File installernya saja sekitar 6-10GB).
+* **Virtualisasi:** Fitur **Intel VT-x** atau **AMD-V** di BIOS harus aktif.
+* **Software Virtualisasi:** VMware Workstation Player (Gratis untuk personal) atau VMware Workstation Pro.
+
+## **Langkah-Langkah instalasi**
+
+1. Buka situs resmi Cisco modeling lab melalui Link Berikut:
+
+   [**https://mkto.cisco.com/cml-free.html**](https://mkto.cisco.com/cml-free.html)
+2. isi semua data diri anda dan pastikan sudah memiliki Cisco CCO ID / Cisco ID Jika belum ada teman teman bisa create account cisco terlebih dahulu
+3. Setelah daftar anda akan di kirimkan link untuk mendownload CML di gmail anda
+4. Pilih opsi **Free Tier** jika tersedia, atau pastikan Anda mendownload file berformat **.OVA .iso** (untuk VMware)
+5. Setelah Menginstall **.OVA dan .iso,** untuk dapat mengakses file.is jangan lupa untuk di extrak zip terlebih dahulu
+6. langkah selanjutnya open ova pada vmware anda
+
+setelah itu ubah nama untuk vm CML kita > Import
+
+Kemudian masuk ke Edit Virtual Machine > CD / DVD (IDE) > Browse iso dan centang connect power on > OK
+
+* jangan lupa mengubah Network Adapternya menjadi NAT
+* Kemudian jalankan VM CML nya&#x20;
+
+Kemudian system akan mengcopy image dari ISO iref tekan OK jika ada permintaan tersebut
+
+* Jika tampilannya sudah seperti gambar di bawah artinya instalasi anda telah berhasil dan anda sudah dapat mengakses CML dari webbrowser anda menggunakan ip yang terteda pada CML
+
+  “Catatan untuk IP ini dapat berubah sesuai dengan default IP NAT VMWARE anda“
+* Akses CML pada web browser anda
+
+SELAMATT ANDA SUDAH BERHASIL MENGINSTALL CML SECARA GRATISS!!!

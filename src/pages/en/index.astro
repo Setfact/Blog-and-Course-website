@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Home">
@@ -13,17 +13,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 			<!-- Right: Content -->
 			<div class="order-1 lg:order-2 flex flex-col items-start space-y-6">
 				<h1 class="font-['Hanken_Grotesk'] text-[28px] md:text-[36px] font-bold leading-[1.2] md:tracking-[-0.02em] text-slate-900">
-					Belajar Networking & Linux<br>Tanpa Bikin Pusing
+					Learn Networking & Linux<br>Without the Headache
 				</h1>
 				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-lg">
-					Tingkatkan skill IT kamu! Pelajari Network Engineering, Linux Server, dan Otomatisasi Jaringan lewat panduan praktis dan studi kasus dunia nyata.
+					Level up your IT skills! Master Network Engineering, Linux Servers, and Network Automation through practical guides and real-world scenarios.
 				</p>
 				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
-					<a href="/courses" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#003f87] text-white px-6 py-3 rounded text-center hover:bg-blue-800 transition-colors">
-						Semua Kursus
+					<a href="/en/courses" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#003f87] text-white px-6 py-3 rounded text-center hover:bg-blue-800 transition-colors">
+						All Courses
 					</a>
-					<a href="/learning-path" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#62d6ed] text-[#001f25] px-6 py-3 rounded text-center hover:bg-[#4bcce6] transition-colors">
-						Semua Alur Belajar
+					<a href="/en/learning-path" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#62d6ed] text-[#001f25] px-6 py-3 rounded text-center hover:bg-[#4bcce6] transition-colors">
+						Learning Paths
 					</a>
 				</div>
 			</div>
@@ -33,11 +33,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 	<!-- Value Proposition Section -->
 	<section class="max-w-[1200px] mx-auto px-4 md:px-12 py-16 text-center">
 		<div class="mb-12 flex flex-col items-center">
-			<h2 class="font-['Hanken_Grotesk'] text-[36px] font-bold leading-[1.2] tracking-[-0.02em] text-slate-900 mb-2">Nggak Cuma Teori. Kita Praktik Langsung.</h2>
+			<h2 class="font-['Hanken_Grotesk'] text-[36px] font-bold leading-[1.2] tracking-[-0.02em] text-slate-900 mb-2">Beyond Theory. We Do Hands-On.</h2>
 			<svg class="mb-4 text-[#003f87]" fill="none" height="12" viewBox="0 0 200 12" width="200" xmlns="http://www.w3.org/2000/svg">
 				<path d="M2 9.5C45 -1.5 155 -1.5 198 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
 			</svg>
-			<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-2xl">Modul disusun khusus agar kamu paham alur kerja di lapangan (Production), bukan cuma buat lulus sertifikasi.</p>
+			<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-2xl">Our modules are designed to help you understand production workflows, not just memorize answers for a certification exam.</p>
 		</div>
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
 			<!-- Visual & Topologi -->
@@ -46,8 +46,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 					<polyline points="16 18 22 12 16 6"></polyline>
 					<polyline points="8 6 2 12 8 18"></polyline>
 				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Visual & Topologi Jelas</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Lupakan modul teks yang bikin ngantuk. Kami pakai diagram topologi dan animasi biar konsep jaringan yang rumit jadi lebih gampang dicerna.</p>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Visuals & Clear Topologies</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Forget boring text-heavy modules. We use network topologies and animations to make complex concepts easy to digest.</p>
 			</div>
 			<!-- Studi Kasus Lapangan -->
 			<div class="flex flex-col items-center space-y-4">
@@ -55,8 +55,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 					<rect height="4" rx="1" ry="1" width="16" x="4" y="4"></rect>
 					<rect height="10" rx="1" ry="1" width="16" x="4" y="10"></rect>
 				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Studi Kasus Lapangan</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Belajar dari real-world scenarios. Kamu akan tahu cara nge-config router, deploy server, dan setup firewall seperti di production environment.</p>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Real-World Case Studies</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Learn from real-world scenarios. You'll learn how to config routers, deploy servers, and setup firewalls just like in a production environment.</p>
 			</div>
 			<!-- Learning paths -->
 			<div class="flex flex-col items-center space-y-4">
@@ -68,8 +68,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 					<line x1="3" x2="3.01" y1="12" y2="12"></line>
 					<line x1="3" x2="3.01" y1="18" y2="18"></line>
 				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Learning Path Terstruktur</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Nggak perlu bingung mulai dari mana. Kami susun materi dari fundamental sampai expert biar belajarmu lebih terarah dan anti-nyasar.</p>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Structured Learning Paths</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">No need to wonder where to start. We've structured our content from fundamental to expert so your learning journey stays on track.</p>
 			</div>
 		</div>
 	</section>

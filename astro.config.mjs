@@ -5,12 +5,23 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import pagefind from "astro-pagefind";
+import keystatic from '@keystatic/astro';
+import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
+  output: 'static',
+  adapter: node({ mode: 'standalone' }),
   vite: {
     plugins: [tailwindcss()]
   },
 
-  integrations: [react(), mdx(), pagefind()]
+  i18n: {
+    defaultLocale: "id",
+    locales: ["id", "en"],
+    routing: {
+      prefixDefaultLocale: false
+    }
+  },
+  integrations: [react(), mdx(), pagefind(), keystatic()]
 });

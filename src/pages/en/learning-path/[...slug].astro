@@ -1,0 +1,142 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import CustomImage from '../../../components/CustomImage.astro';
+
+export async function getStaticPaths() {
+  const allPaths = await getCollection('paths');
+  const publishedPaths = allPaths.filter(path => path.data.draft !== true && path.data.language === 'en');
+  return publishedPaths.map(path => ({
+    params: { slug: path.id },
+    props: { pathEntry: path },
+  }));
+}
+
+const { pathEntry } = Astro.props;
+const { Content } = await render(pathEntry);
+
+// Fetch all non-draft docs
+const allDocs = await getCollection('docs');
+const publishedDocs = allDocs.filter(doc => doc.data.draft !== true && doc.data.language === 'en');
+
+// Get top-level "master" courses for this path, sorted by per-path order
+const masterCourses = publishedDocs
+  .filter(doc => doc.data.learningPaths?.some(lp => lp.path === pathEntry.id))
+  .sort((a, b) => {
+    const aOrder = a.data.learningPaths?.find(lp => lp.path === pathEntry.id)?.order ?? 999;
+    const bOrder = b.data.learningPaths?.find(lp => lp.path === pathEntry.id)?.order ?? 999;
+    return aOrder - bOrder;
+  });
+
+// For each master course, find its sub-lessons (slave) from the same folder
+const coursesWithLessons = masterCourses.map(course => {
+  // Determine the folder prefix (e.g. "network/index" → "network/")
+  const folderPrefix = course.id.endsWith('/index')
+    ? course.id.replace('/index', '/')
+    : null; // flat files have no sub-lessons
+
+  const subLessons = folderPrefix
+    ? publishedDocs
+        .filter(doc =>
+          doc.id.startsWith(folderPrefix) &&
+          doc.id !== course.id &&
+          !doc.data.learningPaths?.some(lp => lp.path === pathEntry.id) // exclude other masters
+        )
+        .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999))
+    : [];
+
+  // Build the URL for the course
+  let courseSlug = course.id;
+  if (courseSlug.endsWith('/index')) courseSlug = courseSlug.replace(/\/index$/, '');
+  const courseUrl = `/en/docs/${courseSlug}`;
+
+  return { course, subLessons, courseUrl };
+});
+---
+<BaseLayout title={pathEntry.data.title}>
+  <div class="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 flex flex-col xl:flex-row items-start gap-12 relative">
+    
+    <!-- Left Content: Explanation -->
+    <main class="flex-1 w-full max-w-4xl">
+      <div class="mb-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-variant rounded-DEFAULT font-label-caps text-label-caps text-on-surface-variant mb-6 border border-border-subtle">
+          <span class="material-symbols-outlined text-[16px]">route</span>
+          LEARNING PATH
+        </div>
+        <h1 class="text-3xl md:text-5xl font-headline-lg text-primary mb-6 leading-tight">{pathEntry.data.title}</h1>
+        <p class="text-xl text-on-surface-variant font-body-lg leading-relaxed">{pathEntry.data.description}</p>
+      </div>
+
+      <div class="prose prose-slate prose-lg max-w-none 
+                  prose-headings:text-on-background prose-headings:font-headline-md prose-headings:scroll-mt-24
+                  prose-p:text-on-surface-variant prose-p:font-body-md 
+                  prose-a:text-primary hover:prose-a:text-primary-container
+                  prose-strong:text-on-background">
+        <Content components={{ CustomImage }} />
+      </div>
+    </main>
+
+    <!-- Right Sidebar: Timeline -->
+    <aside class="w-full xl:w-[420px] flex-shrink-0 xl:sticky top-24 border border-border-subtle bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-sm">
+      <h3 class="font-headline-sm text-xl text-on-surface mb-2 pb-4 border-b border-border-subtle">Courses in this series</h3>
+      <p class="text-xs text-on-surface-variant font-body-md mb-6">{masterCourses.length} course{masterCourses.length !== 1 ? 's' : ''}</p>
+
+      {coursesWithLessons.length === 0 ? (
+        <p class="text-on-surface-variant font-body-md text-sm italic">No courses added to this path yet.</p>
+      ) : (
+        <div class="relative">
+          <!-- Main vertical line -->
+          <div class="absolute left-[11px] top-4 bottom-0 w-[2px] bg-border-subtle z-0"></div>
+
+          <div class="space-y-6 relative z-10">
+            {coursesWithLessons.map(({ course, subLessons, courseUrl }, index) => (
+              <div class="flex gap-4">
+                <!-- Node dot -->
+                <div class="flex-shrink-0 mt-1 relative z-10">
+                  <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold shadow-sm">
+                    {index + 1}
+                  </div>
+                </div>
+
+                <!-- Course card -->
+                <div class="flex-1 min-w-0 pb-2">
+                  <!-- Master Course -->
+                  <a href={`/en/docs/${course.id}`} class="group/card flex flex-col sm:flex-row gap-6 p-6 rounded-lg border border-border-subtle bg-surface-container-lowest hover:border-primary transition-all duration-300">
+                    <h4 class="font-headline-sm text-sm font-semibold text-on-surface group-hover:text-primary transition-colors leading-snug">{course.data.title}</h4>
+                    {course.data.description && (
+                      <p class="font-body-md text-xs text-on-surface-variant mt-1 line-clamp-2">{course.data.description}</p>
+                    )}
+                    {subLessons.length > 0 && (
+                      <p class="text-[10px] font-label-caps tracking-wider text-outline mt-2">{subLessons.length} LESSON{subLessons.length !== 1 ? 'S' : ''}</p>
+                    )}
+                  </a>
+
+                  <!-- Sub-lessons (slave) -->
+                  {subLessons.length > 0 && (
+                    <div class="ml-3 border-l-2 border-border-subtle pl-4 space-y-1">
+                      {subLessons.map((lesson) => {
+                        let lessonSlug = lesson.id;
+                        if (lessonSlug.endsWith('/index')) lessonSlug = lessonSlug.replace(/\/index$/, '');
+                        return (
+                          <a
+                            href={`/en/docs/${lessonSlug}`}
+                            class="flex items-center gap-2 py-1.5 px-2 rounded text-xs text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-all group no-underline"
+                          >
+                            <span class="material-symbols-outlined text-[14px] text-outline group-hover:text-primary transition-colors flex-shrink-0">article</span>
+                            <span class="truncate">{lesson.data.title}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </aside>
+
+  </div>
+</BaseLayout>
+

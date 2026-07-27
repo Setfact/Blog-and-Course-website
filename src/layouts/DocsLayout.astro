@@ -35,6 +35,12 @@ const categoryDocs = allDocs
 const categoryName = category.toUpperCase();
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '');
+const isEnglish = currentPath.startsWith('/en/');
+const langPrefix = isEnglish ? '/en' : '';
+
+const currentIndex = categoryDocs.findIndex(doc => doc.id === entry.id);
+const prevDoc = currentIndex > 0 ? categoryDocs[currentIndex - 1] : null;
+const nextDoc = currentIndex !== -1 && currentIndex < categoryDocs.length - 1 ? categoryDocs[currentIndex + 1] : null;
 ---
 
 <BaseLayout title={entry.data.title}>
@@ -47,7 +53,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '');
       </div>
       <nav class="flex flex-col gap-1">
         {categoryDocs.map(doc => {
-          const docUrl = `/docs/${doc.slug}`;
+          const docUrl = `${langPrefix}/docs/${doc.slug}`;
           const isActive = currentPath === docUrl || currentPath === docUrl + '/';
           return (
             <a 
@@ -82,7 +88,28 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '');
         <slot />
       </div>
 
-      <!-- Pagination / Next Prev could go here later -->
+      <!-- Pagination / Next Prev -->
+      <div class="mt-16 pt-8 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {prevDoc ? (
+          <a href={`${langPrefix}/docs/${prevDoc.slug}`} class="flex flex-col items-start p-4 rounded border border-border-subtle hover:border-primary hover:bg-surface-muted transition-colors group">
+            <span class="font-label-caps text-label-caps text-on-surface-variant group-hover:text-primary mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+              {isEnglish ? 'Previous Lesson' : 'Materi Sebelumnya'}
+            </span>
+            <span class="font-headline-sm text-sm text-on-background line-clamp-2">{prevDoc.title}</span>
+          </a>
+        ) : (<div></div>)}
+        
+        {nextDoc ? (
+          <a href={`${langPrefix}/docs/${nextDoc.slug}`} class="flex flex-col items-end text-right p-4 rounded border border-border-subtle hover:border-primary hover:bg-surface-muted transition-colors group">
+            <span class="font-label-caps text-label-caps text-on-surface-variant group-hover:text-primary mb-1 flex items-center gap-1">
+              {isEnglish ? 'Next Lesson' : 'Materi Selanjutnya'}
+              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </span>
+            <span class="font-headline-sm text-sm text-on-background line-clamp-2">{nextDoc.title}</span>
+          </a>
+        ) : (<div></div>)}
+      </div>
     </main>
 
     <!-- Right Sidebar (Table of Contents) -->

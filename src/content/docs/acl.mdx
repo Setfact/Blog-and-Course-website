@@ -1,0 +1,627 @@
+---
+title: 'ACL Cisco '
+draft: false
+order: 1
+learningPaths:
+  - path: ccna-200-301
+    order: 1
+---
+# CCNA ENSA&#x20;
+
+## ACLs for IPv4 Configuration
+
+## Referensi
+
+* **Sumber utama:** [https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html)
+* **Bahasa:** Indonesia, dengan istilah teknis asli dipertahankan
+* **Gaya dokumentasi:** per subbab, penjelasan panjang, command example lengkap, gambar ditempatkan tepat di bawah section yang relevan
+
+Catatan
+
+Modul ini adalah **kelanjutan praktis** dari Modul 4 (ACL Concepts). Kalau Modul 4 membahas teori ACL, Modul 5 membahas **konfigurasi langsung** di router Cisco. Kamu akan belajar membuat, menerapkan, memodifikasi, dan memverifikasi ACL.
+
+---
+
+# 5.0 Introduction
+
+Modul ini bertujuan untuk mengajarkan kamu bagaimana **mengimplementasikan IPv4 ACL** untuk memfilter traffic dan mengamankan akses administratif. Intinya: dari teori ke praktik.
+
+## 5.0.1 Why should I take this module?
+
+Karena di dunia nyata, ACL bukan hanya diketahui tapi harus **bisa dikonfigurasi**. Sebagai network engineer, kamu akan sering diminta untuk:
+
+* memblokir akses dari host/network tertentu
+* mengamankan remote access (Telnet/SSH)
+* memfilter traffic berdasarkan port dan protocol
+* memodifikasi ACL yang sudah ada
+
+## 5.0.2 What will I learn to do in this module?
+
+Di modul ini, kamu akan belajar untuk:
+
+* mengkonfigurasi **standard IPv4 ACL**
+* memodifikasi ACL yang sudah ada
+* mengamankan **VTY ports** dengan standard ACL
+* mengkonfigurasi **extended IPv4 ACL**
+
+---
+
+# 5.1 Configure Standard IPv4 ACLs
+
+Bagian ini membahas cara membuat dan menerapkan standard ACL. Standard ACL hanya memfilter berdasarkan **source IPv4 address**.
+
+## 5.1.1 Create an ACL
+
+### Perencanaan itu penting
+
+Sebelum mengetik command apapun, **rencanakan dulu** apa yang ingin kamu capai. Untuk ACL yang kompleks dengan banyak ACE, gunakan text editor untuk:
+
+1. menulis kebijakan yang ingin diterapkan
+2. menulis perintah IOS yang sesuai
+3. menambahkan **remark** (keterangan) untuk dokumentasi
+4. paste ke router
+5. **test menyeluruh**
+
+Jangan langsung konfigurasi!
+
+ACL yang buruk bisa memblokir traffic penting atau membuka celah keamanan. Selalu rencanakan dan test dulu.
+
+## 5.1.2 Numbered Standard IPv4 ACL Syntax
+
+### Syntax
+
+```
+Router(config)# access-list access-list-number {deny | permit | remark text} source [source-wildcard] [log]
+
+```
+
+### Parameter
+
+| Parameter            | Keterangan                                        |
+| -------------------- | ------------------------------------------------- |
+| `access-list-number` | Nomor ACL: **1–99** atau **1300–1999**            |
+| `deny`               | Tolak packet yang match                           |
+| `permit`             | Izinkan packet yang match                         |
+| `remark`             | Komentar/dokumentasi (maks 100 karakter)          |
+| `source`             | Alamat sumber: host spesifik, network, atau `any` |
+| `source-wildcard`    | Wildcard mask (default: `0.0.0.0` = satu host)    |
+| `log`                | Generate message untuk packet pertama yang match  |
+
+### Menghapus ACL
+
+```
+Router(config)# no access-list access-list-number
+
+```
+
+## 5.1.3 Named Standard IPv4 ACL Syntax
+
+### Syntax
+
+```
+Router(config)# ip access-list standard access-list-name
+
+```
+
+* Masuk ke named standard ACL configuration mode (`config-std-nacl`)
+* Nama ACL bersifat **alphanumeric, case-sensitive, dan unik**
+
+### Menghapus Named ACL
+
+```
+Router(config)# no ip access-list standard access-list-name
+
+```
+
+### Kenapa named ACL lebih disukai?
+
+* bisa **diedit baris per baris** tanpa menghapus seluruh ACL
+* lebih mudah diidentifikasi (namanya deskriptif)
+* lebih mudah di-troubleshoot
+
+## 5.1.4 Apply a Standard IPv4 ACL
+
+Setelah ACL dibuat, kamu harus **menerapkannya ke interface**.
+
+### Syntax
+
+```
+Router(config-if)# ip access-group {access-list-number | access-list-name} {in | out}
+
+```
+
+### Menghapus dari interface
+
+```
+Router(config-if)# no ip access-group
+
+```
+
+## 5.1.5 Numbered Standard IPv4 ACL Example
+
+### Skenario
+
+Kamu hanya boleh mengizinkan **PC1 (192.168.10.10)** dan **LAN 2 (192.168.20.0/24)** untuk keluar ke internet.
+
+### Konfigurasi
+
+```
+R1(config)# access-list 10 remark ACE permits ONLY host 192.168.10.10
+R1(config)# access-list 10 permit host 192.168.10.10
+R1(config)# access-list 10 remark ACE permits all host in LAN 2
+R1(config)# access-list 10 permit 192.168.20.0 0.0.0.255
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group 10 out
+
+```
+
+### Penjelasan command per baris
+
+| Command                                        | Arti                                              |
+| ---------------------------------------------- | ------------------------------------------------- |
+| `access-list 10 remark ...`                    | Komentar dokumentasi — tidak mempengaruhi traffic |
+| `access-list 10 permit host 192.168.10.10`     | Izinkan satu host spesifik                        |
+| `access-list 10 permit 192.168.20.0 0.0.0.255` | Izinkan seluruh subnet /24                        |
+| `ip access-group 10 out`                       | Terapkan ACL 10 ke arah outbound                  |
+
+### Catatan penting
+
+* Karena ini **standard ACL**, ditempatkan **dekat destination** (di interface outbound)
+* ACE diproses dari atas ke bawah secara sekuensial
+* Kalau tidak ada match → **implicit deny** akan menolak packet
+
+## 5.1.6 Named Standard IPv4 ACL Example
+
+Sama seperti di atas, tapi menggunakan nama `PERMIT-ACCESS`.
+
+### Konfigurasi
+
+```
+R1(config)# ip access-list standard PERMIT-ACCESS
+R1(config-std-nacl)# remark ACE permits host 192.168.10.10
+R1(config-std-nacl)# permit host 192.168.10.10
+R1(config-std-nacl)# remark ACE permits all hosts in LAN 2
+R1(config-std-nacl)# permit 192.168.20.0 0.0.0.255
+R1(config-std-nacl)# exit
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group PERMIT-ACCESS out
+
+```
+
+### Perbandingan Numbered vs Named
+
+| Aspek              | Numbered                    | Named                               |
+| ------------------ | --------------------------- | ----------------------------------- |
+| Identifikasi       | Nomor (10)                  | Nama (PERMIT-ACCESS)                |
+| Edit per baris     | ❌ Tidak bisa                | ✅ Bisa                              |
+| Syntax             | `access-list 10 permit ...` | `ip access-list standard ...`       |
+| Apply ke interface | `ip access-group 10 out`    | `ip access-group PERMIT-ACCESS out` |
+
+## 5.1.7 Syntax Check – Configure Standard IPv4 ACLs
+
+Syntax Checker
+
+Source menyediakan syntax checker interaktif untuk praktik konfigurasi standard ACL. Tersedia di halaman source asli.
+
+## 5.1.8 Packet Tracer – Configure Numbered Standard IPv4 ACLs
+
+Packet Tracer
+
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi numbered standard ACL. Tersedia di halaman source asli.
+
+## 5.1.9 Packet Tracer – Configure Named Standard IPv4 ACLs
+
+Packet Tracer
+
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi named standard ACL. Tersedia di halaman source asli.
+
+---
+
+# 5.2 Modify IPv4 ACLs
+
+Bagian ini membahas cara mengedit ACL yang sudah ada di router. Ada dua metode yang bisa dipakai.
+
+## 5.2.1 Two Methods to Modify an ACL
+
+| Metode               | Kapan Dipakai                 |
+| -------------------- | ----------------------------- |
+| **Text Editor**      | Perubahan besar / rewrite ACL |
+| **Sequence Numbers** | Perubahan kecil / edit个别 ACE  |
+
+## 5.2.2 Text Editor Method
+
+### Langkah-langkah
+
+1. Copy ACL yang salah dari `show running-config`
+2. Edit di text editor
+3. **Hapus seluruh ACL lama** dari router
+4. Paste ACL yang sudah diperbaiki
+
+```
+Router(config)# no access-list access-list-number
+
+```
+
+### Kekurangan
+
+* harus menghapus seluruh ACL dulu
+* ada downtime singkat saat ACL dihapus dan diganti
+
+## 5.2.3 Sequence Numbers Method
+
+Setiap ACE dalam named ACL (atau numbered ACL yang diakses lewat `ip access-list`) memiliki **sequence number** otomatis. Kamu bisa mengedit ACE berdasarkan nomor ini.
+
+### Langkah-langkah
+
+1. Masuk ke ACL configuration mode
+2. Hapus ACE yang salah dengan `no <sequence-number>`
+3. Masukkan ACE yang benar
+
+### Contoh: memperbaiki typo di ACL 1, sequence 10
+
+```
+R1(config)# ip access-list standard 1
+R1(config-std-nacl)# no 10
+R1(config-std-nacl)# 10 deny host 192.168.10.10
+
+```
+
+### Kelebihan method sequence numbers
+
+* bisa menghapus satu ACE tanpa menghapus seluruh ACL
+* bisa menyisipkan ACE baru di antara ACE yang sudah ada
+* tidak ada downtime
+
+## 5.2.4 Modify a Named ACL Example
+
+Untuk named ACL, kamu bisa masuk ke ACL config mode lalu edit langsung:
+
+```
+R1(config)# ip access-list standard PERMIT-ACCESS
+R1(config-std-nacl)# no 10
+R1(config-std-nacl)# 10 permit host 192.168.10.20
+R1(config-std-nacl)# exit
+
+```
+
+Sequence number bisa disisipkan di antara nomor yang sudah ada (misal: 15 di antara 10 dan 20) untuk mengontrol urutan eksekusi.
+
+## 5.2.5 ACL Statistics
+
+### Melihat statistik match per ACE
+
+```
+Router# show access-lists
+
+```
+
+Output akan menunjukkan berapa kali setiap ACE berhasil match dengan packet.
+
+### Catatan penting
+
+* **Implicit deny any** di akhir ACL **tidak menampilkan statistik** kecuali kamu menambahkan `deny any` secara eksplisit
+* Kalau kamu ingin melihat berapa banyak packet yang ditolak oleh implicit deny, tambahkan baris `deny any` di akhir ACL
+
+### Reset counters
+
+```
+Router# clear access-list counters [name|number]
+
+```
+
+## 5.2.6 Syntax Checker – Modify IPv4 ACLs
+
+Syntax Checker
+
+Source menyediakan syntax checker interaktif untuk praktik modifikasi ACL. Tersedia di halaman source asli.
+
+## 5.2.7 Packet Tracer – Configure and Modify Standard IPv4 ACLs
+
+Packet Tracer
+
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi dan modifikasi standard ACL. Tersedia di halaman source asli.
+
+---
+
+# 5.3 Secure VTY Ports with a Standard IPv4 ACL
+
+Bagian ini membahas cara mengamankan akses remote (Telnet/SSH) ke router menggunakan standard ACL.
+
+## 5.3.1 The access-class Command
+
+Untuk mengamankan VTY lines, kamu menggunakan command `access-class` — bukan `ip access-group`.
+
+### Syntax
+
+```
+Router(config-line)# access-class {access-list-number | access-list-name} {in | out}
+
+```
+
+### Perbedaan dengan interface ACL
+
+| Command           | Digunakan di                 |
+| ----------------- | ---------------------------- |
+| `ip access-group` | Interface (physical/virtual) |
+| `access-class`    | VTY lines (line vty 0 4)     |
+
+## 5.3.2 Secure VTY Access Example
+
+### Skenario
+
+Hanya host `192.168.10.10` yang boleh mengakses router via Telnet/SSH.
+
+### Konfigurasi
+
+```
+R1(config)# ip access-list standard ADMIN-HOST
+R1(config-std-nacl)# permit 192.168.10.10
+R1(config-std-nacl)# deny any
+R1(config-std-nacl)# exit
+R1(config)# line vty 0 4
+R1(config-line)# access-class ADMIN-HOST in
+R1(config-line)# exit
+
+```
+
+### Kenapa `deny any` ditambahkan?
+
+Untuk **melihat statistik** berapa kali akses ditolak. Tanpa `deny any` eksplisit, implicit deny tidak mencatat statistik.
+
+## 5.3.3 Verify the VTY Port is Secured
+
+### Verifikasi dari luar
+
+```
+R1# show access-lists
+
+```
+
+### Test akses dari host yang tidak diizinkan
+
+```
+C:\> telnet 192.168.1.1
+% Connection refused by remote host
+
+```
+
+### Test akses dari host yang diizinkan
+
+```
+C:\> telnet 192.168.1.1
+Trying 192.168.1.1 ... Open
+Password:
+R1>
+
+```
+
+### Best practice di production
+
+Gunakan `transport input ssh` di VTY lines daripada Telnet. SSH lebih aman karena traffic-nya terenkripsi.
+
+```
+R1(config)# line vty 0 4
+R1(config-line)# transport input ssh
+
+```
+
+## 5.3.4 Syntax Checker – Secure the VTY Ports
+
+Syntax Checker
+
+Source menyediakan syntax checker interaktif untuk praktik securing VTY ports. Tersedia di halaman source asli.
+
+---
+
+# 5.4 Configure Extended IPv4 ACLs
+
+Bagian ini membahas cara mengkonfigurasi extended ACL — yang lebih fleksibel karena bisa memfilter berdasarkan **source, destination, protocol, dan port**.
+
+## 5.4.1 Extended ACLs
+
+Extended ACL memberikan kontrol yang lebih detail dibanding standard ACL:
+
+| Fitur          | Standard ACL | Extended ACL |
+| -------------- | ------------ | ------------ |
+| Source IP      | ✅            | ✅            |
+| Destination IP | ❌            | ✅            |
+| Protocol       | ❌            | ✅            |
+| Port Number    | ❌            | ✅            |
+
+### Penempatan
+
+Extended ACL ditempatkan **sedekat mungkin dengan source** karena sudah cukup spesifik.
+
+## 5.4.2 Numbered Extended IPv4 ACL Syntax
+
+### Syntax
+
+```
+Router(config)# access-list access-list-number {deny | permit | remark text} protocol source source-wildcard [operator [port]] destination destination-wildcard [operator [port]] [established] [log]
+
+```
+
+### Parameter
+
+| Parameter                                  | Keterangan                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| `access-list-number`                       | **100–199** atau **2000–2699**                                                   |
+| `protocol`                                 | `ip`, `tcp`, `udp`, `icmp`, dll                                                  |
+| `source` / `destination`                   | Host, network, atau `any`                                                        |
+| `source-wildcard` / `destination-wildcard` | Wildcard mask                                                                    |
+| `operator`                                 | `eq` (equals), `neq` (not equal), `gt` (greater than), `lt` (less than), `range` |
+| `port`                                     | Nomor port atau nama service (www, https, ftp, dll)                              |
+| `established`                              | Untuk return traffic (ACK/RST set)                                               |
+| `log`                                      | Generate message untuk matching packet                                           |
+
+## 5.4.3 Protocols and Ports
+
+### Protocol yang sering dipakai
+
+| Protocol | Keterangan                      |
+| -------- | ------------------------------- |
+| `ip`     | Semua IP traffic                |
+| `tcp`    | TCP traffic                     |
+| `udp`    | UDP traffic                     |
+| `icmp`   | ICMP traffic (ping, traceroute) |
+
+### Port yang sering dipakai
+
+| Service       | Port | Protocol |
+| ------------- | ---- | -------- |
+| FTP (data)    | 20   | TCP      |
+| FTP (control) | 21   | TCP      |
+| SSH           | 22   | TCP      |
+| Telnet        | 23   | TCP      |
+| SMTP          | 25   | TCP      |
+| DNS           | 53   | TCP/UDP  |
+| HTTP          | 80   | TCP      |
+| HTTPS         | 443  | TCP      |
+
+## 5.4.4 Protocols and Port Numbers Configuration Examples
+
+### Contoh: izinkan HTTP dan HTTPS dari LAN ke internet
+
+```
+R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq www
+R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq 443
+
+```
+
+### Penjelasan
+
+* `tcp` — hanya TCP traffic
+* `192.168.10.0 0.0.0.255` — source dari subnet /24
+* `any` — ke mana saja
+* `eq www` — port 80 (HTTP)
+* `eq 443` — port HTTPS
+
+## 5.4.5 Apply a Numbered Extended IPv4 ACL
+
+### Apply ke interface
+
+```
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group 100 in
+
+```
+
+### Catatan
+
+Extended ACL ditempatkan **dekat source** (inbound di source interface) supaya traffic yang tidak diinginkan ditolak sejak awal.
+
+## 5.4.6 TCP Established Keyword
+
+Keyword `established` memungkinkan extended ACL untuk berfungsi seperti **stateful firewall sederhana**.
+
+### Apa itu `established`?
+
+* hanya mengizinkan paket TCP yang memiliki flag **ACK** atau **RST** set
+* paket dengan flag **SYN** saja (koneksi baru) akan ditolak
+* berguna untuk mengizinkan **return traffic** tanpa membuka koneksi baru
+
+### Contoh konfigurasi
+
+```
+R1(config)# access-list 120 permit tcp any 192.168.10.0 0.0.0.255 established
+
+```
+
+### Cara kerja
+
+1. Host dari luar mencoba koneksi TCP ke host di dalam
+2. Paket SYN ditolak karena belum ada established connection
+3. Tapi kalau host di dalam yang menginisiasi koneksi, return traffic (ACK/RST) diizinkan
+
+## 5.4.7 Named Extended IPv4 ACL Example
+
+### Contoh konfigurasi: mengizinkan browsing
+
+```
+R1(config)# ip access-list extended SURFING
+R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 80
+R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 443
+
+```
+
+### Contoh konfigurasi: return traffic dengan established
+
+```
+R1(config)# ip access-list extended BROWSING
+R1(config-ext-nacl)# permit tcp any 192.168.10.0 0.0.0.255 established
+
+```
+
+### Apply ke interface
+
+```
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group SURFING in
+R1(config-if)# ip access-group BROWSING out
+
+```
+
+### Penjelasan flow
+
+* **SURFING (inbound)** — mengizinkan host di LAN mengakses web (HTTP/HTTPS)
+* **BROWSING (outbound)** — mengizinkan return traffic dari web server kembali ke LAN
+
+## 5.4.8 Verify Extended ACL
+
+Verifikasi sama seperti standard ACL:
+
+```
+R1# show access-lists
+R1# show ip interface Serial 0/1/0 | include access list
+R1# show running-config | section access-list
+
+```
+
+---
+
+# 5.5 Module Practice and Quiz
+
+## 5.5.1 What did I learn in this module?
+
+| Bagian | Yang Dipelajari                                                              |
+| ------ | ---------------------------------------------------------------------------- |
+| 5.1    | Mengkonfigurasi standard IPv4 ACL (numbered dan named)                       |
+| 5.2    | Memodifikasi ACL dengan text editor dan sequence numbers                     |
+| 5.3    | Mengamankan VTY ports dengan standard ACL + `access-class`                   |
+| 5.4    | Mengkonfigurasi extended IPv4 ACL, `established` keyword, named extended ACL |
+
+## 5.5.2 Module Quiz – ACLs for IPv4 Configuration
+
+Quiz
+
+Source menyediakan quiz interaktif untuk modul ini. Tersedia di halaman source asli.
+
+---
+
+# Ringkasan modul 5
+
+| Bagian | Isi utama                                                                           |
+| ------ | ----------------------------------------------------------------------------------- |
+| 5.0    | Pengenalan — dari teori ACL ke praktik konfigurasi                                  |
+| 5.1    | Standard IPv4 ACL: syntax numbered/named, apply ke interface, contoh konfigurasi    |
+| 5.2    | Modify ACL: text editor method vs sequence numbers method, statistics               |
+| 5.3    | Secure VTY: `access-class` command, best practice `transport input ssh`             |
+| 5.4    | Extended IPv4 ACL: syntax, protocol/port, `established` keyword, contoh konfigurasi |
+| 5.5    | Quiz dan praktik                                                                    |
+
+---
+
+# Command Reference modul 5
+
+| Command                                      | Fungsi                      |
+| -------------------------------------------- | --------------------------- |
+| `access-list <n> (permit\|deny) ...`         | Buat numbered ACL           |
+| `ip access-list standard <name>`             | Buat named standard ACL     |
+| `ip access-list extended <name>`             | Buat named extended ACL     |
+| `ip access-group <n\|name> (in\|out)`        | Apply ACL ke interface      |
+| `access-class <n\|name> (in\|out)`           | Apply ACL ke VTY lines      |
+| `show access-lists`                          | Lihat ACL dan statistik     |
+| `show running-config \| section access-list` | Lihat ACL di running config |
+| `clear access-list counters`                 | Reset statistik match       |
+| `remark <text>`                              | Tambahkan komentar di ACL   |
+| `transport input ssh`                        | Batasi VTY hanya SSH        |

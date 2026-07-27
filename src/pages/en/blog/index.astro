@@ -1,11 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { useTranslations } from '../../i18n/utils';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { useTranslations } from '../../../i18n/utils';
 
-const t = useTranslations('id');
+const t = useTranslations('en');
 const allPostsRaw = await getCollection('blog');
-const allPosts = allPostsRaw.filter(post => post.data.language === 'id');
+const allPosts = allPostsRaw.filter(post => post.data.language === 'en');
 const publishedPosts = allPosts.filter(post => post.data.draft !== true);
 const sortedPosts = publishedPosts.sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf());
 const featuredPost = sortedPosts[0];
@@ -18,11 +18,11 @@ const remainingPosts = sortedPosts.slice(1);
 		<!-- Header & Filters -->
 		<section class="flex flex-col gap-6">
 			<div class="flex flex-col gap-2">
-				<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Blog Engineer</h1>
-				<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Penjelasan mendalam mengenai protokol jaringan, administrasi Linux, dan otomatisasi infrastruktur. Ditulis oleh engineer, untuk engineer.</p>
+				<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Engineering Blog</h1>
+				<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Deep dives into networking protocols, Linux administration, and infrastructure automation. Written by engineers, for engineers.</p>
 			</div>
 			<div class="flex flex-wrap gap-3 mt-4" id="blog-filters">
-				<button data-filter="all" class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">Semua Artikel</button>
+				<button data-filter="all" class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">All Posts</button>
 				<button data-filter="Sysadmin" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Sysadmin</button>
 				<button data-filter="Automation" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Automation</button>
 				<button data-filter="Networking" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Networking</button>
@@ -52,7 +52,7 @@ const remainingPosts = sortedPosts.slice(1);
 						</div>
 						<span class="font-semibold text-sm text-on-surface-variant">{featuredPost.data.author || 'Calvin Umboh'}</span>
 					</div>
-					<a class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1 group" href={`/blog/${featuredPost.id}`}>
+					<a class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1 group" href={`/en/blog/${featuredPost.id}`}>
 						{t('blog.readMore')} <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
 					</a>
 				</div>
@@ -79,7 +79,7 @@ const remainingPosts = sortedPosts.slice(1);
 					<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">{post.data.description}</p>
 				</div>
 				<div class="p-5 pt-0 mt-auto">
-					<a class="font-label-caps text-label-caps text-primary hover:underline" href={`/blog/${post.id}`}>{t('blog.readMore')} -&gt;</a>
+					<a class="font-label-caps text-label-caps text-primary hover:underline" href={`/en/blog/${post.id}`}>{t('blog.readMore')} -&gt;</a>
 				</div>
 			</article>
 			))}
@@ -87,7 +87,7 @@ const remainingPosts = sortedPosts.slice(1);
 		)}
 
 		<div class="flex justify-center mt-8">
-			<button class="font-label-caps text-label-caps px-6 py-3 border border-border-subtle text-on-surface-variant rounded hover:border-primary hover:text-primary transition-colors bg-surface-container-lowest">Muat Lebih Banyak Artikel</button>
+			<button class="font-label-caps text-label-caps px-6 py-3 border border-border-subtle text-on-surface-variant rounded hover:border-primary hover:text-primary transition-colors bg-surface-container-lowest">Load More Articles</button>
 		</div>
 	</div>
 </BaseLayout>

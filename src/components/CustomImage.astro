@@ -1,0 +1,72 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  src: string;
+  alt?: string;
+  align?: 'left' | 'center' | 'right';
+  size?: 'small' | 'medium' | 'large' | 'full';
+  caption?: string;
+}
+
+const { 
+  src, 
+  alt = '', 
+  align = 'center', 
+  size = 'medium',
+  caption 
+} = Astro.props;
+
+// Determine width classes based on size prop
+const sizeClasses = {
+  small: 'w-full md:w-1/3',
+  medium: 'w-full md:w-1/2',
+  large: 'w-full md:w-3/4',
+  full: 'w-full',
+};
+
+const widthClass = sizeClasses[size] || sizeClasses.medium;
+
+// Determine alignment classes
+const alignClasses = {
+  left: 'mr-auto',
+  center: 'mx-auto',
+  right: 'ml-auto',
+};
+
+const alignmentClass = alignClasses[align] || alignClasses.center;
+
+// Resolve dynamic image from Keystatic's output (../../assets/...)
+const images = import.meta.glob<{ default: ImageMetadata }>('../assets/**/*.{jpeg,jpg,png,gif,webp,svg,avif}');
+let resolvedImage = null;
+
+if (src && src.startsWith('../../assets/')) {
+  // Convert Keystatic MDX relative path to CustomImage.astro relative path
+  const componentRelativePath = src.replace('../../assets/', '../assets/');
+  if (images[componentRelativePath]) {
+    const imageModule = await images[componentRelativePath]();
+    resolvedImage = imageModule.default;
+  }
+}
+---
+
+<figure class={`flex flex-col my-8 ${widthClass} ${alignmentClass}`}>
+  {resolvedImage ? (
+    <Image 
+      src={resolvedImage} 
+      alt={alt || caption || 'Image'} 
+      class="w-full h-auto rounded-lg shadow-md border border-slate-200"
+    />
+  ) : (
+    <img 
+      src={src} 
+      alt={alt || caption || 'Image'} 
+      class="w-full h-auto rounded-lg shadow-md border border-slate-200"
+    />
+  )}
+  {caption && (
+    <figcaption class="text-center text-sm text-slate-500 mt-2 font-['Inter'] italic">
+      {caption}
+    </figcaption>
+  )}
+</figure>

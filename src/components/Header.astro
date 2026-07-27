@@ -1,33 +1,41 @@
 ---
 // src/components/Header.astro
 import Search from "astro-pagefind/components/Search.astro";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const prefix = lang === 'id' ? '' : `/${lang}`;
 ---
 
 <header class="border-b border-slate-200 bg-white relative z-50">
   <div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6">
     <!-- Logo -->
     <div class="flex items-center">
-      <a href="/" class="font-['Hanken_Grotesk'] text-xl font-bold tracking-tight text-slate-900">
+      <a href={`${prefix}/`} class="font-['Hanken_Grotesk'] text-xl font-bold tracking-tight text-slate-900">
         Phinisi Network
       </a>
     </div>
 
     <!-- Navigation -->
     <nav class="hidden md:flex items-center space-x-8">
-      <a href="/courses" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Courses</a>
-      <a href="/learning-path" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Learning path</a>
-      <a href="/blog" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Blog</a>
+      <a href={`${prefix}/courses`} class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">{t('nav.courses')}</a>
+      <a href={`${prefix}/learning-path`} class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">{t('nav.learningPath')}</a>
+      <a href={`${prefix}/blog`} class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">{t('nav.blog')}</a>
     </nav>
 
-    <!-- Right Side: Search, Sign In, Sign Up -->
-    <div class="flex items-center space-x-4">
+    <!-- Right Side: Search, Language -->
+    <div class="flex items-center space-x-6 md:space-x-8">
       <div class="relative hidden sm:block w-64 pagefind-custom-container">
         <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false }} />
       </div>
-      <a href="/signin" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Sign In</a>
-      <a href="/signup" class="rounded bg-[#0056B3] px-4 py-2 font-['JetBrains_Mono'] text-[12px] font-semibold tracking-wider text-white uppercase transition-colors hover:bg-blue-800">
-        Sign Up
-      </a>
+      
+      <!-- Language Switcher -->
+      <div class="flex items-center space-x-2 text-sm font-['Inter'] text-slate-600">
+        <a href={Astro.url.pathname.replace(/^\/en/, '') || '/'} class={lang === 'id' ? 'font-bold text-slate-900' : 'hover:text-slate-900'}>ID</a>
+        <span>|</span>
+        <a href={`/en${Astro.url.pathname.replace(/^\/en/, '')}`} class={lang === 'en' ? 'font-bold text-slate-900' : 'hover:text-slate-900'}>EN</a>
+      </div>
     </div>
   </div>
 </header>

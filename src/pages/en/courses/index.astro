@@ -1,11 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { useTranslations } from '../../i18n/utils';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { useTranslations } from '../../../i18n/utils';
 
-const t = useTranslations('id');
+const t = useTranslations('en');
 const allDocsRaw = await getCollection('docs');
-const allDocs = allDocsRaw.filter(doc => doc.data.draft !== true && doc.data.language === 'id');
+const allDocs = allDocsRaw.filter(doc => doc.data.draft !== true && doc.data.language === 'en');
 const categories = [...new Set(allDocs.map(doc => doc.id.split('/')[0]))];
 
 const categoryData: Record<string, any> = {
@@ -71,9 +71,9 @@ const courses = categories.map(cat => {
 		
 		<!-- Page Header -->
 		<div class="mb-12 border-b border-border-subtle pb-8">
-			<h1 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-background mb-4">Katalog Kursus</h1>
+			<h1 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-background mb-4">Course Catalog</h1>
 			<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">
-				Kuasai jaringan, administrasi Linux, dan otomatisasi infrastruktur melalui kurikulum teknis kami yang terstruktur. Dirancang untuk engineer, oleh engineer.
+				Master networking, Linux administration, and infrastructure automation through our structured technical curriculum. Designed for engineers, by engineers.
 			</p>
 		</div>
 
@@ -89,9 +89,9 @@ const courses = categories.map(cat => {
 			<div class="flex items-center gap-2">
 				<span class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">{t('course.sort')}</span>
 				<select class="bg-surface-muted border border-border-subtle text-body-md font-body-md rounded-DEFAULT px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-					<option>{t('course.recommended')}</option>
-					<option>{t('course.newest')}</option>
-					<option>{t('course.difficulty')}</option>
+					<option>Recommended</option>
+					<option>Newest</option>
+					<option>Difficulty: Ascending</option>
 				</select>
 			</div>
 		</div>
@@ -99,7 +99,7 @@ const courses = categories.map(cat => {
 		<!-- Course Grid (4-column responsive) -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter" id="courses-grid">
 			{courses.map(course => (
-			<a href={`/docs/${course.id}`} data-category={course.meta.badges.join(',')} class="course-card bg-surface-container-lowest border border-border-subtle rounded-DEFAULT overflow-hidden flex flex-col hover:border-primary transition-colors duration-200 group relative shadow-sm hover:shadow-md">
+			<a href={`/en/docs/${course.id}`} data-category={course.meta.badges.join(',')} class="course-card bg-surface-container-lowest border border-border-subtle rounded-DEFAULT overflow-hidden flex flex-col hover:border-primary transition-colors duration-200 group relative shadow-sm hover:shadow-md">
 				<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary group-hover:w-1.5 transition-all duration-200 z-10"></div>
 				<div class="h-40 w-full bg-terminal-bg relative overflow-hidden" style={`background-image: url('${course.meta.image}'); background-size: cover; background-position: center;`}>
 					<div class="absolute inset-0 bg-primary-fixed-dim/20 mix-blend-overlay"></div>

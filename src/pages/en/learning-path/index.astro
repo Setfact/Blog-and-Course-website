@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 const allPathsRaw = await getCollection('paths');
-const allPaths = allPathsRaw.filter(path => path.data.language === 'id');
+const allPaths = allPathsRaw.filter(path => path.data.language === 'en');
 const paths = allPaths.filter(path => path.data.draft !== true);
 ---
 
@@ -26,13 +26,13 @@ const paths = allPaths.filter(path => path.data.draft !== true);
 			<div class="relative z-10 p-8 md:p-16 max-w-3xl">
 				<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-variant rounded-DEFAULT font-label-caps text-label-caps text-on-surface-variant mb-6 border border-border-subtle">
 					<span class="material-symbols-outlined text-[16px]">route</span>
-					PEMBELAJARAN TERSTRUKTUR
+					STRUCTURED LEARNING
 				</div>
 				<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-					Alur Belajar
+					Learning Paths
 				</h1>
 				<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-					Kuasai berbagai keahlian teknis dengan alur belajar terstruktur yang berfokus pada sertifikasi. Dirancang untuk membawa Anda dari pemula hingga ahli melalui modul praktik yang berurutan.
+					Master technical skills with our structured certification-focused tracks. Designed to take you from beginner to expert through sequential, hands-on modules and rigorous technical documentation.
 				</p>
 			</div>
 		</section>
@@ -57,7 +57,7 @@ const paths = allPaths.filter(path => path.data.draft !== true);
 							</p>
 							
 							<div class="mt-auto flex items-center gap-4 border-t border-border-subtle pt-6">
-								<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href={`/learning-path/${path.id}`}>Mulai Belajar</a>
+								<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href={`/en/learning-path/${path.id}`}>Start Path</a>
 							</div>
 						</div>
 					</article>
