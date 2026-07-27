@@ -1,0 +1,446 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Phinisi Network - Learn Networking for Free</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#d7dadf",
+                        "on-secondary-container": "#006776",
+                        "surface-container": "#ebeef3",
+                        "on-primary-fixed-variant": "#004491",
+                        "inverse-on-surface": "#eef1f6",
+                        "on-primary-fixed": "#001a40",
+                        "on-tertiary-fixed-variant": "#92001c",
+                        "on-background": "#181c20",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c2c6d4",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "border-subtle": "#E2E8F0",
+                        "surface-variant": "#e0e3e8",
+                        "surface-container-low": "#f1f4f9",
+                        "secondary-fixed": "#a4eeff",
+                        "success-green": "#166534",
+                        "on-secondary-fixed": "#001f25",
+                        "inverse-surface": "#2d3135",
+                        "terminal-bg": "#0F172A",
+                        "background": "#f7f9ff",
+                        "secondary": "#006877",
+                        "secondary-fixed-dim": "#62d6ed",
+                        "on-surface": "#181c20",
+                        "secondary-container": "#75e7fe",
+                        "on-primary-container": "#bbd0ff",
+                        "outline": "#727784",
+                        "tertiary": "#89001a",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f7f9ff",
+                        "tertiary-fixed": "#ffdad8",
+                        "surface-container-high": "#e5e8ee",
+                        "primary-container": "#0056b3",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#ffc1bf",
+                        "inverse-primary": "#acc7ff",
+                        "tertiary-container": "#b30b27",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#424752",
+                        "on-tertiary-fixed": "#410007",
+                        "surface-container-highest": "#e0e3e8",
+                        "primary-fixed-dim": "#acc7ff",
+                        "surface": "#f7f9ff",
+                        "surface-muted": "#F8FAFC",
+                        "surface-tint": "#115cb9",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "primary": "#003f87",
+                        "primary-fixed": "#d7e2ff",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "max-width": "1200px",
+                        "base": "4px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "code-block": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "code-block": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "headline-lg": ["36px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-sans">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest w-full top-0 sticky border-b border-border-subtle z-50">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto h-16">
+<div class="text-headline-md font-headline-md font-bold text-primary">
+                Phinisi Network
+            </div>
+<nav class="hidden md:flex space-x-8"><a class="text-on-surface-variant font-medium font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">Courses</a><a class="text-on-surface-variant font-medium font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">Learning Paths</a><a class="text-on-surface-variant font-medium font-body-md text-body-md hover:text-primary transition-colors duration-200" href="#">Blog</a></nav>
+<div class="flex items-center space-x-4">
+<button class="font-label-caps text-label-caps text-primary hover:text-primary-container transition-colors duration-200 border border-border-subtle px-4 py-2 rounded">
+                    Sign up
+                </button>
+<button class="font-label-caps text-label-caps bg-error text-on-error px-4 py-2 rounded hover:bg-opacity-90 transition-colors duration-200">
+                    Log in
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full">
+<!-- Hero Section -->
+<section class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-16 md:py-24">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<!-- Left: Network Diagram Illustration -->
+<div class="order-2 lg:order-1 relative w-full h-[300px] md:h-[400px]">
+<img alt="Hand-drawn network diagram" class="w-full h-full object-contain object-center" data-alt="Hand-drawn style sketch of a computer network with firewall, company service, internet, remote user, and internal resources." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR1CxNZe6PsUNZiGTYb8sgTMzHZufT2RoIchlBBEDwD9JZqcLcZkKpZIjYO9fioEfy6pTN9bqZ0UR56oj7PXBOibvjQdWeshfXitbHVaB6KnJfuVzzp-hB4Vk1iYpNjlBMAK3tseqQY9LQ9a3RGmJHVfaa9Itxl4km-nPZJCbv1_r_vnJ0R6RpJZc4j1xtLy8P-SFYwP1OsOsUA9sZTUN-vsu3Y7qpv09WqKCC1IpnELLLcW3LKW18Leo1g04vrT0tNapigiuXrUI">
+</div>
+<!-- Right: Content -->
+<div class="order-1 lg:order-2 flex flex-col items-start space-y-6">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background">
+                        Learn Networking<br>for Free
+                    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-lg">
+                        Learn Traditional Networking, DevNet, and Network Automation with our beginner-friendly tutorials and lots of animated examples.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
+<button class="font-label-caps text-label-caps bg-primary text-on-primary px-6 py-3 rounded hover:bg-opacity-90 transition-colors">
+                            All courses
+                        </button>
+<button class="font-label-caps text-label-caps bg-secondary-fixed-dim text-on-secondary-fixed px-6 py-3 rounded hover:bg-opacity-90 transition-colors">
+                            All learning paths
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Value Proposition Section -->
+<section class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-16 text-center">
+<div class="mb-12 flex flex-col items-center">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Understand More. Be more.</h2>
+<svg class="mb-4 text-primary" fill="none" height="12" viewBox="0 0 200 12" width="200" xmlns="http://www.w3.org/2000/svg">
+<path d="M2 9.5C45 -1.5 155 -1.5 198 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<p class="font-body-md text-body-md text-on-surface-variant">Animated diagrams, real-world use cases, and guided learning paths help you build real understanding.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- We stay human -->
+<div class="flex flex-col items-center space-y-4">
+<svg class="text-on-surface-variant mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+<polyline points="16 18 22 12 16 6"></polyline>
+<polyline points="8 6 2 12 8 18"></polyline>
+</svg>
+<h3 class="font-headline-sm text-headline-sm text-on-background">We stay human</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">We use lots of diagrams and animations, not walls of text and bullets. We teach the human way.</p>
+</div>
+<!-- Learning by example -->
+<div class="flex flex-col items-center space-y-4">
+<svg class="text-on-surface-variant mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+<rect height="4" rx="1" ry="1" width="16" x="4" y="4"></rect>
+<rect height="10" rx="1" ry="1" width="16" x="4" y="10"></rect>
+</svg>
+<h3 class="font-headline-sm text-headline-sm text-on-background">Learning by example</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">We use lots of real-world examples, so you can understand every concept.</p>
+</div>
+<!-- Learning paths -->
+<div class="flex flex-col items-center space-y-4">
+<svg class="text-on-surface-variant mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+<line x1="8" x2="21" y1="6" y2="6"></line>
+<line x1="8" x2="21" y1="12" y2="12"></line>
+<line x1="8" x2="21" y1="18" y2="18"></line>
+<line x1="3" x2="3.01" y1="6" y2="6"></line>
+<line x1="3" x2="3.01" y1="12" y2="12"></line>
+<line x1="3" x2="3.01" y1="18" y2="18"></line>
+</svg>
+<h3 class="font-headline-sm text-headline-sm text-on-background">Learning paths</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Lessons are aligned with the latest blueprints, so you never have to wonder what to learn next to achieve your certification goal.</p>
+</div>
+</div>
+</section>
+<!-- Learning Paths Section -->
+<section class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-16">
+<div class="mb-12 flex flex-col items-center text-center">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Learning Paths</h2>
+<svg class="mb-4 text-primary" fill="none" height="12" viewBox="0 0 160 12" width="160" xmlns="http://www.w3.org/2000/svg">
+<path d="M2 9.5C35 -1.5 125 -1.5 158 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Got a certification goal in mind?</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-3xl">Learning paths arrange courses in a sequence so you never have to wonder what technology to learn next in order to achieve your certification goal.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- CCIE Path -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-40 bg-[#f9c792] p-4 flex items-center justify-center relative">
+<span class="absolute top-2 right-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-2 py-1 rounded">Learning Path</span>
+<div class="text-center">
+<p class="text-sm font-semibold tracking-widest text-on-surface">CISCO CERTIFIED</p>
+<h3 class="text-3xl font-light text-on-surface mt-1">CCIE</h3>
+<p class="text-xs tracking-wider text-on-surface mt-1">ENTERPRISE INFRASTRUCTURE</p>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-headline-sm text-on-background mb-3">Learning Path: CCIE Enterprise Infrastructure</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant flex-grow mb-6">This learning path offers deep-dive courses on Catalyst SD-WAN, IP Multicast, SD-Access, and Network Automation. It is built for hands-on engineers.</p>
+<div class="flex items-center justify-between border-t border-border-subtle pt-4">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-surface-dim overflow-hidden">
+<img alt="Ivan Ivanov" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkz2jzqtqIBNRlcRLuL2EepxRTWaWW1i8Dn_SvBNF2JnIsrtXbFjVOb3ofeVH8EPK8aOU8PUqcelYVgHW2FFX-jd1ZdWvRL_xL2dttYJWrUT5raU4FqxiMG6EFQ5WRjzm7iVBjLfkAL3RE1Ura6zvmUMXLoYZAYOjjWXhPuEhjEpH564dbUWfSneB2be8VOerbL6mW2O9yYZFZatydiCbgFehVZo1jKWIihKB-MovGXeJL9EjAI_eYolh-NqlXzsjfbhi9RFuIFzc">
+</div>
+<span class="text-[13px] text-on-surface-variant font-medium">Ivan Ivanov</span>
+</div>
+<span class="text-[13px] font-bold text-on-surface-variant">2 COURSES</span>
+</div>
+</div>
+</div>
+<!-- CCNA Path -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-40 bg-[#c3d79b] p-4 flex items-center justify-center relative">
+<span class="absolute top-2 right-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-2 py-1 rounded">Learning Path</span>
+<div class="text-center">
+<p class="text-sm font-semibold tracking-widest text-on-surface">CISCO CERTIFIED</p>
+<h3 class="text-3xl font-light text-on-surface mt-1">CCNA</h3>
+<p class="text-xs tracking-wider text-on-surface mt-1">ENTERPRISE INFRASTRUCTURE</p>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-headline-sm text-on-background mb-3">Learning Path: CCNA Enterprise Infrastructure (200-301) CCNAv1.1</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant flex-grow mb-6">This learning path offers a complete hands-on path covering networking, routing, switching, IPv6, wireless, and security fundamentals.</p>
+<div class="flex items-center justify-between border-t border-border-subtle pt-4">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-surface-dim overflow-hidden">
+<img alt="Ivan Ivanov" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO3oAkTA34TaiuYLpuESmOnerii4ppNCenjWJ18JZ3W7qCnMIP3p5e-GJsEyB6Cw3TvD7Hw8-Vbhp0iNLg0IxXsengTpu6EdrOeZGqukDXiUSWvmsPBEX2JfqNM7JLUS_LJRFHuhtSTpFQXxxx4J-4idf8ZnjDp1gya0ak-hMRgwdeCdCjOW_uaJEbZm-1mYJfM5Z9b1jnlGnKfAyxpAcErM9kS881P48yplNBmLIAVopi4u793Wgt4c44QEP2IFtXj8wVIGbmgCU">
+</div>
+<span class="text-[13px] text-on-surface-variant font-medium">Ivan Ivanov</span>
+</div>
+<span class="text-[13px] font-bold text-on-surface-variant">8 COURSES</span>
+</div>
+</div>
+</div>
+<!-- CCNA Auto Path -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-40 bg-[#92d0d0] p-4 flex items-center justify-center relative">
+<span class="absolute top-2 right-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-2 py-1 rounded">Learning Path</span>
+<div class="text-center">
+<p class="text-sm font-semibold tracking-widest text-on-surface">CISCO CERTIFIED</p>
+<h3 class="text-3xl font-light text-on-surface mt-1">CCNA</h3>
+<p class="text-xs tracking-wider text-on-surface mt-1">AUTOMATION (DevNet)</p>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-headline-sm text-on-background mb-3">Learning Path: CCNA Automation (200-901) CCNAAUTO</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant flex-grow mb-6">This learning path offers structured CCNA Automation (DevNet) certification-focused content combined with lots of examples and quizzes.</p>
+<div class="flex items-center justify-between border-t border-border-subtle pt-4">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-surface-dim overflow-hidden">
+<img alt="Ivan Ivanov" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYrFOoJDrKraUP6jleI8gVcqI2Y-vXcR0oKpf6gYcuEmF3PXwa0jVwCubMISh4DGF0X3ARRAr7TTGTTQUG1pCJd0sjDlLwc0g1ssWBl5QI6yl4vXtdTloafKJH1bOjzG_7-ZGuJildRMw8CaznJStnYQtlKWGPOzHWD2OYn3G_KA4dodW11YxhZfrwX270FWkrCHoY6OZYER26J1Z7V1bSj34-iSZcCJYenKB87qLru0521APGfQA70tneasQTFqDE2J7WviLHFLs">
+</div>
+<span class="text-[13px] text-on-surface-variant font-medium">Ivan Ivanov</span>
+</div>
+<span class="text-[13px] font-bold text-on-surface-variant">1 COURSES</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Latest Lessons Section -->
+<section class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-16 border-t border-border-subtle bg-surface-bright">
+<div class="mb-12 flex flex-col items-center text-center">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Latest Lessons</h2>
+<svg class="mb-4 text-primary" fill="none" height="12" viewBox="0 0 160 12" width="160" xmlns="http://www.w3.org/2000/svg">
+<path d="M2 9.5C35 -1.5 125 -1.5 158 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Not sure what topic to focus on?</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Browse our latest lessons.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Integer</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">String</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Python Data Types</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">What is Python?</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Why do you need to learn Python?</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">VLSM without Binary Example 1</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Find the Subnet ID (Class B)</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">VPN essentials</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Lab #3.1 - Implementing Extended Numbered ACL</a>
+<a class="bg-surface-container-lowest border border-border-subtle border-l-4 border-l-primary py-4 px-6 text-center rounded-r hover:bg-surface-muted transition-colors text-[14px] text-on-surface font-medium" href="#">Extended Numbered ACL</a>
+</div>
+</section>
+<!-- Courses Section -->
+<section class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-16 border-t border-border-subtle">
+<div class="mb-12 flex flex-col items-center text-center">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Courses</h2>
+<svg class="mb-4 text-primary" fill="none" height="12" viewBox="0 0 160 12" width="160" xmlns="http://www.w3.org/2000/svg">
+<path d="M2 9.5C35 -1.5 125 -1.5 158 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Want to master a networking topic?</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Choose from our catalogue of free courses. Learn at your own pace from anywhere, anytime.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Course 1 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-32 bg-[#92d0d0] relative p-4 flex flex-col justify-center">
+<span class="absolute top-2 left-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-1.5 py-0.5 rounded">CCIE Enterprise</span>
+<h3 class="text-center text-lg font-semibold text-on-surface mt-4">Catalyst SD-WAN<br>Deep Dive</h3>
+</div>
+<div class="p-4 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-[16px] text-on-background mb-2">Cisco Catalyst SD-WAN Deep-Dive</h4>
+<p class="text-[13px] text-on-surface-variant mb-4">Ivan Ivanov</p>
+<div class="mt-auto flex justify-between items-end">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase">Certificate</p>
+<p class="text-[12px] font-bold text-on-surface">CCIE Enterprise</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase">Number of lessons</p>
+<p class="text-[12px] font-bold text-on-surface">28 Lessons</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Course 2 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-32 bg-[#c3d79b] relative p-4 flex flex-col justify-center">
+<span class="absolute top-2 left-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-1.5 py-0.5 rounded">CCNA EI</span>
+<h3 class="text-center text-lg font-semibold text-on-surface mt-4">IPv6<br>FUNDAMENTALS</h3>
+</div>
+<div class="p-4 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-[16px] text-on-background mb-2">IPv6 Fundamentals</h4>
+<p class="text-[13px] text-on-surface-variant mb-4">Ivan Ivanov</p>
+<div class="mt-auto flex justify-between items-end">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase">Certificate</p>
+<p class="text-[12px] font-bold text-on-surface">CCNA Enterprise</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase">Number of lessons</p>
+<p class="text-[12px] font-bold text-on-surface">11 Lessons</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Course 3 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-32 bg-[#fff2cc] relative p-4 flex flex-col justify-center">
+<span class="absolute top-2 left-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-1.5 py-0.5 rounded">CCNA EI</span>
+<h3 class="text-center text-lg font-semibold text-on-surface mt-4">WIRELESS<br>FUNDAMENTALS</h3>
+</div>
+<div class="p-4 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-[16px] text-on-background mb-2">Wireless Fundamentals</h4>
+<p class="text-[13px] text-on-surface-variant mb-4">Ivan Ivanov</p>
+<div class="mt-auto flex justify-between items-end">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase">Certificate</p>
+<p class="text-[12px] font-bold text-on-surface">CCNA Enterprise</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase">Number of lessons</p>
+<p class="text-[12px] font-bold text-on-surface">19 Lessons</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Course 4 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="h-32 bg-[#fce4d6] relative p-4 flex flex-col justify-center">
+<span class="absolute top-2 left-2 bg-[#fbe7a1] text-[#7a591a] text-[10px] font-bold px-1.5 py-0.5 rounded">CCNA EI</span>
+<h3 class="text-center text-lg font-semibold text-on-surface mt-4">OSPF<br>FUNDAMENTALS</h3>
+</div>
+<div class="p-4 flex flex-col flex-grow">
+<h4 class="font-headline-sm text-[16px] text-on-background mb-2">OSPF Fundamentals</h4>
+<p class="text-[13px] text-on-surface-variant mb-4">Ivan Ivanov</p>
+<div class="mt-auto flex justify-between items-end">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase">Certificate</p>
+<p class="text-[12px] font-bold text-on-surface">CCNA Enterprise</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase">Number of lessons</p>
+<p class="text-[12px] font-bold text-on-surface">30 Lessons</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom CTA Section -->
+<section class="w-full bg-surface-muted py-16 border-t border-border-subtle overflow-hidden">
+<div class="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="flex flex-col space-y-6">
+<h2 class="font-headline-lg text-headline-lg text-on-background max-w-md leading-tight">
+                            Take the next step toward your networking career and achieve your certification goals.
+                        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                            Start your Networking journey now!
+                        </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-2">
+<button class="font-label-caps text-label-caps bg-primary text-on-primary px-6 py-3 rounded hover:bg-opacity-90 transition-colors">
+                                Join for free
+                            </button>
+<button class="font-label-caps text-label-caps bg-secondary-fixed-dim text-on-secondary-fixed px-6 py-3 rounded hover:bg-opacity-90 transition-colors">
+                                Sign In
+                            </button>
+</div>
+</div>
+<div class="relative h-[300px] flex items-end justify-center md:justify-end">
+<img alt="Learning illustration" class="max-w-full max-h-full object-contain mix-blend-multiply opacity-80" data-alt="Illustration of a computer monitor, books, and clock representing online learning." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqm2uFVDXLmfdkpHvTu3AqB2a7E9s4P-FvoHVfJyXW_U_1J9jk-0ZW4YKPbIBUNUhuPDwR6fpJq1r74MePhzQDkJUW4dNSkT-5oR2JOMf7l32pYjG8dDE7OlYVV5idg2HqzoEBQHRC84Y7kUslZUBkznOZE6QdU2MeHpWThgGfgtQc3LIG68eKBMY98scuqRTS9s4q00N5hyh7ztx_IIsAJCn_nDU2rvzyKkztH9787GT3MODHqbS3BfD5othGnkLewvlqlJS7TEg">
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container w-full mt-auto border-t border-border-subtle">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter px-margin-mobile md:px-margin-desktop py-12 max-w-max-width mx-auto">
+<div class="flex flex-col space-y-4">
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface">
+                    Phinisi Network
+                </div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    © 2024 Phinisi Network. All rights reserved. Engineering excellence through education.
+                </p>
+</div>
+<div class="flex flex-wrap gap-x-8 gap-y-4 md:justify-end items-start pt-2">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">About Us</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Status</a>
+</div>
+</div>
+</footer>
+
+
+</body></html>

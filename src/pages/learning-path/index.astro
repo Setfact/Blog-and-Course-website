@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Learning Paths">
+	<style>
+		/* High-contrast tech grid background */
+		.tech-grid {
+			background-image: 
+				linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px),
+				linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+			background-size: 24px 24px;
+		}
+	</style>
+
+	<!-- Main Content Canvas -->
+	<div class="flex-grow w-full max-w-max-width mx-auto px-margin-mobile md:px-gutter py-margin-desktop space-y-16">
+		<!-- Hero Section -->
+		<section class="relative rounded-lg bg-surface-container-lowest border border-border-subtle overflow-hidden tech-grid">
+			<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest via-surface-container-lowest/90 to-transparent"></div>
+			<div class="relative z-10 p-8 md:p-16 max-w-3xl">
+				<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-variant rounded-DEFAULT font-label-caps text-label-caps text-on-surface-variant mb-6 border border-border-subtle">
+					<span class="material-symbols-outlined text-[16px]">route</span>
+					STRUCTURED LEARNING
+				</div>
+				<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
+					Learning Paths
+				</h1>
+				<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+					Master technical skills with our structured certification-focused tracks. Designed to take you from beginner to expert through sequential, hands-on modules and rigorous technical documentation.
+				</p>
+			</div>
+		</section>
+
+		<!-- Learning Paths Grid -->
+		<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+			<!-- Path 1: CCNA -->
+			<article class="flex flex-col bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden group hover:border-outline-variant transition-colors">
+				<div class="h-2 w-full bg-secondary-container"></div>
+				<div class="p-6 md:p-8 flex-grow flex flex-col">
+					<header class="mb-4">
+						<div class="flex items-center gap-3 mb-3">
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">CISCO</span>
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">ROUTING &amp; SWITCHING</span>
+						</div>
+						<h2 class="font-headline-md text-headline-md text-on-surface">CCNA Enterprise Infrastructure (200-301)</h2>
+					</header>
+					<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+						The definitive starting point for network engineers. Master the fundamentals of IPv4/IPv6 routing, switching, wireless concepts, and foundational security in modern enterprise networks.
+					</p>
+					
+					<div class="space-y-4 border-t border-border-subtle pt-6 mb-8">
+						<h3 class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Key Modules</h3>
+						<ul class="space-y-2">
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">check_circle</span>
+								Network Fundamentals &amp; Access
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">check_circle</span>
+								IP Connectivity &amp; Routing (OSPF)
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">check_circle</span>
+								IP Services &amp; Security Automation
+							</li>
+						</ul>
+					</div>
+					
+					<div class="mt-auto flex items-center gap-4">
+						<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href="#">Start Path</a>
+						<a class="px-6 py-2.5 border border-primary text-primary font-label-caps text-label-caps rounded-DEFAULT hover:bg-surface-variant transition-colors" href="#">View Details</a>
+					</div>
+				</div>
+			</article>
+
+			<!-- Path 2: CCIE -->
+			<article class="flex flex-col bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden group hover:border-outline-variant transition-colors relative">
+				<div class="h-2 w-full bg-tertiary-container"></div>
+				<div class="p-6 md:p-8 flex-grow flex flex-col">
+					<header class="mb-4">
+						<div class="flex items-center gap-3 mb-3">
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">CISCO</span>
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">ADVANCED</span>
+							<span class="flex items-center gap-1 text-tertiary-container font-label-caps text-label-caps"><span class="material-symbols-outlined text-[14px]">local_fire_department</span> EXPERT</span>
+						</div>
+						<h2 class="font-headline-md text-headline-md text-on-surface">CCIE Enterprise Infrastructure</h2>
+					</header>
+					<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+						Deep-dive expert level track focusing on complex enterprise scenarios. Covers Catalyst SD-WAN, SD-Access, advanced BGP/OSPF, and programmatic network automation at scale.
+					</p>
+					
+					<div class="space-y-4 border-t border-border-subtle pt-6 mb-8">
+						<h3 class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Key Modules</h3>
+						<ul class="space-y-2">
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-tertiary-container mt-0.5">account_tree</span>
+								Complex BGP &amp; Traffic Engineering
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-tertiary-container mt-0.5">router</span>
+								Cisco SD-WAN Architecture
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-tertiary-container mt-0.5">integration_instructions</span>
+								Network Programmability
+							</li>
+						</ul>
+					</div>
+					
+					<div class="mt-auto flex items-center gap-4">
+						<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href="#">Start Path</a>
+						<a class="px-6 py-2.5 border border-primary text-primary font-label-caps text-label-caps rounded-DEFAULT hover:bg-surface-variant transition-colors" href="#">View Details</a>
+					</div>
+				</div>
+			</article>
+
+			<!-- Path 3: Linux -->
+			<article class="flex flex-col bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden group hover:border-outline-variant transition-colors">
+				<div class="h-2 w-full bg-[#eab308] opacity-80"></div>
+				<div class="p-6 md:p-8 flex-grow flex flex-col">
+					<header class="mb-4">
+						<div class="flex items-center gap-3 mb-3">
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">LINUX</span>
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">SYSTEMS</span>
+						</div>
+						<h2 class="font-headline-md text-headline-md text-on-surface">Linux Fundamentals &amp; Administration</h2>
+					</header>
+					<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+						Essential skills for modern infrastructure engineers. From terminal basics and file permissions to bash scripting, service management, and containerization prerequisites.
+					</p>
+					
+					<div class="space-y-4 border-t border-border-subtle pt-6 mb-8">
+						<h3 class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Key Modules</h3>
+						<ul class="space-y-2">
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">terminal</span>
+								CLI Mastery &amp; Shell Scripting
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">folder_managed</span>
+								File Systems &amp; Permissions
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">dns</span>
+								Network Configuration &amp; Systemd
+							</li>
+						</ul>
+					</div>
+					
+					<div class="mt-auto flex items-center gap-4">
+						<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href="#">Start Path</a>
+						<a class="px-6 py-2.5 border border-primary text-primary font-label-caps text-label-caps rounded-DEFAULT hover:bg-surface-variant transition-colors" href="#">View Details</a>
+					</div>
+				</div>
+			</article>
+
+			<!-- Path 4: Automation -->
+			<article class="flex flex-col bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden group hover:border-outline-variant transition-colors">
+				<div class="h-2 w-full bg-[#10b981] opacity-80"></div>
+				<div class="p-6 md:p-8 flex-grow flex flex-col">
+					<header class="mb-4">
+						<div class="flex items-center gap-3 mb-3">
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">DEVNET</span>
+							<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">PYTHON / ANSIBLE</span>
+						</div>
+						<h2 class="font-headline-md text-headline-md text-on-surface">Network Automation (DevNet)</h2>
+					</header>
+					<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+						Transition from CLI to code. Learn Python for network engineers, Git version control, REST APIs, and orchestration tools like Ansible and Terraform for infrastructure as code.
+					</p>
+					
+					<div class="space-y-4 border-t border-border-subtle pt-6 mb-8">
+						<h3 class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Key Modules</h3>
+						<ul class="space-y-2">
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-success-green mt-0.5">code</span>
+								Python Data Structures &amp; APIs
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-success-green mt-0.5">memory</span>
+								Ansible Playbooks &amp; Netmiko
+							</li>
+							<li class="flex items-start gap-2 font-body-md text-sm text-on-surface-variant">
+								<span class="material-symbols-outlined text-[18px] text-success-green mt-0.5">api</span>
+								RESTCONF, NETCONF &amp; YANG
+							</li>
+						</ul>
+					</div>
+					
+					<div class="mt-auto flex items-center gap-4">
+						<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href="#">Start Path</a>
+						<a class="px-6 py-2.5 border border-primary text-primary font-label-caps text-label-caps rounded-DEFAULT hover:bg-surface-variant transition-colors" href="#">View Details</a>
+					</div>
+				</div>
+			</article>
+		</section>
+	</div>
+</BaseLayout>

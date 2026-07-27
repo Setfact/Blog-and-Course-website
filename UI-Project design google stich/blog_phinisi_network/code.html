@@ -1,0 +1,261 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Blog - Phinisi Network</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-dim": "#d7dadf",
+                            "on-secondary-container": "#006776",
+                            "surface-container": "#ebeef3",
+                            "on-primary-fixed-variant": "#004491",
+                            "inverse-on-surface": "#eef1f6",
+                            "on-primary-fixed": "#001a40",
+                            "on-tertiary-fixed-variant": "#92001c",
+                            "on-background": "#181c20",
+                            "error-container": "#ffdad6",
+                            "outline-variant": "#c2c6d4",
+                            "on-error": "#ffffff",
+                            "on-secondary-fixed-variant": "#004e5a",
+                            "border-subtle": "#E2E8F0",
+                            "surface-variant": "#e0e3e8",
+                            "surface-container-low": "#f1f4f9",
+                            "secondary-fixed": "#a4eeff",
+                            "success-green": "#166534",
+                            "on-secondary-fixed": "#001f25",
+                            "inverse-surface": "#2d3135",
+                            "terminal-bg": "#0F172A",
+                            "background": "#f7f9ff",
+                            "secondary": "#006877",
+                            "secondary-fixed-dim": "#62d6ed",
+                            "on-surface": "#181c20",
+                            "secondary-container": "#75e7fe",
+                            "on-primary-container": "#bbd0ff",
+                            "outline": "#727784",
+                            "tertiary": "#89001a",
+                            "on-tertiary": "#ffffff",
+                            "error": "#ba1a1a",
+                            "surface-bright": "#f7f9ff",
+                            "tertiary-fixed": "#ffdad8",
+                            "surface-container-high": "#e5e8ee",
+                            "primary-container": "#0056b3",
+                            "on-primary": "#ffffff",
+                            "on-tertiary-container": "#ffc1bf",
+                            "inverse-primary": "#acc7ff",
+                            "tertiary-container": "#b30b27",
+                            "on-secondary": "#ffffff",
+                            "surface-container-lowest": "#ffffff",
+                            "on-surface-variant": "#424752",
+                            "on-tertiary-fixed": "#410007",
+                            "surface-container-highest": "#e0e3e8",
+                            "primary-fixed-dim": "#acc7ff",
+                            "surface": "#f7f9ff",
+                            "surface-muted": "#F8FAFC",
+                            "surface-tint": "#115cb9",
+                            "tertiary-fixed-dim": "#ffb3b1",
+                            "primary": "#003f87",
+                            "primary-fixed": "#d7e2ff",
+                            "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "max-width": "1200px",
+                            "base": "4px",
+                            "gutter": "24px",
+                            "margin-mobile": "16px",
+                            "margin-desktop": "48px"
+                    },
+                    "fontFamily": {
+                            "headline-sm": ["Hanken Grotesk"],
+                            "headline-md": ["Hanken Grotesk"],
+                            "code-block": ["JetBrains Mono"],
+                            "headline-lg-mobile": ["Hanken Grotesk"],
+                            "headline-lg": ["Hanken Grotesk"],
+                            "body-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                            "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                            "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                            "code-block": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                            "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                            "headline-lg": ["36px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                            "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                            "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                            "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-lowest w-full top-0 sticky border-b border-border-subtle dark:border-outline-variant z-50">
+<div class="flex justify-between items-center w-full px-margin-desktop max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-8">
+<a class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight" href="#">
+                    Phinisi Network
+                </a>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-body-md text-body-md text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Courses</a>
+<a class="font-body-md text-body-md text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Learning Paths</a>
+<a class="font-body-md text-body-md text-primary font-bold border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">Blog</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:text-primary font-label-caps text-label-caps border border-border-subtle rounded hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm">search</span> Search
+                </button>
+<button class="font-label-caps text-label-caps px-4 py-2 text-primary border border-primary rounded hover:bg-surface-muted transition-colors active:scale-95 transition-transform">Sign In</button>
+<button class="font-label-caps text-label-caps px-4 py-2 bg-primary-container text-on-primary rounded hover:bg-primary transition-colors active:scale-95 transition-transform">Sign Up</button>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 flex flex-col gap-12">
+<!-- Header & Filters -->
+<section class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Engineering Blog</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Deep dives into networking protocols, Linux administration, and infrastructure automation. Written by engineers, for engineers.</p>
+</div>
+<div class="flex flex-wrap gap-3 mt-4">
+<button class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">All Posts</button>
+<button class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Sysadmin</button>
+<button class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Automation</button>
+<button class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Networking</button>
+</div>
+</section>
+<!-- Featured Post (Bento) -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-gutter bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow">
+<div class="md:col-span-7 h-64 md:h-auto bg-surface-dim relative">
+<div class="bg-cover bg-center w-full h-full absolute inset-0" data-alt="A highly detailed top-down view of a complex server rack network switch with glowing blue and white ethernet cables plugged in, demonstrating a high-tech, clean, professional data center environment with high-contrast technical lighting and deep shadows." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDVWtjcGQ_erUpnc5D1p4GDLLG2G73xvENriL281qyvSSuweFuKIsvbQitC2I-sdFrwvYVC3qtWXJtZtB3mS0hTZ03AyriSB2efjMKt3RjPcngYNAEAg3qFrrstwhv2lIw31sfuDzyjVHED0HPKcOg2vuO13qG7Zp2DMFpSfBeVRmme3mbx2AAEuh2eUtiezxofRifKFEoT5IACyoIFaZaIwjD0nvqd5eyh92nZZxQPVvbOryp0ZLycygfRlIOxfhPYg72rhnE2fGw')"></div>
+<div class="absolute top-4 left-4">
+<span class="font-label-caps text-label-caps px-2 py-1 bg-terminal-bg text-on-primary rounded border border-outline-variant/30 backdrop-blur-sm">Networking</span>
+</div>
+</div>
+<div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-center gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-code-block text-sm">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span class="">Oct 24, 2024</span>
+<span class="px-2">•</span>
+<span class="">12 min read</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-background group-hover:text-primary transition-colors">Demystifying BGP Route Reflectors in Large Scale Data Centers</h2>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow line-clamp-3">An in-depth technical analysis of scaling Border Gateway Protocol using Route Reflectors. We explore the limitations of full-mesh iBGP and implement a highly available RR topology using FRRouting.</p>
+<div class="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-caps text-xs">AJ</div>
+<span class="font-body-md text-sm text-on-surface-variant">Alex Johnson</span>
+</div>
+<a class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1 group" href="#">
+                        Read Article <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Article Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest border border-border-subtle rounded flex flex-col group hover:border-primary transition-colors h-full">
+<div class="h-48 relative overflow-hidden bg-surface-dim border-b border-border-subtle">
+<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A close-up shot of a dark terminal screen displaying complex Linux command line text and bash scripts in high-contrast cyan and white text on a deep blue-black background, conveying a professional automation and sysadmin aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA48BdDJtzlCaxnScgbV7Nr2kMyaJFEXLvO3yCxH9A-yzNVD3iDRwCFP1zjwrkqUf1YVzkX-y4mAvar6Y5Gs1TYH_2OAVkp_Dm41PnqNuCYuOUQeOQMid4tovl-b0P6ximR4AETAXpK-zcyxL-3zhIFO76n_y46NpamxzP7BTsMVVBD8JMyWyDHEuQH4FRmepjZBC4hOyFYTg7l3AQnefNrbXbZCkipCKBfdN7-z8zTtVwcnhX17PSHK6jnpN8ncpPkY9Um9JsYcrg')"></div>
+<div class="absolute top-3 left-3">
+<span class="font-label-caps text-label-caps px-2 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">Sysadmin</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3 flex-grow">
+<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-xs">
+<span class="">Oct 18, 2024</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-background group-hover:text-primary line-clamp-2">Optimizing Linux Kernel Parameters for High-Throughput Databases</h3>
+<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">A practical guide to tuning sysctl parameters, understanding transparent hugepages, and optimizing block I/O schedulers for PostgreSQL workloads.</p>
+</div>
+<div class="p-5 pt-0 mt-auto">
+<a class="font-label-caps text-label-caps text-primary hover:underline" href="#">Read More -&gt;</a>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest border border-border-subtle rounded flex flex-col group hover:border-primary transition-colors h-full">
+<div class="h-48 relative overflow-hidden bg-surface-dim border-b border-border-subtle">
+<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A clean, abstract geometric visualization of network nodes and connecting lines over a dark slate background. The nodes glow subtly in stark white and primary blue, representing a highly structured automation and orchestration architecture." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDcIGKePdfuanCZIKAPLxF7E27cmi88k-q5yvINW0NQ5GfPmbQONONL1XJHA-aNpuKBYLOCfPBByqRj8BE3-tIvwlVHTX2DyF2smfpXgpPBFScDCwE-dsgIjXMH5VPHecz3zrW-AT5f5L858AICxk3yGN6_Bk78eSD3LqCdv1pTyXiBaX0JQF2mR4ubViWtNxY7tHNW4t5q8GGamDnaCM8fVasE1-_uZ2ZxCPrRHj9ZxdaxI3gqj1878t_1DISVu1RnfbEWIgKZScU')"></div>
+<div class="absolute top-3 left-3">
+<span class="font-label-caps text-label-caps px-2 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">Automation</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3 flex-grow">
+<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-xs">
+<span class="">Oct 12, 2024</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-background group-hover:text-primary line-clamp-2">Idempotent Infrastructure: Advanced Ansible Patterns</h3>
+<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">Moving beyond basic playbooks. Learn how to construct robust, fail-safe Ansible roles using advanced error handling and dynamic inventory management.</p>
+</div>
+<div class="p-5 pt-0 mt-auto">
+<a class="font-label-caps text-label-caps text-primary hover:underline" href="#">Read More -&gt;</a>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-container-lowest border border-border-subtle rounded flex flex-col group hover:border-primary transition-colors h-full">
+<div class="h-48 relative overflow-hidden bg-surface-dim border-b border-border-subtle">
+<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A sharp, detailed macro photograph of a fiber optic cable connector emitting a bright, intense blue light against a stark, dark grey high-tech background. Professional, high-contrast engineering aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD3Q8Td7V1iF0B8aTKGQPkiWE8R5qp8psORybef18UJVxvXwVfKEMXsapLsEOM7h-aYjSTgKGzrX4CoW3EzdG6BOWxWPsMSh6HR46tDvXtf524hzYdMgwUh-iYVWFgWtFdYBG6YZrusqbFt_sl9XcaJadUrTLrDvWs5eGk0T2QWBPaLjxPgAs97wJsULJeDc_Ep9KUwZNkBezTNJZKnrmxSu9MxN4uDmEJ5ibeuoUHUSeY7VgyuD-W5LgRBCXkp6gHpYo41cBIzGXc')"></div>
+<div class="absolute top-3 left-3">
+<span class="font-label-caps text-label-caps px-2 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">Networking</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3 flex-grow">
+<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-xs">
+<span class="">Oct 05, 2024</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-background group-hover:text-primary line-clamp-2">Troubleshooting OSPF Neighbor Adjacency Issues</h3>
+<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">A systematic approach to diagnosing stuck OSPF states. We break down the state machine from Init to Full, identifying common MTU and authentication mismatches.</p>
+</div>
+<div class="p-5 pt-0 mt-auto">
+<a class="font-label-caps text-label-caps text-primary hover:underline" href="#">Read More -&gt;</a>
+</div>
+</article>
+</section>
+<div class="flex justify-center mt-8">
+<button class="font-label-caps text-label-caps px-6 py-3 border border-border-subtle text-on-surface-variant rounded hover:border-primary hover:text-primary transition-colors bg-surface-container-lowest">Load More Articles</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container dark:bg-surface-container w-full mt-auto border-t border-border-subtle dark:border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter px-margin-desktop py-12 max-w-max-width mx-auto">
+<div class="flex flex-col gap-4">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">Phinisi Network</span>
+<p class="font-body-md text-body-md text-on-surface-variant">© 2024 Phinisi Network. All rights reserved. Engineering excellence through education.</p>
+</div>
+<div class="flex flex-wrap md:justify-end gap-x-8 gap-y-4">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">About Us</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Status</a>
+</div>
+</div>
+</footer>
+
+
+</body></html>

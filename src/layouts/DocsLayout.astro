@@ -1,0 +1,118 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  entry: any;
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { entry, headings } = Astro.props;
+
+// Determine current category based on the entry ID (e.g. 'network/intro' -> 'network')
+const category = entry.id.split('/')[0];
+
+// Fetch all docs to build the sidebar
+const allDocs = await getCollection('docs');
+
+// Filter docs that belong to the same category
+const categoryDocs = allDocs
+  .filter(doc => doc.id.startsWith(category + '/'))
+  .map(doc => {
+    let slug = doc.id;
+    if (slug.endsWith('/index')) slug = slug.replace(/\/index$/, '');
+    else if (slug === 'index') slug = '';
+    return {
+      title: doc.data.title,
+      slug: slug,
+      id: doc.id
+    };
+  });
+
+// Format category name for display
+const categoryName = category.toUpperCase();
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '');
+---
+
+<BaseLayout title={entry.data.title}>
+  <div class="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-start gap-8 relative">
+    
+    <!-- Left Sidebar (Desktop) -->
+    <aside class="hidden md:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-6 border-r border-border-subtle custom-scrollbar">
+      <div class="mb-6">
+        <span class="text-xs font-label-caps font-bold text-primary tracking-wider uppercase">{categoryName} COURSE</span>
+      </div>
+      <nav class="flex flex-col gap-1">
+        {categoryDocs.map(doc => {
+          const docUrl = `/docs/${doc.slug}`;
+          const isActive = currentPath === docUrl || currentPath === docUrl + '/';
+          return (
+            <a 
+              href={docUrl} 
+              class={`px-3 py-2 text-sm font-body-md rounded transition-colors ${
+                isActive 
+                  ? 'bg-primary-container text-on-primary font-medium' 
+                  : 'text-on-surface-variant hover:bg-surface-muted hover:text-on-background'
+              }`}
+            >
+              {doc.title}
+            </a>
+          );
+        })}
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 py-8 md:py-12 min-w-0 max-w-3xl">
+      <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-headline-lg text-on-background mb-4">{entry.data.title}</h1>
+        <p class="text-lg text-on-surface-variant font-body-lg">{entry.data.description}</p>
+      </div>
+      
+      <div class="prose prose-slate prose-lg max-w-none 
+                  prose-headings:text-on-background prose-headings:font-headline-sm prose-headings:scroll-mt-24
+                  prose-p:text-on-surface-variant prose-p:font-body-md 
+                  prose-a:text-primary hover:prose-a:text-primary-container
+                  prose-code:text-secondary prose-code:bg-surface-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                  prose-pre:bg-terminal-bg prose-pre:border prose-pre:border-border-subtle
+                  prose-strong:text-on-background">
+        <slot />
+      </div>
+
+      <!-- Pagination / Next Prev could go here later -->
+    </main>
+
+    <!-- Right Sidebar (Table of Contents) -->
+    {headings && headings.length > 0 && (
+      <aside class="hidden xl:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-6">
+        <h4 class="text-sm font-headline-sm font-semibold text-on-background mb-4">On this page</h4>
+        <nav class="flex flex-col gap-2 border-l-2 border-border-subtle pl-4">
+          {headings.filter(h => h.depth > 1 && h.depth < 4).map(heading => (
+            <a 
+              href={`#${heading.slug}`} 
+              class={`text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ${heading.depth === 3 ? 'ml-4' : ''}
+              `}
+            >
+              {heading.text}
+            </a>
+          ))}
+        </nav>
+      </aside>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-subtle);
+    border-radius: 20px;
+  }
+</style>

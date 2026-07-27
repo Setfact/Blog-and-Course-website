@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Home">
+	<!-- Hero Section -->
+	<section class="max-w-[1200px] mx-auto px-4 md:px-12 py-16 md:py-24">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+			<!-- Left: Network Diagram Illustration -->
+			<div class="order-2 lg:order-1 relative w-full h-[300px] md:h-[400px]">
+				<img alt="Hand-drawn network diagram" class="w-full h-full object-contain object-center" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR1CxNZe6PsUNZiGTYb8sgTMzHZufT2RoIchlBBEDwD9JZqcLcZkKpZIjYO9fioEfy6pTN9bqZ0UR56oj7PXBOibvjQdWeshfXitbHVaB6KnJfuVzzp-hB4Vk1iYpNjlBMAK3tseqQY9LQ9a3RGmJHVfaa9Itxl4km-nPZJCbv1_r_vnJ0R6RpJZc4j1xtLy8P-SFYwP1OsOsUA9sZTUN-vsu3Y7qpv09WqKCC1IpnELLLcW3LKW18Leo1g04vrT0tNapigiuXrUI">
+			</div>
+			<!-- Right: Content -->
+			<div class="order-1 lg:order-2 flex flex-col items-start space-y-6">
+				<h1 class="font-['Hanken_Grotesk'] text-[28px] md:text-[36px] font-bold leading-[1.2] md:tracking-[-0.02em] text-slate-900">
+					Learn Networking<br>for Free
+				</h1>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-lg">
+					Learn Traditional Networking, DevNet, and Network Automation with our beginner-friendly tutorials and lots of animated examples.
+				</p>
+				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
+					<a href="/courses" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#003f87] text-white px-6 py-3 rounded text-center hover:bg-blue-800 transition-colors">
+						All courses
+					</a>
+					<a href="/learning-path" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#62d6ed] text-[#001f25] px-6 py-3 rounded text-center hover:bg-[#4bcce6] transition-colors">
+						All learning paths
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Value Proposition Section -->
+	<section class="max-w-[1200px] mx-auto px-4 md:px-12 py-16 text-center">
+		<div class="mb-12 flex flex-col items-center">
+			<h2 class="font-['Hanken_Grotesk'] text-[36px] font-bold leading-[1.2] tracking-[-0.02em] text-slate-900 mb-2">Understand More. Be more.</h2>
+			<svg class="mb-4 text-[#003f87]" fill="none" height="12" viewBox="0 0 200 12" width="200" xmlns="http://www.w3.org/2000/svg">
+				<path d="M2 9.5C45 -1.5 155 -1.5 198 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+			</svg>
+			<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-2xl">Animated diagrams, real-world use cases, and guided learning paths help you build real understanding.</p>
+		</div>
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+			<!-- We stay human -->
+			<div class="flex flex-col items-center space-y-4">
+				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+					<polyline points="16 18 22 12 16 6"></polyline>
+					<polyline points="8 6 2 12 8 18"></polyline>
+				</svg>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">We stay human</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">We use lots of diagrams and animations, not walls of text and bullets. We teach the human way.</p>
+			</div>
+			<!-- Learning by example -->
+			<div class="flex flex-col items-center space-y-4">
+				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+					<rect height="4" rx="1" ry="1" width="16" x="4" y="4"></rect>
+					<rect height="10" rx="1" ry="1" width="16" x="4" y="10"></rect>
+				</svg>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Learning by example</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">We use lots of real-world examples, so you can understand every concept.</p>
+			</div>
+			<!-- Learning paths -->
+			<div class="flex flex-col items-center space-y-4">
+				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+					<line x1="8" x2="21" y1="6" y2="6"></line>
+					<line x1="8" x2="21" y1="12" y2="12"></line>
+					<line x1="8" x2="21" y1="18" y2="18"></line>
+					<line x1="3" x2="3.01" y1="6" y2="6"></line>
+					<line x1="3" x2="3.01" y1="12" y2="12"></line>
+					<line x1="3" x2="3.01" y1="18" y2="18"></line>
+				</svg>
+				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Learning paths</h3>
+				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Lessons are aligned with the latest blueprints, so you never have to wonder what to learn next to achieve your certification goal.</p>
+			</div>
+		</div>
+	</section>
+</BaseLayout>

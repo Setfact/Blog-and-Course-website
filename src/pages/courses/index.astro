@@ -1,0 +1,124 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const allDocs = await getCollection('docs');
+const categories = [...new Set(allDocs.map(doc => doc.id.split('/')[0]))];
+
+const categoryData: Record<string, any> = {
+  'network': {
+    title: 'Networking Fundamentals',
+    description: 'Understand the fundamental concepts of routing protocols, OSPF, EIGRP, and BGP basics for enterprise networks.',
+    badge: 'CCNA',
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPmLJo3sj6v1zT--1FSzn3qdh6T3rdKl7iBoW6gs3Z3Yhkpy9_AeEgEnHURSHWjwOijXFcZt4WyMkRgzPHcJs9DUXt5O9kyJr70rLnRX9gqEmlZOrjxx-7aq9LuIZqUQgeMpi_puDSfohIPE8wFjkNtxmO6-bXaXtExGc7mqDCSwX63vnuz8eW09-DvFdU-UHAI8e7Onuip3FZ_xG3zpqT0qyjlo7r3p_S_wGoxkBWwbnMcVMUC7W_J4DbqI-E5ah40amoyNet7Ow"
+  },
+  'linux': {
+    title: 'Linux Fundamentals',
+    description: 'Master the command line, file permissions, and core system administration tasks necessary for modern IT environments.',
+    badge: 'LINUX',
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAw18ZETXqaNQ9vYZguH1txDoaGLxS45OrrCOc3LShFeD0Fb-UbnKD5DIHs6udwXoK7TYAMrLwZM70pjtv5s3u5u6Sy_9M6d81B6kOgHgRmFOOmMyU_P1qlYelkNRn41CAc_Nufyua9PcUlpHrimi3ACrUMUcAk-P2K2ta0yYByifuLCxnzdjgkdC_odpYsV-6WAm2UGlZ8uzo-R_a_kVl8llQfvab178xHGJZMyAGUNILo3hZ3A3vaySgbh5vx6zWeBgQlUNiW7Lg"
+  },
+  'automation': {
+    title: 'Network Automation',
+    description: 'Automate configuration management across multi-vendor networks using Ansible playbooks and YAML.',
+    badge: 'AUTOMATION',
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYckVezp7n91NeTCLdiXuDOyQGTPki6J4RXWORPYMwBrIDgcLgIp1UZpI7bZEPjLUN3xzpk_Q_A2ZlxwqO9QNHCb-uhWantNaDQzNG0o8iM0QQsta_eAJi8odDFHEqlCRAMIBk-KpHmd7zwY2vWROX3p4Tv_KBy-4w6qPeu42gl7DeroYigJLiF4hjPBhi0WKkTmocJI3VG_vmpxpOMMmRCroMjwOVGxPeXQUDvYN8igP_YGl-5ucC4tacbOeCsW6zWqOWxWaDHTc"
+  }
+};
+
+const courses = categories.map(cat => {
+  const meta = categoryData[cat] || { title: cat, description: '', badge: cat.toUpperCase(), image: '' };
+  const lessons = allDocs.filter(doc => doc.id.startsWith(cat + '/')).length;
+  return { id: cat, meta, lessons };
+});
+---
+
+<BaseLayout title="Courses">
+	<!-- Main Content Canvas -->
+	<div class="w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12">
+		
+		<!-- Page Header -->
+		<div class="mb-12 border-b border-border-subtle pb-8">
+			<h1 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-background mb-4">Course Catalog</h1>
+			<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">
+				Master networking, Linux administration, and infrastructure automation through our structured technical curriculum. Designed for engineers, by engineers.
+			</p>
+		</div>
+
+		<!-- Filters / Controls Toolbar -->
+		<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+			<div class="flex flex-wrap gap-2" id="course-filters">
+				<button data-filter="all" class="px-4 py-2 bg-surface-muted border border-primary text-label-caps font-label-caps rounded-DEFAULT hover:border-primary hover:text-primary transition-colors text-primary">All Courses</button>
+				<button data-filter="CCNA" class="px-4 py-2 bg-surface-muted border border-border-subtle text-label-caps font-label-caps rounded-DEFAULT hover:border-primary hover:text-primary transition-colors text-on-surface-variant">Networking</button>
+				<button data-filter="LINUX" class="px-4 py-2 bg-surface-muted border border-border-subtle text-label-caps font-label-caps rounded-DEFAULT hover:border-primary hover:text-primary transition-colors text-on-surface-variant">Linux</button>
+				<button data-filter="AUTOMATION" class="px-4 py-2 bg-surface-muted border border-border-subtle text-label-caps font-label-caps rounded-DEFAULT hover:border-primary hover:text-primary transition-colors text-on-surface-variant">Automation</button>
+			</div>
+			
+			<div class="flex items-center gap-2">
+				<span class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Sort By:</span>
+				<select class="bg-surface-muted border border-border-subtle text-body-md font-body-md rounded-DEFAULT px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+					<option>Recommended</option>
+					<option>Newest</option>
+					<option>Difficulty: Ascending</option>
+				</select>
+			</div>
+		</div>
+
+		<!-- Course Grid (4-column responsive) -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter" id="courses-grid">
+			{courses.map(course => (
+			<article data-category={course.meta.badge} class="course-card bg-surface-container-lowest border border-border-subtle rounded-DEFAULT overflow-hidden flex flex-col hover:border-primary transition-colors duration-200 group relative shadow-sm hover:shadow-md">
+				<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary group-hover:w-1.5 transition-all duration-200 z-10"></div>
+				<div class="h-40 w-full bg-terminal-bg relative overflow-hidden" style={`background-image: url('${course.meta.image}'); background-size: cover; background-position: center;`}>
+					<div class="absolute inset-0 bg-primary-fixed-dim/20 mix-blend-overlay"></div>
+				</div>
+				<div class="p-6 flex flex-col flex-grow">
+					<div class="mb-3">
+						<span class="inline-block px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-[2px]">{course.meta.badge}</span>
+					</div>
+					<h3 class="text-headline-sm font-headline-sm text-on-background mb-2 group-hover:text-primary transition-colors">{course.meta.title}</h3>
+					<p class="text-body-md font-body-md text-on-surface-variant mb-6 text-truncate-2">{course.meta.description}</p>
+					
+					<div class="mt-auto flex items-center justify-between border-t border-border-subtle pt-4">
+						<div class="flex items-center gap-1.5 text-on-surface-variant">
+							<span class="material-symbols-outlined text-[18px]" data-icon="menu_book">menu_book</span>
+							<span class="font-label-caps text-label-caps">{course.lessons} Lesson{course.lessons !== 1 ? 's' : ''}</span>
+						</div>
+						<a href={`/docs/${course.id}`} class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</a>
+					</div>
+				</div>
+			</article>
+			))}
+		</div>
+	</div>
+</BaseLayout>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const filterButtons = document.querySelectorAll('#course-filters button');
+		const courseCards = document.querySelectorAll('.course-card');
+
+		filterButtons.forEach(button => {
+			button.addEventListener('click', () => {
+				const filter = button.getAttribute('data-filter');
+
+				// Update active button styling
+				filterButtons.forEach(btn => {
+					btn.classList.remove('border-primary', 'text-primary');
+					btn.classList.add('border-border-subtle', 'text-on-surface-variant');
+				});
+				button.classList.remove('border-border-subtle', 'text-on-surface-variant');
+				button.classList.add('border-primary', 'text-primary');
+
+				// Filter cards
+				courseCards.forEach(card => {
+					if (filter === 'all' || card.getAttribute('data-category') === filter) {
+						(card as HTMLElement).style.display = 'flex';
+					} else {
+						(card as HTMLElement).style.display = 'none';
+					}
+				});
+			});
+		});
+	});
+</script>

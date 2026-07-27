@@ -1,0 +1,127 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const allPosts = await getCollection('blog');
+const sortedPosts = allPosts.sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf());
+const featuredPost = sortedPosts[0];
+const remainingPosts = sortedPosts.slice(1);
+---
+
+<BaseLayout title="Engineering Blog">
+	<!-- Main Content -->
+	<div class="flex-grow w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 flex flex-col gap-12">
+		<!-- Header & Filters -->
+		<section class="flex flex-col gap-6">
+			<div class="flex flex-col gap-2">
+				<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Engineering Blog</h1>
+				<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Deep dives into networking protocols, Linux administration, and infrastructure automation. Written by engineers, for engineers.</p>
+			</div>
+			<div class="flex flex-wrap gap-3 mt-4" id="blog-filters">
+				<button data-filter="all" class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">All Posts</button>
+				<button data-filter="Sysadmin" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Sysadmin</button>
+				<button data-filter="Automation" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Automation</button>
+				<button data-filter="Networking" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Networking</button>
+			</div>
+		</section>
+
+		<!-- Featured Post (Bento) -->
+		{featuredPost && (
+		<section id="featured-post" data-category={featuredPost.data.category} class="grid grid-cols-1 md:grid-cols-12 gap-gutter bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow">
+			<div class="md:col-span-7 h-64 md:h-auto bg-surface-dim relative">
+				<div class="bg-cover bg-center w-full h-full absolute inset-0" style={`background-image: url('${featuredPost.data.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVWtjcGQ_erUpnc5D1p4GDLLG2G73xvENriL281qyvSSuweFuKIsvbQitC2I-sdFrwvYVC3qtWXJtZtB3mS0hTZ03AyriSB2efjMKt3RjPcngYNAEAg3qFrrstwhv2lIw31sfuDzyjVHED0HPKcOg2vuO13qG7Zp2DMFpSfBeVRmme3mbx2AAEuh2eUtiezxofRifKFEoT5IACyoIFaZaIwjD0nvqd5eyh92nZZxQPVvbOryp0ZLycygfRlIOxfhPYg72rhnE2fGw'}')`}></div>
+				<div class="absolute top-4 left-4">
+					<span class="font-label-caps text-label-caps px-2 py-1 bg-terminal-bg text-on-primary rounded border border-outline-variant/30 backdrop-blur-sm">{featuredPost.data.category}</span>
+				</div>
+			</div>
+			<div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-center gap-4">
+				<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-code-block text-sm">
+					<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+					<span class="">{new Date(featuredPost.data.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+				</div>
+				<h2 class="font-headline-md text-headline-md text-on-background group-hover:text-primary transition-colors">{featuredPost.data.title}</h2>
+				<p class="font-body-md text-body-md text-on-surface-variant flex-grow line-clamp-3">{featuredPost.data.description}</p>
+				<div class="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-caps text-xs">{(featuredPost.data.author || 'P').charAt(0).toUpperCase()}</div>
+						<span class="font-body-md text-sm text-on-surface-variant">{featuredPost.data.author || 'Phinisi Team'}</span>
+					</div>
+					<a class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1 group" href={`/blog/${featuredPost.id}`}>
+						Read Article <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+					</a>
+				</div>
+			</div>
+		</section>
+		)}
+
+		<!-- Article Grid -->
+		{remainingPosts.length > 0 && (
+		<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter" id="blog-grid">
+			{remainingPosts.map(post => (
+			<article data-category={post.data.category} class="blog-card bg-surface-container-lowest border border-border-subtle rounded flex flex-col group hover:border-primary transition-colors h-full">
+				<div class="h-48 relative overflow-hidden bg-surface-dim border-b border-border-subtle">
+					<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" style={`background-image: url('${post.data.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuA48BdDJtzlCaxnScgbV7Nr2kMyaJFEXLvO3yCxH9A-yzNVD3iDRwCFP1zjwrkqUf1YVzkX-y4mAvar6Y5Gs1TYH_2OAVkp_Dm41PnqNuCYuOUQeOQMid4tovl-b0P6ximR4AETAXpK-zcyxL-3zhIFO76n_y46NpamxzP7BTsMVVBD8JMyWyDHEuQH4FRmepjZBC4hOyFYTg7l3AQnefNrbXbZCkipCKBfdN7-z8zTtVwcnhX17PSHK6jnpN8ncpPkY9Um9JsYcrg'}')`}></div>
+					<div class="absolute top-3 left-3">
+						<span class="font-label-caps text-label-caps px-2 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">{post.data.category}</span>
+					</div>
+				</div>
+				<div class="p-5 flex flex-col gap-3 flex-grow">
+					<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-xs">
+						<span class="">{new Date(post.data.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+					</div>
+					<h3 class="font-headline-sm text-headline-sm text-on-background group-hover:text-primary line-clamp-2">{post.data.title}</h3>
+					<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">{post.data.description}</p>
+				</div>
+				<div class="p-5 pt-0 mt-auto">
+					<a class="font-label-caps text-label-caps text-primary hover:underline" href={`/blog/${post.id}`}>Read More -&gt;</a>
+				</div>
+			</article>
+			))}
+		</section>
+		)}
+
+		<div class="flex justify-center mt-8">
+			<button class="font-label-caps text-label-caps px-6 py-3 border border-border-subtle text-on-surface-variant rounded hover:border-primary hover:text-primary transition-colors bg-surface-container-lowest">Load More Articles</button>
+		</div>
+	</div>
+</BaseLayout>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const filterButtons = document.querySelectorAll('#blog-filters button');
+		const blogCards = document.querySelectorAll('.blog-card');
+
+		filterButtons.forEach(button => {
+			button.addEventListener('click', () => {
+				const filter = button.getAttribute('data-filter');
+
+				// Update active button styling
+				filterButtons.forEach(btn => {
+					btn.classList.remove('bg-primary', 'text-on-primary', 'border-primary');
+					btn.classList.add('bg-surface-muted', 'text-on-surface-variant', 'border-border-subtle');
+				});
+				button.classList.remove('bg-surface-muted', 'text-on-surface-variant', 'border-border-subtle');
+				button.classList.add('bg-primary', 'text-on-primary', 'border-primary');
+
+				// Filter featured post
+				const featuredPost = document.getElementById('featured-post');
+				if (featuredPost) {
+					if (filter === 'all' || featuredPost.getAttribute('data-category') === filter) {
+						featuredPost.style.display = 'grid';
+					} else {
+						featuredPost.style.display = 'none';
+					}
+				}
+
+				// Filter cards
+				blogCards.forEach(card => {
+					if (filter === 'all' || card.getAttribute('data-category') === filter) {
+						(card as HTMLElement).style.display = 'flex';
+					} else {
+						(card as HTMLElement).style.display = 'none';
+					}
+				});
+			});
+		});
+	});
+</script>
