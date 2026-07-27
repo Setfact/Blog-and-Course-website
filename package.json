@@ -7,9 +7,11 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "start": "astro dev",
+    "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "postinstall": "node patch-keystatic.js"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.3",
