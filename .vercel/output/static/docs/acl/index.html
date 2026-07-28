@@ -1,0 +1,850 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="description" content="Phinisi Network - E-Learning &amp; Technical Blog"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v7.1.3"><title>ACL Cisco  | Phinisi Network</title><!-- Google Fonts as per Design System --><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"><style>.custom-scrollbar[data-astro-cid-ccykbmgk]::-webkit-scrollbar{width:6px}.custom-scrollbar[data-astro-cid-ccykbmgk]::-webkit-scrollbar-track{background:0 0}.custom-scrollbar[data-astro-cid-ccykbmgk]::-webkit-scrollbar-thumb{background-color:var(--color-border-subtle);border-radius:20px}
+</style><link rel="stylesheet" href="/_astro/BaseLayout.BLZ566K1.css"></head><body class="flex min-h-screen flex-col bg-slate-50 text-slate-900 font-['Inter']"><header class="border-b border-slate-200 bg-white relative z-50"><div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6"><!-- Logo --><div class="flex items-center"><a href="/" class="font-['Hanken_Grotesk'] text-xl font-bold tracking-tight text-slate-900">Phinisi Network</a></div><!-- Navigation --><nav class="hidden md:flex items-center space-x-8"><a href="/courses" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Kursus</a><a href="/learning-path" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Alur Belajar</a><a href="/blog" class="font-['Inter'] text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">Blog</a></nav><!-- Right Side: Search, Language --><div class="flex items-center space-x-6 md:space-x-8"><div class="relative hidden sm:block w-64 pagefind-custom-container"><pagefind-config bundle-path="/pagefind/"></pagefind-config><script type="module" src="/_astro/PagefindConfig.astro_astro_type_script_index_0_lang.oMACxZGj.js"></script><pagefind-searchbox class="pagefind-ui"></pagefind-searchbox></div><!-- Language Switcher --><div class="flex items-center space-x-2 text-sm font-['Inter'] text-slate-600"><a href="/docs/acl/" class="font-bold text-slate-900">ID</a><span>|</span><a href="/en/docs/acl/" class="hover:text-slate-900">EN</a></div></div></div></header><main class="flex-grow"><div class="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-start gap-8 relative" data-astro-cid-ccykbmgk><!-- Left Sidebar (Desktop) --><aside class="hidden md:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-6 border-r border-border-subtle custom-scrollbar" data-astro-cid-ccykbmgk><div class="mb-6" data-astro-cid-ccykbmgk><span class="text-xs font-label-caps font-bold text-primary tracking-wider uppercase" data-astro-cid-ccykbmgk>ACL COURSE</span></div><nav class="flex flex-col gap-1" data-astro-cid-ccykbmgk></nav></aside><!-- Main Content --><main class="flex-1 py-8 md:py-12 min-w-0 max-w-3xl" data-astro-cid-ccykbmgk><div class="mb-8" data-astro-cid-ccykbmgk><h1 class="text-3xl md:text-4xl font-headline-lg text-on-background mb-4" data-astro-cid-ccykbmgk>ACL Cisco </h1><p class="text-lg text-on-surface-variant font-body-lg" data-astro-cid-ccykbmgk></p></div><div class="prose prose-slate prose-lg max-w-none 
+                  prose-headings:text-on-background prose-headings:font-headline-sm prose-headings:scroll-mt-24
+                  prose-p:text-on-surface-variant prose-p:font-body-md 
+                  prose-a:text-primary hover:prose-a:text-primary-container
+                  prose-code:text-secondary prose-code:bg-surface-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                  prose-pre:bg-terminal-bg prose-pre:border prose-pre:border-border-subtle
+                  prose-strong:text-on-background" data-astro-cid-ccykbmgk><h1 id="ccna-ensa-">CCNA ENSA </h1>
+<h2 id="acls-for-ipv4-configuration">ACLs for IPv4 Configuration</h2>
+<h2 id="referensi">Referensi</h2>
+<ul>
+<li><strong>Sumber utama:</strong> <a href="https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html">https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html</a></li>
+<li><strong>Bahasa:</strong> Indonesia, dengan istilah teknis asli dipertahankan</li>
+<li><strong>Gaya dokumentasi:</strong> per subbab, penjelasan panjang, command example lengkap, gambar ditempatkan tepat di bawah section yang relevan</li>
+</ul>
+<p>Catatan</p>
+<p>Modul ini adalah <strong>kelanjutan praktis</strong> dari Modul 4 (ACL Concepts). Kalau Modul 4 membahas teori ACL, Modul 5 membahas <strong>konfigurasi langsung</strong> di router Cisco. Kamu akan belajar membuat, menerapkan, memodifikasi, dan memverifikasi ACL.</p>
+<hr/>
+<h1 id="50-introduction">5.0 Introduction</h1>
+<p>Modul ini bertujuan untuk mengajarkan kamu bagaimana <strong>mengimplementasikan IPv4 ACL</strong> untuk memfilter traffic dan mengamankan akses administratif. Intinya: dari teori ke praktik.</p>
+<h2 id="501-why-should-i-take-this-module">5.0.1 Why should I take this module?</h2>
+<p>Karena di dunia nyata, ACL bukan hanya diketahui tapi harus <strong>bisa dikonfigurasi</strong>. Sebagai network engineer, kamu akan sering diminta untuk:</p>
+<ul>
+<li>memblokir akses dari host/network tertentu</li>
+<li>mengamankan remote access (Telnet/SSH)</li>
+<li>memfilter traffic berdasarkan port dan protocol</li>
+<li>memodifikasi ACL yang sudah ada</li>
+</ul>
+<h2 id="502-what-will-i-learn-to-do-in-this-module">5.0.2 What will I learn to do in this module?</h2>
+<p>Di modul ini, kamu akan belajar untuk:</p>
+<ul>
+<li>mengkonfigurasi <strong>standard IPv4 ACL</strong></li>
+<li>memodifikasi ACL yang sudah ada</li>
+<li>mengamankan <strong>VTY ports</strong> dengan standard ACL</li>
+<li>mengkonfigurasi <strong>extended IPv4 ACL</strong></li>
+</ul>
+<hr/>
+<h1 id="51-configure-standard-ipv4-acls">5.1 Configure Standard IPv4 ACLs</h1>
+<p>Bagian ini membahas cara membuat dan menerapkan standard ACL. Standard ACL hanya memfilter berdasarkan <strong>source IPv4 address</strong>.</p>
+<h2 id="511-create-an-acl">5.1.1 Create an ACL</h2>
+<h3 id="perencanaan-itu-penting">Perencanaan itu penting</h3>
+<p>Sebelum mengetik command apapun, <strong>rencanakan dulu</strong> apa yang ingin kamu capai. Untuk ACL yang kompleks dengan banyak ACE, gunakan text editor untuk:</p>
+<ol>
+<li>menulis kebijakan yang ingin diterapkan</li>
+<li>menulis perintah IOS yang sesuai</li>
+<li>menambahkan <strong>remark</strong> (keterangan) untuk dokumentasi</li>
+<li>paste ke router</li>
+<li><strong>test menyeluruh</strong></li>
+</ol>
+<p>Jangan langsung konfigurasi!</p>
+<p>ACL yang buruk bisa memblokir traffic penting atau membuka celah keamanan. Selalu rencanakan dan test dulu.</p>
+<h2 id="512-numbered-standard-ipv4-acl-syntax">5.1.2 Numbered Standard IPv4 ACL Syntax</h2>
+<h3 id="syntax">Syntax</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# access-list access-list-number {deny | permit | remark text} source [source-wildcard] [log]</span></span></code></pre>
+<h3 id="parameter">Parameter</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access-list-number</code></td>
+<td>Nomor ACL: <strong>1–99</strong> atau <strong>1300–1999</strong></td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>Tolak packet yang match</td>
+</tr>
+<tr>
+<td><code>permit</code></td>
+<td>Izinkan packet yang match</td>
+</tr>
+<tr>
+<td><code>remark</code></td>
+<td>Komentar/dokumentasi (maks 100 karakter)</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Alamat sumber: host spesifik, network, atau <code>any</code></td>
+</tr>
+<tr>
+<td><code>source-wildcard</code></td>
+<td>Wildcard mask (default: <code>0.0.0.0</code> = satu host)</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td>Generate message untuk packet pertama yang match</td>
+</tr>
+</tbody>
+</table>
+<h3 id="menghapus-acl">Menghapus ACL</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# no access-list access-list-number</span></span></code></pre>
+<h2 id="513-named-standard-ipv4-acl-syntax">5.1.3 Named Standard IPv4 ACL Syntax</h2>
+<h3 id="syntax-1">Syntax</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# ip access-list standard access-list-name</span></span></code></pre>
+<ul>
+<li>Masuk ke named standard ACL configuration mode (<code>config-std-nacl</code>)</li>
+<li>Nama ACL bersifat <strong>alphanumeric, case-sensitive, dan unik</strong></li>
+</ul>
+<h3 id="menghapus-named-acl">Menghapus Named ACL</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# no ip access-list standard access-list-name</span></span></code></pre>
+<h3 id="kenapa-named-acl-lebih-disukai">Kenapa named ACL lebih disukai?</h3>
+<ul>
+<li>bisa <strong>diedit baris per baris</strong> tanpa menghapus seluruh ACL</li>
+<li>lebih mudah diidentifikasi (namanya deskriptif)</li>
+<li>lebih mudah di-troubleshoot</li>
+</ul>
+<h2 id="514-apply-a-standard-ipv4-acl">5.1.4 Apply a Standard IPv4 ACL</h2>
+<p>Setelah ACL dibuat, kamu harus <strong>menerapkannya ke interface</strong>.</p>
+<h3 id="syntax-2">Syntax</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config-if)# ip access-group {access-list-number | access-list-name} {in | out}</span></span></code></pre>
+<h3 id="menghapus-dari-interface">Menghapus dari interface</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config-if)# no ip access-group</span></span></code></pre>
+<h2 id="515-numbered-standard-ipv4-acl-example">5.1.5 Numbered Standard IPv4 ACL Example</h2>
+<h3 id="skenario">Skenario</h3>
+<p>Kamu hanya boleh mengizinkan <strong>PC1 (192.168.10.10)</strong> dan <strong>LAN 2 (192.168.20.0/24)</strong> untuk keluar ke internet.</p>
+<h3 id="konfigurasi">Konfigurasi</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# access-list 10 remark ACE permits ONLY host 192.168.10.10</span></span>
+<span class="line"><span>R1(config)# access-list 10 permit host 192.168.10.10</span></span>
+<span class="line"><span>R1(config)# access-list 10 remark ACE permits all host in LAN 2</span></span>
+<span class="line"><span>R1(config)# access-list 10 permit 192.168.20.0 0.0.0.255</span></span>
+<span class="line"><span>R1(config)# interface Serial 0/1/0</span></span>
+<span class="line"><span>R1(config-if)# ip access-group 10 out</span></span></code></pre>
+<h3 id="penjelasan-command-per-baris">Penjelasan command per baris</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access-list 10 remark ...</code></td>
+<td>Komentar dokumentasi — tidak mempengaruhi traffic</td>
+</tr>
+<tr>
+<td><code>access-list 10 permit host 192.168.10.10</code></td>
+<td>Izinkan satu host spesifik</td>
+</tr>
+<tr>
+<td><code>access-list 10 permit 192.168.20.0 0.0.0.255</code></td>
+<td>Izinkan seluruh subnet /24</td>
+</tr>
+<tr>
+<td><code>ip access-group 10 out</code></td>
+<td>Terapkan ACL 10 ke arah outbound</td>
+</tr>
+</tbody>
+</table>
+<h3 id="catatan-penting">Catatan penting</h3>
+<ul>
+<li>Karena ini <strong>standard ACL</strong>, ditempatkan <strong>dekat destination</strong> (di interface outbound)</li>
+<li>ACE diproses dari atas ke bawah secara sekuensial</li>
+<li>Kalau tidak ada match → <strong>implicit deny</strong> akan menolak packet</li>
+</ul>
+<h2 id="516-named-standard-ipv4-acl-example">5.1.6 Named Standard IPv4 ACL Example</h2>
+<p>Sama seperti di atas, tapi menggunakan nama <code>PERMIT-ACCESS</code>.</p>
+<h3 id="konfigurasi-1">Konfigurasi</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list standard PERMIT-ACCESS</span></span>
+<span class="line"><span>R1(config-std-nacl)# remark ACE permits host 192.168.10.10</span></span>
+<span class="line"><span>R1(config-std-nacl)# permit host 192.168.10.10</span></span>
+<span class="line"><span>R1(config-std-nacl)# remark ACE permits all hosts in LAN 2</span></span>
+<span class="line"><span>R1(config-std-nacl)# permit 192.168.20.0 0.0.0.255</span></span>
+<span class="line"><span>R1(config-std-nacl)# exit</span></span>
+<span class="line"><span>R1(config)# interface Serial 0/1/0</span></span>
+<span class="line"><span>R1(config-if)# ip access-group PERMIT-ACCESS out</span></span></code></pre>
+<h3 id="perbandingan-numbered-vs-named">Perbandingan Numbered vs Named</h3>
+<table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Numbered</th>
+<th>Named</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identifikasi</td>
+<td>Nomor (10)</td>
+<td>Nama (PERMIT-ACCESS)</td>
+</tr>
+<tr>
+<td>Edit per baris</td>
+<td>❌ Tidak bisa</td>
+<td>✅ Bisa</td>
+</tr>
+<tr>
+<td>Syntax</td>
+<td><code>access-list 10 permit ...</code></td>
+<td><code>ip access-list standard ...</code></td>
+</tr>
+<tr>
+<td>Apply ke interface</td>
+<td><code>ip access-group 10 out</code></td>
+<td><code>ip access-group PERMIT-ACCESS out</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="517-syntax-check--configure-standard-ipv4-acls">5.1.7 Syntax Check – Configure Standard IPv4 ACLs</h2>
+<p>Syntax Checker</p>
+<p>Source menyediakan syntax checker interaktif untuk praktik konfigurasi standard ACL. Tersedia di halaman source asli.</p>
+<h2 id="518-packet-tracer--configure-numbered-standard-ipv4-acls">5.1.8 Packet Tracer – Configure Numbered Standard IPv4 ACLs</h2>
+<p>Packet Tracer</p>
+<p>Source menyediakan activity Packet Tracer untuk praktik konfigurasi numbered standard ACL. Tersedia di halaman source asli.</p>
+<h2 id="519-packet-tracer--configure-named-standard-ipv4-acls">5.1.9 Packet Tracer – Configure Named Standard IPv4 ACLs</h2>
+<p>Packet Tracer</p>
+<p>Source menyediakan activity Packet Tracer untuk praktik konfigurasi named standard ACL. Tersedia di halaman source asli.</p>
+<hr/>
+<h1 id="52-modify-ipv4-acls">5.2 Modify IPv4 ACLs</h1>
+<p>Bagian ini membahas cara mengedit ACL yang sudah ada di router. Ada dua metode yang bisa dipakai.</p>
+<h2 id="521-two-methods-to-modify-an-acl">5.2.1 Two Methods to Modify an ACL</h2>
+<table>
+<thead>
+<tr>
+<th>Metode</th>
+<th>Kapan Dipakai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Text Editor</strong></td>
+<td>Perubahan besar / rewrite ACL</td>
+</tr>
+<tr>
+<td><strong>Sequence Numbers</strong></td>
+<td>Perubahan kecil / edit个别 ACE</td>
+</tr>
+</tbody>
+</table>
+<h2 id="522-text-editor-method">5.2.2 Text Editor Method</h2>
+<h3 id="langkah-langkah">Langkah-langkah</h3>
+<ol>
+<li>Copy ACL yang salah dari <code>show running-config</code></li>
+<li>Edit di text editor</li>
+<li><strong>Hapus seluruh ACL lama</strong> dari router</li>
+<li>Paste ACL yang sudah diperbaiki</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# no access-list access-list-number</span></span></code></pre>
+<h3 id="kekurangan">Kekurangan</h3>
+<ul>
+<li>harus menghapus seluruh ACL dulu</li>
+<li>ada downtime singkat saat ACL dihapus dan diganti</li>
+</ul>
+<h2 id="523-sequence-numbers-method">5.2.3 Sequence Numbers Method</h2>
+<p>Setiap ACE dalam named ACL (atau numbered ACL yang diakses lewat <code>ip access-list</code>) memiliki <strong>sequence number</strong> otomatis. Kamu bisa mengedit ACE berdasarkan nomor ini.</p>
+<h3 id="langkah-langkah-1">Langkah-langkah</h3>
+<ol>
+<li>Masuk ke ACL configuration mode</li>
+<li>Hapus ACE yang salah dengan <code>no &lt;sequence-number&gt;</code></li>
+<li>Masukkan ACE yang benar</li>
+</ol>
+<h3 id="contoh-memperbaiki-typo-di-acl-1-sequence-10">Contoh: memperbaiki typo di ACL 1, sequence 10</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list standard 1</span></span>
+<span class="line"><span>R1(config-std-nacl)# no 10</span></span>
+<span class="line"><span>R1(config-std-nacl)# 10 deny host 192.168.10.10</span></span></code></pre>
+<h3 id="kelebihan-method-sequence-numbers">Kelebihan method sequence numbers</h3>
+<ul>
+<li>bisa menghapus satu ACE tanpa menghapus seluruh ACL</li>
+<li>bisa menyisipkan ACE baru di antara ACE yang sudah ada</li>
+<li>tidak ada downtime</li>
+</ul>
+<h2 id="524-modify-a-named-acl-example">5.2.4 Modify a Named ACL Example</h2>
+<p>Untuk named ACL, kamu bisa masuk ke ACL config mode lalu edit langsung:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list standard PERMIT-ACCESS</span></span>
+<span class="line"><span>R1(config-std-nacl)# no 10</span></span>
+<span class="line"><span>R1(config-std-nacl)# 10 permit host 192.168.10.20</span></span>
+<span class="line"><span>R1(config-std-nacl)# exit</span></span></code></pre>
+<p>Sequence number bisa disisipkan di antara nomor yang sudah ada (misal: 15 di antara 10 dan 20) untuk mengontrol urutan eksekusi.</p>
+<h2 id="525-acl-statistics">5.2.5 ACL Statistics</h2>
+<h3 id="melihat-statistik-match-per-ace">Melihat statistik match per ACE</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router# show access-lists</span></span></code></pre>
+<p>Output akan menunjukkan berapa kali setiap ACE berhasil match dengan packet.</p>
+<h3 id="catatan-penting-1">Catatan penting</h3>
+<ul>
+<li><strong>Implicit deny any</strong> di akhir ACL <strong>tidak menampilkan statistik</strong> kecuali kamu menambahkan <code>deny any</code> secara eksplisit</li>
+<li>Kalau kamu ingin melihat berapa banyak packet yang ditolak oleh implicit deny, tambahkan baris <code>deny any</code> di akhir ACL</li>
+</ul>
+<h3 id="reset-counters">Reset counters</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router# clear access-list counters [name|number]</span></span></code></pre>
+<h2 id="526-syntax-checker--modify-ipv4-acls">5.2.6 Syntax Checker – Modify IPv4 ACLs</h2>
+<p>Syntax Checker</p>
+<p>Source menyediakan syntax checker interaktif untuk praktik modifikasi ACL. Tersedia di halaman source asli.</p>
+<h2 id="527-packet-tracer--configure-and-modify-standard-ipv4-acls">5.2.7 Packet Tracer – Configure and Modify Standard IPv4 ACLs</h2>
+<p>Packet Tracer</p>
+<p>Source menyediakan activity Packet Tracer untuk praktik konfigurasi dan modifikasi standard ACL. Tersedia di halaman source asli.</p>
+<hr/>
+<h1 id="53-secure-vty-ports-with-a-standard-ipv4-acl">5.3 Secure VTY Ports with a Standard IPv4 ACL</h1>
+<p>Bagian ini membahas cara mengamankan akses remote (Telnet/SSH) ke router menggunakan standard ACL.</p>
+<h2 id="531-the-access-class-command">5.3.1 The access-class Command</h2>
+<p>Untuk mengamankan VTY lines, kamu menggunakan command <code>access-class</code> — bukan <code>ip access-group</code>.</p>
+<h3 id="syntax-3">Syntax</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config-line)# access-class {access-list-number | access-list-name} {in | out}</span></span></code></pre>
+<h3 id="perbedaan-dengan-interface-acl">Perbedaan dengan interface ACL</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Digunakan di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ip access-group</code></td>
+<td>Interface (physical/virtual)</td>
+</tr>
+<tr>
+<td><code>access-class</code></td>
+<td>VTY lines (line vty 0 4)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="532-secure-vty-access-example">5.3.2 Secure VTY Access Example</h2>
+<h3 id="skenario-1">Skenario</h3>
+<p>Hanya host <code>192.168.10.10</code> yang boleh mengakses router via Telnet/SSH.</p>
+<h3 id="konfigurasi-2">Konfigurasi</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list standard ADMIN-HOST</span></span>
+<span class="line"><span>R1(config-std-nacl)# permit 192.168.10.10</span></span>
+<span class="line"><span>R1(config-std-nacl)# deny any</span></span>
+<span class="line"><span>R1(config-std-nacl)# exit</span></span>
+<span class="line"><span>R1(config)# line vty 0 4</span></span>
+<span class="line"><span>R1(config-line)# access-class ADMIN-HOST in</span></span>
+<span class="line"><span>R1(config-line)# exit</span></span></code></pre>
+<h3 id="kenapa-deny-any-ditambahkan">Kenapa <code>deny any</code> ditambahkan?</h3>
+<p>Untuk <strong>melihat statistik</strong> berapa kali akses ditolak. Tanpa <code>deny any</code> eksplisit, implicit deny tidak mencatat statistik.</p>
+<h2 id="533-verify-the-vty-port-is-secured">5.3.3 Verify the VTY Port is Secured</h2>
+<h3 id="verifikasi-dari-luar">Verifikasi dari luar</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1# show access-lists</span></span></code></pre>
+<h3 id="test-akses-dari-host-yang-tidak-diizinkan">Test akses dari host yang tidak diizinkan</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>C:\&gt; telnet 192.168.1.1</span></span>
+<span class="line"><span>% Connection refused by remote host</span></span></code></pre>
+<h3 id="test-akses-dari-host-yang-diizinkan">Test akses dari host yang diizinkan</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>C:\&gt; telnet 192.168.1.1</span></span>
+<span class="line"><span>Trying 192.168.1.1 ... Open</span></span>
+<span class="line"><span>Password:</span></span>
+<span class="line"><span>R1&gt;</span></span></code></pre>
+<h3 id="best-practice-di-production">Best practice di production</h3>
+<p>Gunakan <code>transport input ssh</code> di VTY lines daripada Telnet. SSH lebih aman karena traffic-nya terenkripsi.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# line vty 0 4</span></span>
+<span class="line"><span>R1(config-line)# transport input ssh</span></span></code></pre>
+<h2 id="534-syntax-checker--secure-the-vty-ports">5.3.4 Syntax Checker – Secure the VTY Ports</h2>
+<p>Syntax Checker</p>
+<p>Source menyediakan syntax checker interaktif untuk praktik securing VTY ports. Tersedia di halaman source asli.</p>
+<hr/>
+<h1 id="54-configure-extended-ipv4-acls">5.4 Configure Extended IPv4 ACLs</h1>
+<p>Bagian ini membahas cara mengkonfigurasi extended ACL — yang lebih fleksibel karena bisa memfilter berdasarkan <strong>source, destination, protocol, dan port</strong>.</p>
+<h2 id="541-extended-acls">5.4.1 Extended ACLs</h2>
+<p>Extended ACL memberikan kontrol yang lebih detail dibanding standard ACL:</p>
+<table>
+<thead>
+<tr>
+<th>Fitur</th>
+<th>Standard ACL</th>
+<th>Extended ACL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source IP</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Destination IP</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Protocol</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Port Number</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<h3 id="penempatan">Penempatan</h3>
+<p>Extended ACL ditempatkan <strong>sedekat mungkin dengan source</strong> karena sudah cukup spesifik.</p>
+<h2 id="542-numbered-extended-ipv4-acl-syntax">5.4.2 Numbered Extended IPv4 ACL Syntax</h2>
+<h3 id="syntax-4">Syntax</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>Router(config)# access-list access-list-number {deny | permit | remark text} protocol source source-wildcard [operator [port]] destination destination-wildcard [operator [port]] [established] [log]</span></span></code></pre>
+<h3 id="parameter-1">Parameter</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access-list-number</code></td>
+<td><strong>100–199</strong> atau <strong>2000–2699</strong></td>
+</tr>
+<tr>
+<td><code>protocol</code></td>
+<td><code>ip</code>, <code>tcp</code>, <code>udp</code>, <code>icmp</code>, dll</td>
+</tr>
+<tr>
+<td><code>source</code> / <code>destination</code></td>
+<td>Host, network, atau <code>any</code></td>
+</tr>
+<tr>
+<td><code>source-wildcard</code> / <code>destination-wildcard</code></td>
+<td>Wildcard mask</td>
+</tr>
+<tr>
+<td><code>operator</code></td>
+<td><code>eq</code> (equals), <code>neq</code> (not equal), <code>gt</code> (greater than), <code>lt</code> (less than), <code>range</code></td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td>Nomor port atau nama service (www, https, ftp, dll)</td>
+</tr>
+<tr>
+<td><code>established</code></td>
+<td>Untuk return traffic (ACK/RST set)</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td>Generate message untuk matching packet</td>
+</tr>
+</tbody>
+</table>
+<h2 id="543-protocols-and-ports">5.4.3 Protocols and Ports</h2>
+<h3 id="protocol-yang-sering-dipakai">Protocol yang sering dipakai</h3>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ip</code></td>
+<td>Semua IP traffic</td>
+</tr>
+<tr>
+<td><code>tcp</code></td>
+<td>TCP traffic</td>
+</tr>
+<tr>
+<td><code>udp</code></td>
+<td>UDP traffic</td>
+</tr>
+<tr>
+<td><code>icmp</code></td>
+<td>ICMP traffic (ping, traceroute)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="port-yang-sering-dipakai">Port yang sering dipakai</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Protocol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FTP (data)</td>
+<td>20</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>FTP (control)</td>
+<td>21</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>SSH</td>
+<td>22</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>Telnet</td>
+<td>23</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>SMTP</td>
+<td>25</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>DNS</td>
+<td>53</td>
+<td>TCP/UDP</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>80</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>HTTPS</td>
+<td>443</td>
+<td>TCP</td>
+</tr>
+</tbody>
+</table>
+<h2 id="544-protocols-and-port-numbers-configuration-examples">5.4.4 Protocols and Port Numbers Configuration Examples</h2>
+<h3 id="contoh-izinkan-http-dan-https-dari-lan-ke-internet">Contoh: izinkan HTTP dan HTTPS dari LAN ke internet</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq www</span></span>
+<span class="line"><span>R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq 443</span></span></code></pre>
+<h3 id="penjelasan">Penjelasan</h3>
+<ul>
+<li><code>tcp</code> — hanya TCP traffic</li>
+<li><code>192.168.10.0 0.0.0.255</code> — source dari subnet /24</li>
+<li><code>any</code> — ke mana saja</li>
+<li><code>eq www</code> — port 80 (HTTP)</li>
+<li><code>eq 443</code> — port HTTPS</li>
+</ul>
+<h2 id="545-apply-a-numbered-extended-ipv4-acl">5.4.5 Apply a Numbered Extended IPv4 ACL</h2>
+<h3 id="apply-ke-interface">Apply ke interface</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# interface Serial 0/1/0</span></span>
+<span class="line"><span>R1(config-if)# ip access-group 100 in</span></span></code></pre>
+<h3 id="catatan">Catatan</h3>
+<p>Extended ACL ditempatkan <strong>dekat source</strong> (inbound di source interface) supaya traffic yang tidak diinginkan ditolak sejak awal.</p>
+<h2 id="546-tcp-established-keyword">5.4.6 TCP Established Keyword</h2>
+<p>Keyword <code>established</code> memungkinkan extended ACL untuk berfungsi seperti <strong>stateful firewall sederhana</strong>.</p>
+<h3 id="apa-itu-established">Apa itu <code>established</code>?</h3>
+<ul>
+<li>hanya mengizinkan paket TCP yang memiliki flag <strong>ACK</strong> atau <strong>RST</strong> set</li>
+<li>paket dengan flag <strong>SYN</strong> saja (koneksi baru) akan ditolak</li>
+<li>berguna untuk mengizinkan <strong>return traffic</strong> tanpa membuka koneksi baru</li>
+</ul>
+<h3 id="contoh-konfigurasi">Contoh konfigurasi</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# access-list 120 permit tcp any 192.168.10.0 0.0.0.255 established</span></span></code></pre>
+<h3 id="cara-kerja">Cara kerja</h3>
+<ol>
+<li>Host dari luar mencoba koneksi TCP ke host di dalam</li>
+<li>Paket SYN ditolak karena belum ada established connection</li>
+<li>Tapi kalau host di dalam yang menginisiasi koneksi, return traffic (ACK/RST) diizinkan</li>
+</ol>
+<h2 id="547-named-extended-ipv4-acl-example">5.4.7 Named Extended IPv4 ACL Example</h2>
+<h3 id="contoh-konfigurasi-mengizinkan-browsing">Contoh konfigurasi: mengizinkan browsing</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list extended SURFING</span></span>
+<span class="line"><span>R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 80</span></span>
+<span class="line"><span>R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 443</span></span></code></pre>
+<h3 id="contoh-konfigurasi-return-traffic-dengan-established">Contoh konfigurasi: return traffic dengan established</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# ip access-list extended BROWSING</span></span>
+<span class="line"><span>R1(config-ext-nacl)# permit tcp any 192.168.10.0 0.0.0.255 established</span></span></code></pre>
+<h3 id="apply-ke-interface-1">Apply ke interface</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1(config)# interface Serial 0/1/0</span></span>
+<span class="line"><span>R1(config-if)# ip access-group SURFING in</span></span>
+<span class="line"><span>R1(config-if)# ip access-group BROWSING out</span></span></code></pre>
+<h3 id="penjelasan-flow">Penjelasan flow</h3>
+<ul>
+<li><strong>SURFING (inbound)</strong> — mengizinkan host di LAN mengakses web (HTTP/HTTPS)</li>
+<li><strong>BROWSING (outbound)</strong> — mengizinkan return traffic dari web server kembali ke LAN</li>
+</ul>
+<h2 id="548-verify-extended-acl">5.4.8 Verify Extended ACL</h2>
+<p>Verifikasi sama seperti standard ACL:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>R1# show access-lists</span></span>
+<span class="line"><span>R1# show ip interface Serial 0/1/0 | include access list</span></span>
+<span class="line"><span>R1# show running-config | section access-list</span></span></code></pre>
+<hr/>
+<h1 id="55-module-practice-and-quiz">5.5 Module Practice and Quiz</h1>
+<h2 id="551-what-did-i-learn-in-this-module">5.5.1 What did I learn in this module?</h2>
+<table>
+<thead>
+<tr>
+<th>Bagian</th>
+<th>Yang Dipelajari</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.1</td>
+<td>Mengkonfigurasi standard IPv4 ACL (numbered dan named)</td>
+</tr>
+<tr>
+<td>5.2</td>
+<td>Memodifikasi ACL dengan text editor dan sequence numbers</td>
+</tr>
+<tr>
+<td>5.3</td>
+<td>Mengamankan VTY ports dengan standard ACL + <code>access-class</code></td>
+</tr>
+<tr>
+<td>5.4</td>
+<td>Mengkonfigurasi extended IPv4 ACL, <code>established</code> keyword, named extended ACL</td>
+</tr>
+</tbody>
+</table>
+<h2 id="552-module-quiz--acls-for-ipv4-configuration">5.5.2 Module Quiz – ACLs for IPv4 Configuration</h2>
+<p>Quiz</p>
+<p>Source menyediakan quiz interaktif untuk modul ini. Tersedia di halaman source asli.</p>
+<hr/>
+<h1 id="ringkasan-modul-5">Ringkasan modul 5</h1>
+<table>
+<thead>
+<tr>
+<th>Bagian</th>
+<th>Isi utama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.0</td>
+<td>Pengenalan — dari teori ACL ke praktik konfigurasi</td>
+</tr>
+<tr>
+<td>5.1</td>
+<td>Standard IPv4 ACL: syntax numbered/named, apply ke interface, contoh konfigurasi</td>
+</tr>
+<tr>
+<td>5.2</td>
+<td>Modify ACL: text editor method vs sequence numbers method, statistics</td>
+</tr>
+<tr>
+<td>5.3</td>
+<td>Secure VTY: <code>access-class</code> command, best practice <code>transport input ssh</code></td>
+</tr>
+<tr>
+<td>5.4</td>
+<td>Extended IPv4 ACL: syntax, protocol/port, <code>established</code> keyword, contoh konfigurasi</td>
+</tr>
+<tr>
+<td>5.5</td>
+<td>Quiz dan praktik</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h1 id="command-reference-modul-5">Command Reference modul 5</h1>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access-list &lt;n&gt; (permit|deny) ...</code></td>
+<td>Buat numbered ACL</td>
+</tr>
+<tr>
+<td><code>ip access-list standard &lt;name&gt;</code></td>
+<td>Buat named standard ACL</td>
+</tr>
+<tr>
+<td><code>ip access-list extended &lt;name&gt;</code></td>
+<td>Buat named extended ACL</td>
+</tr>
+<tr>
+<td><code>ip access-group &lt;n|name&gt; (in|out)</code></td>
+<td>Apply ACL ke interface</td>
+</tr>
+<tr>
+<td><code>access-class &lt;n|name&gt; (in|out)</code></td>
+<td>Apply ACL ke VTY lines</td>
+</tr>
+<tr>
+<td><code>show access-lists</code></td>
+<td>Lihat ACL dan statistik</td>
+</tr>
+<tr>
+<td><code>show running-config | section access-list</code></td>
+<td>Lihat ACL di running config</td>
+</tr>
+<tr>
+<td><code>clear access-list counters</code></td>
+<td>Reset statistik match</td>
+</tr>
+<tr>
+<td><code>remark &lt;text&gt;</code></td>
+<td>Tambahkan komentar di ACL</td>
+</tr>
+<tr>
+<td><code>transport input ssh</code></td>
+<td>Batasi VTY hanya SSH</td>
+</tr>
+</tbody>
+</table></div><!-- Pagination / Next Prev --><div class="mt-16 pt-8 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-4" data-astro-cid-ccykbmgk><div data-astro-cid-ccykbmgk></div><div data-astro-cid-ccykbmgk></div></div></main><!-- Right Sidebar (Table of Contents) --><aside class="hidden xl:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-6" data-astro-cid-ccykbmgk><h4 class="text-sm font-headline-sm font-semibold text-on-background mb-4" data-astro-cid-ccykbmgk>On this page</h4><nav class="flex flex-col gap-2 border-l-2 border-border-subtle pl-4" data-astro-cid-ccykbmgk><a href="#acls-for-ipv4-configuration" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>ACLs for IPv4 Configuration</a><a href="#referensi" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>Referensi</a><a href="#501-why-should-i-take-this-module" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.0.1 Why should I take this module?</a><a href="#502-what-will-i-learn-to-do-in-this-module" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.0.2 What will I learn to do in this module?</a><a href="#511-create-an-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.1 Create an ACL</a><a href="#perencanaan-itu-penting" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Perencanaan itu penting</a><a href="#512-numbered-standard-ipv4-acl-syntax" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.2 Numbered Standard IPv4 ACL Syntax</a><a href="#syntax" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Syntax</a><a href="#parameter" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Parameter</a><a href="#menghapus-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Menghapus ACL</a><a href="#513-named-standard-ipv4-acl-syntax" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.3 Named Standard IPv4 ACL Syntax</a><a href="#syntax-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Syntax</a><a href="#menghapus-named-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Menghapus Named ACL</a><a href="#kenapa-named-acl-lebih-disukai" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Kenapa named ACL lebih disukai?</a><a href="#514-apply-a-standard-ipv4-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.4 Apply a Standard IPv4 ACL</a><a href="#syntax-2" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Syntax</a><a href="#menghapus-dari-interface" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Menghapus dari interface</a><a href="#515-numbered-standard-ipv4-acl-example" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.5 Numbered Standard IPv4 ACL Example</a><a href="#skenario" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Skenario</a><a href="#konfigurasi" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Konfigurasi</a><a href="#penjelasan-command-per-baris" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Penjelasan command per baris</a><a href="#catatan-penting" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Catatan penting</a><a href="#516-named-standard-ipv4-acl-example" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.6 Named Standard IPv4 ACL Example</a><a href="#konfigurasi-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Konfigurasi</a><a href="#perbandingan-numbered-vs-named" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Perbandingan Numbered vs Named</a><a href="#517-syntax-check--configure-standard-ipv4-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.7 Syntax Check – Configure Standard IPv4 ACLs</a><a href="#518-packet-tracer--configure-numbered-standard-ipv4-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.8 Packet Tracer – Configure Numbered Standard IPv4 ACLs</a><a href="#519-packet-tracer--configure-named-standard-ipv4-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.1.9 Packet Tracer – Configure Named Standard IPv4 ACLs</a><a href="#521-two-methods-to-modify-an-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.1 Two Methods to Modify an ACL</a><a href="#522-text-editor-method" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.2 Text Editor Method</a><a href="#langkah-langkah" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Langkah-langkah</a><a href="#kekurangan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Kekurangan</a><a href="#523-sequence-numbers-method" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.3 Sequence Numbers Method</a><a href="#langkah-langkah-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Langkah-langkah</a><a href="#contoh-memperbaiki-typo-di-acl-1-sequence-10" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Contoh: memperbaiki typo di ACL 1, sequence 10</a><a href="#kelebihan-method-sequence-numbers" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Kelebihan method sequence numbers</a><a href="#524-modify-a-named-acl-example" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.4 Modify a Named ACL Example</a><a href="#525-acl-statistics" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.5 ACL Statistics</a><a href="#melihat-statistik-match-per-ace" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Melihat statistik match per ACE</a><a href="#catatan-penting-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Catatan penting</a><a href="#reset-counters" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Reset counters</a><a href="#526-syntax-checker--modify-ipv4-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.6 Syntax Checker – Modify IPv4 ACLs</a><a href="#527-packet-tracer--configure-and-modify-standard-ipv4-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.2.7 Packet Tracer – Configure and Modify Standard IPv4 ACLs</a><a href="#531-the-access-class-command" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.3.1 The access-class Command</a><a href="#syntax-3" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Syntax</a><a href="#perbedaan-dengan-interface-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Perbedaan dengan interface ACL</a><a href="#532-secure-vty-access-example" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.3.2 Secure VTY Access Example</a><a href="#skenario-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Skenario</a><a href="#konfigurasi-2" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Konfigurasi</a><a href="#kenapa-deny-any-ditambahkan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Kenapa deny any ditambahkan?</a><a href="#533-verify-the-vty-port-is-secured" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.3.3 Verify the VTY Port is Secured</a><a href="#verifikasi-dari-luar" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Verifikasi dari luar</a><a href="#test-akses-dari-host-yang-tidak-diizinkan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Test akses dari host yang tidak diizinkan</a><a href="#test-akses-dari-host-yang-diizinkan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Test akses dari host yang diizinkan</a><a href="#best-practice-di-production" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Best practice di production</a><a href="#534-syntax-checker--secure-the-vty-ports" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.3.4 Syntax Checker – Secure the VTY Ports</a><a href="#541-extended-acls" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.1 Extended ACLs</a><a href="#penempatan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Penempatan</a><a href="#542-numbered-extended-ipv4-acl-syntax" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.2 Numbered Extended IPv4 ACL Syntax</a><a href="#syntax-4" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Syntax</a><a href="#parameter-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Parameter</a><a href="#543-protocols-and-ports" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.3 Protocols and Ports</a><a href="#protocol-yang-sering-dipakai" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Protocol yang sering dipakai</a><a href="#port-yang-sering-dipakai" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Port yang sering dipakai</a><a href="#544-protocols-and-port-numbers-configuration-examples" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.4 Protocols and Port Numbers Configuration Examples</a><a href="#contoh-izinkan-http-dan-https-dari-lan-ke-internet" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Contoh: izinkan HTTP dan HTTPS dari LAN ke internet</a><a href="#penjelasan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Penjelasan</a><a href="#545-apply-a-numbered-extended-ipv4-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.5 Apply a Numbered Extended IPv4 ACL</a><a href="#apply-ke-interface" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Apply ke interface</a><a href="#catatan" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Catatan</a><a href="#546-tcp-established-keyword" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.6 TCP Established Keyword</a><a href="#apa-itu-established" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Apa itu established?</a><a href="#contoh-konfigurasi" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Contoh konfigurasi</a><a href="#cara-kerja" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Cara kerja</a><a href="#547-named-extended-ipv4-acl-example" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.7 Named Extended IPv4 ACL Example</a><a href="#contoh-konfigurasi-mengizinkan-browsing" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Contoh konfigurasi: mengizinkan browsing</a><a href="#contoh-konfigurasi-return-traffic-dengan-established" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Contoh konfigurasi: return traffic dengan established</a><a href="#apply-ke-interface-1" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Apply ke interface</a><a href="#penjelasan-flow" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                ml-4
+              " data-astro-cid-ccykbmgk>Penjelasan flow</a><a href="#548-verify-extended-acl" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.4.8 Verify Extended ACL</a><a href="#551-what-did-i-learn-in-this-module" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.5.1 What did I learn in this module?</a><a href="#552-module-quiz--acls-for-ipv4-configuration" class="text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
+                
+              " data-astro-cid-ccykbmgk>5.5.2 Module Quiz – ACLs for IPv4 Configuration</a></nav></aside></div></main><footer class="bg-slate-900 border-t border-slate-800 text-slate-300 mt-auto"><div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-12 md:py-16"><div class="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12"><!-- Brand & Description --><div class="md:col-span-2 space-y-4"><a href="/" class="inline-block font-['Hanken_Grotesk'] text-2xl font-bold tracking-tight text-white mb-2">Phinisi Network</a><p class="text-sm font-['Inter'] text-slate-400 leading-relaxed max-w-sm">Platform e-learning untuk jaringan, administrasi sistem, dan otomatisasi. Belajar dengan cara yang praktis dan manusiawi.</p></div><!-- Quick Links --><div class="space-y-4"><h4 class="font-['JetBrains_Mono'] text-xs font-semibold tracking-[0.05em] uppercase text-white">Tautan Singkat</h4><ul class="space-y-3 font-['Inter'] text-sm"><li><a href="/courses" class="hover:text-white transition-colors">Kursus</a></li><li><a href="/learning-path" class="hover:text-white transition-colors">Alur Belajar</a></li><li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li><li><a href="/about" class="hover:text-white transition-colors">Tentang</a></li></ul></div><!-- Legal --><div class="space-y-4"><h4 class="font-['JetBrains_Mono'] text-xs font-semibold tracking-[0.05em] uppercase text-white">Legal</h4><ul class="space-y-3 font-['Inter'] text-sm"><li><a href="/privacy" class="hover:text-white transition-colors">Kebijakan Privasi</a></li><li><a href="/terms" class="hover:text-white transition-colors">Syarat &amp; Ketentuan</a></li></ul></div></div><!-- Bottom Bar --><div class="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 font-['Inter'] text-xs text-slate-500"><p>&copy; 2026 Phinisi Network. Hak Cipta Dilindungi.</p><div class="flex items-center space-x-4"><a href="https://instagram.com/calvin_um" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors" aria-label="Instagram"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"></path></svg></a><a href="https://www.linkedin.com/in/calvin-umboh" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors" aria-label="LinkedIn"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd"></path></svg></a></div></div></div></footer></body></html><script type="module">document.addEventListener(`DOMContentLoaded`,()=>{let e=new IntersectionObserver(e=>{e.forEach(e=>{let t=e.target.getAttribute(`id`),n=document.querySelector(`aside nav a[href="#${t}"]`);n&&e.intersectionRatio>0&&(document.querySelectorAll(`aside nav a`).forEach(e=>{e.classList.remove(`text-primary`,`font-semibold`)}),n.classList.add(`text-primary`,`font-semibold`))})},{rootMargin:`0px 0px -80% 0px`});document.querySelectorAll(`main h2, main h3`).forEach(t=>{e.observe(t)})});</script>

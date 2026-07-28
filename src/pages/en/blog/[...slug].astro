@@ -6,6 +6,8 @@ import Callout from '../../../components/Callout.astro';
 import Tabs from '../../../components/Tabs.astro';
 import TabItem from '../../../components/TabItem.astro';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allPosts = await getCollection('blog');
   const publishedPosts = allPosts.filter(post => post.data.draft !== true && post.data.language === 'en');

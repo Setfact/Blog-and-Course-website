@@ -6,6 +6,8 @@ import Tabs from '../../../components/Tabs.astro';
 import TabItem from '../../../components/TabItem.astro';
 import CustomImage from '../../../components/CustomImage.astro';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allDocs = await getCollection('docs');
   const publishedDocs = allDocs.filter(doc => doc.data.draft !== true && doc.data.language === 'en');

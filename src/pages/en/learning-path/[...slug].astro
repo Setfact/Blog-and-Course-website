@@ -3,6 +3,8 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import CustomImage from '../../../components/CustomImage.astro';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allPaths = await getCollection('paths');
   const publishedPaths = allPaths.filter(path => path.data.draft !== true && path.data.language === 'en');
