@@ -17,7 +17,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: true,
+      allowedHosts: ['phinisinetwork.calvinumboh.my.id'],
     }
   },
 
