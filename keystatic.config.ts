@@ -133,11 +133,8 @@ const mdxComponents = {
 };
 
 export default config({
-  storage: import.meta.env.DEV ? { 
-    kind: 'local' 
-  } : {
-    kind: 'github',
-    repo: 'Setfact/Blog-and-Course-website',
+  storage: {
+    kind: 'local'
   },
   ui: {
     brand: {
