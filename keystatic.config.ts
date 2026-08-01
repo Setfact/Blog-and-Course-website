@@ -138,7 +138,8 @@ export default config({
   },
   ui: {
     brand: {
-      name: 'Phinisi Network CMS',
+      name: 'Phinisi Network',
+      mark: () => h('img', { src: '/logo.png', height: 32, style: { marginRight: 8 }, alt: 'Phinisi Logo' }),
     },
   },
   collections: {
