@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Kebijakan Privasi - Phinisi Network">
+  <Header />
+  
+  <main class="min-h-screen bg-slate-50 py-16 md:py-24">
+    <div class="max-w-[800px] mx-auto px-4 sm:px-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6 font-['Hanken_Grotesk']">Kebijakan Privasi</h1>
+        
+        <div class="space-y-8 text-slate-700 font-['Inter'] leading-relaxed">
+          <p class="text-sm text-slate-500 border-b border-slate-100 pb-6">Terakhir diperbarui: 2 Agustus 2026</p>
+          
+          <section>
+            <h2 class="text-xl font-bold text-slate-900 mb-3 font-['Hanken_Grotesk']">1. Informasi yang Kami Kumpulkan</h2>
+            <p>Kami mengumpulkan informasi yang Anda berikan secara langsung kepada kami, seperti saat Anda membuat akun, mendaftar kursus, atau menghubungi dukungan pelanggan kami. Ini termasuk nama, alamat email, dan data profil Anda.</p>
+          </section>
+
+          <section>
+            <h2 class="text-xl font-bold text-slate-900 mb-3 font-['Hanken_Grotesk']">2. Bagaimana Kami Menggunakan Informasi Anda</h2>
+            <p>Informasi yang kami kumpulkan digunakan untuk mengoperasikan platform e-learning kami, memproses pendaftaran kursus Anda, mengirimkan pembaruan materi, memberikan sertifikat kelulusan, dan meningkatkan layanan kami secara keseluruhan.</p>
+          </section>
+
+          <section>
+            <h2 class="text-xl font-bold text-slate-900 mb-3 font-['Hanken_Grotesk']">3. Pembagian Data</h2>
+            <p>Kami sangat menghargai privasi Anda. Kami <strong>tidak menjual</strong> atau menyewakan informasi pribadi Anda kepada pihak ketiga. Kami hanya membagikan data kepada penyedia layanan tepercaya yang membantu kami beroperasi (seperti layanan analitik dan pembayaran) dengan kewajiban kerahasiaan yang sangat ketat.</p>
+          </section>
+
+          <section>
+            <h2 class="text-xl font-bold text-slate-900 mb-3 font-['Hanken_Grotesk']">4. Keamanan Data</h2>
+            <p>Kami mengambil langkah-langkah teknis dan administratif yang wajar untuk melindungi informasi pribadi Anda dari kehilangan, pencurian, dan akses yang tidak sah. Walaupun kami berusaha maksimal, perlu diingat bahwa tidak ada transmisi internet yang 100% aman.</p>
+          </section>
+
+          <section>
+            <h2 class="text-xl font-bold text-slate-900 mb-3 font-['Hanken_Grotesk']">5. Hak Anda (Kontrol Pengguna)</h2>
+            <p>Anda berhak untuk mengakses, memperbarui, atau menghapus informasi pribadi Anda kapan saja. Anda bisa melakukan ini melalui pengaturan akun Anda atau dengan menghubungi tim dukungan kami secara langsung.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
