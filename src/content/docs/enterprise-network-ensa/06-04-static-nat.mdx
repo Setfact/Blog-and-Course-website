@@ -1,0 +1,96 @@
+---
+title: "Static NAT"
+language: id
+draft: false
+description: "Bagian ini membahas konfigurasi static NAT secara lengkap."
+order: 40
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 6
+---
+
+# Static NAT
+
+
+Bagian ini membahas konfigurasi static NAT secara lengkap.
+
+## 6.4.1 Static NAT Scenario
+
+![Static NAT Scenario](https://itexamanswers.net/wp-content/uploads/2020/04/Static-NAT-Scenario.jpg)
+
+### Skenario
+- Server internal di `192.168.10.254` harus bisa diakses dari internet
+- Static NAT memetakan `192.168.10.254` ke `209.165.201.5` secara permanen
+
+## 6.4.2 Configure Static NAT
+
+### Langkah konfigurasi
+
+**Step 1:** Tentukan mapping static
+
+```text
+R2(config)# ip nat inside source static 192.168.10.254 209.165.201.5
+```
+
+**Step 2:** Tentukan interface inside dan outside
+
+```text
+R2(config)# interface GigabitEthernet0/0
+R2(config-if)# ip nat inside
+R2(config-if)# exit
+R2(config)# interface Serial0/1/1
+R2(config-if)# ip nat outside
+R2(config-if)# exit
+```
+
+### Penjelasan command
+
+| Command | Arti |
+|---|---|
+| `ip nat inside source static 192.168.10.254 209.165.201.5` | Buat mapping permanen: inside local → inside global |
+| `ip nat inside` | Tandai interface ini sebagai sisi **inside** (private) |
+| `ip nat outside` | Tandai interface ini sebagai sisi **outside** (public) |
+
+## 6.4.3 Analyze Static NAT
+
+![Analyze Static NAT](https://itexamanswers.net/wp-content/uploads/2020/04/Analyze-Static-NAT.jpg)
+
+### Proses translation
+1. Server internal (`192.168.10.254`) mengirim packet ke client di internet
+2. Router mengganti source IP dari `192.168.10.254` ke `209.165.201.5`
+3. Client di internet membalas ke `209.165.201.5`
+4. Router menerima respons dan mengganti destination IP kembali ke `192.168.10.254`
+
+## 6.4.4 Verify Static NAT
+
+```text
+R2# show ip nat translations
+```
+
+Output menunjukkan mapping antara inside local dan inside global.
+
+```text
+R2# show ip nat statistics
+```
+
+Menunjukkan statistik: total translations, hits, misses.
+
+```text
+R2# clear ip nat statistics
+```
+
+Reset statistik NAT.
+
+## 6.4.5 Packet Tracer – Configure Static NAT
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi static NAT. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

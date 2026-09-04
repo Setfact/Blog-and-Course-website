@@ -1,0 +1,96 @@
+---
+title: "Scalable Networks"
+language: id
+draft: false
+description: "Bagian ini membahas strategi dan teknik untuk membuat jaringan yang scalable."
+order: 72
+course: enterprise-network-ensa
+module: ensa-11-network-design
+durationMinutes: 6
+---
+
+# Scalable Networks
+
+
+Bagian ini membahas strategi dan teknik untuk membuat jaringan yang scalable.
+
+## 11.2.1 Switch Block Design
+
+![Role of Switched Networks](https://itexamanswers.net/wp-content/uploads/2020/04/Role-of-Switched-Networks.jpg)
+
+**Switch block** adalah kombinasi layer 2 dan layer 3 switches yang membentuk unit desain modular. Setiap switch block bisa di-scale secara independen.
+
+### Komponen switch block:
+- **Access layer switches** — menghubungkan end devices
+- **Distribution/Multilayer switches** — mengagregasi dan menjalankan routing
+
+## 11.2.2 Router Block Design
+
+![Plan for Redundancy](https://itexamanswers.net/wp-content/uploads/2020/04/Plan-for-Redundancy.jpg)
+
+**Router block** menambahkan redundancy dan routing antar switch blocks. Dengan dua router, switch block memiliki **default gateway redundancy**.
+
+![Edge Router](https://itexamanswers.net/wp-content/uploads/2020/04/Edge-Router.jpg)
+
+## 11.2.3 Redundant Links
+
+![Redundant Links](https://itexamanswers.net/wp-content/uploads/2020/04/Redundant-Links.jpg)
+
+**Redundant links** mencegah single points of failure. Tapi redundant links di Layer 2 bisa menyebabkan **Layer 2 loops** — untuk itu digunakan **Spanning Tree Protocol (STP)**.
+
+![Plan for Redundancy](https://itexamanswers.net/wp-content/uploads/2020/04/Plan-for-Redundancy.jpg)
+
+## 11.2.4 Multiple Links
+
+![Multiple Links](https://itexamanswers.net/wp-content/uploads/2020/04/Multiple-Links.jpg)
+
+**EtherChannel** menggabungkan beberapa physical links menjadi satu logical link. Ini meningkatkan bandwidth dan menyediakan load balancing.
+
+![Increase Bandwidth](https://itexamanswers.net/wp-content/uploads/2020/04/Increase-Bandwidth.jpg)
+
+## 11.2.5 Scalable Routing Protocols
+
+![Scalable Routing Protocol](https://itexamanswers.net/wp-content/uploads/2020/04/Scalable-Routing-Protocol.jpg)
+
+**OSPF** adalah routing protocol yang scalable karena:
+- mengisolasi update routing (area-based)
+- mengoptimalkan routing tables
+- convergence cepat
+
+![Tune Routing Protocols](https://itexamanswers.net/wp-content/uploads/2020/04/Tune-Routing-Protocols.jpg)
+
+## 11.2.6 Wireless Connectivity
+
+![Wireless Connectivity](https://itexamanswers.net/wp-content/uploads/2020/04/Wireless-Connectivity.jpg)
+
+**Wireless** memperluas access layer untuk mendukung mobilitas dan expansion. Wireless AP terhubung ke access layer switches.
+
+![Expand the Access Layer](https://itexamanswers.net/wp-content/uploads/2020/04/Expand-the-Access-Layer.jpg)
+
+## 11.2.7 Limit Failure Domains
+
+![AP1](https://itexamanswers.net/wp-content/uploads/2020/04/AP1.jpg)
+
+Jaringan yang baik membatasi ukuran **failure domain** — area yang terpengaruh saat satu komponen gagal.
+
+![S1](https://itexamanswers.net/wp-content/uploads/2020/04/S1.jpg)
+
+![S2](https://itexamanswers.net/wp-content/uploads/2020/04/S2.jpg)
+
+![S3](https://itexamanswers.net/wp-content/uploads/2020/04/S3.jpg)
+
+### Cara membatasi failure domain:
+- gunakan **switch blocks** dengan distribution layer
+- gunakan **router blocks** antar switch blocks
+- isolasi failure dengan **VLAN** dan **routing**
+
+<Callout type="remember" title={"\"A well-designed network limits the size of failure domains. Smaller failure domains reduce impact and simplify troubleshooting.\""}>
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 11: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-11-network-design.html).

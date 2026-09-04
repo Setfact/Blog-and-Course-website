@@ -1,0 +1,52 @@
+---
+interface Props {
+  label: string;
+  description?: string;
+  name?: string;
+  value?: string;
+  state?: 'default' | 'selected' | 'correct' | 'incorrect';
+  checked?: boolean;
+  disabled?: boolean;
+  correct?: boolean;
+}
+
+const {
+  label,
+  description,
+  name = 'quiz',
+  value = label,
+  state = 'default',
+  checked = false,
+  disabled = false,
+  correct = false,
+} = Astro.props;
+
+const icon = state === 'correct' ? 'check_circle' : state === 'incorrect' ? 'cancel' : state === 'selected' ? 'radio_button_checked' : 'radio_button_unchecked';
+---
+
+<label class:list={['quiz-option', `is-${state}`, disabled && 'is-disabled']} data-correct={correct ? 'true' : 'false'}>
+  <input type="radio" name={name} value={value} checked={checked} disabled={disabled} />
+  <span class="material-symbols-outlined option-icon" aria-hidden="true">{icon}</span>
+  <span class="option-copy">
+    <strong>{label}</strong>
+    {description && <small>{description}</small>}
+  </span>
+</label>
+
+<style>
+  .quiz-option { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.85rem; min-height: 62px; border: 2px solid var(--color-line); border-radius: 1rem; padding: 0.85rem 1rem; background: white; cursor: pointer; transition: transform 150ms ease, border-color 150ms ease, background 150ms ease; }
+  .quiz-option:hover { transform: translateY(-2px); border-color: var(--color-phinisi-300); }
+  .quiz-option:has(input:focus-visible) { outline: 3px solid rgba(56, 189, 248, 0.55); outline-offset: 3px; }
+  input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .option-icon { color: #9aa9bc; font-size: 1.45rem; }
+  .option-copy { display: flex; flex-direction: column; }
+  .option-copy strong { color: var(--color-ink); font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; }
+  .option-copy small { margin-top: 0.2rem; color: var(--color-muted); font-size: 0.78rem; }
+  .is-selected { border-color: var(--color-phinisi-500); background: var(--color-phinisi-50); }
+  .is-selected .option-icon { color: var(--color-phinisi-600); }
+  .is-correct { border-color: var(--color-success); background: var(--color-success-soft); }
+  .is-correct .option-icon { color: var(--color-success); }
+  .is-incorrect { border-color: var(--color-danger); background: var(--color-danger-soft); }
+  .is-incorrect .option-icon { color: var(--color-danger); }
+  .is-disabled { opacity: 0.6; cursor: not-allowed; }
+</style>

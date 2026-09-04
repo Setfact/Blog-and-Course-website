@@ -1,0 +1,106 @@
+---
+title: "SNMP (Simple Network Management Protocol)"
+language: id
+draft: false
+description: "Bagian ini membahas SNMP — protokol application-layer untuk memantau dan mengelola perangkat jaringan."
+order: 66
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 7
+---
+
+# SNMP (Simple Network Management Protocol)
+
+
+Bagian ini membahas **SNMP** — protokol application-layer untuk memantau dan mengelola perangkat jaringan.
+
+## 10.4.1 Introduction to SNMP
+
+![Introduction to SNMP](https://itexamanswers.net/wp-content/uploads/2020/04/Introduction-to-SNMP.jpg)
+
+### Komponen SNMP
+
+| Komponen | Deskripsi |
+|---|---|
+| **SNMP Manager (NMS)** | Perangkat pusat yang memantau jaringan. Menggunakan **UDP 161** |
+| **SNMP Agent** | Software yang berjalan di perangkat managed. Menanggapi poll dari NMS |
+| **MIB** (Management Information Base) | Database hierarkis dari object yang dikelola (OID — Object Identifier) |
+
+## 10.4.2 SNMP Operations
+
+![SNMP Operation](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Operation.jpg)
+
+### Operasi SNMP
+
+| Operasi | Deskripsi | Arah |
+|---|---|---|
+| **Get Request** | NMS mengambil data dari agent | NMS → Agent |
+| **Set Request** | NMS mengubah konfigurasi di agent | NMS → Agent |
+| **Response** | Agent membalas dengan data yang diminta | Agent → NMS |
+| **Trap** | Agent mengirim alert tanpa diminta ke NMS | Agent → NMS (UDP 162) |
+
+![SNMP Agent Traps](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Agent-Traps.jpg)
+
+![SNMP Agent Traps - 2](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Agent-Traps2.jpg)
+
+## 10.4.3 SNMP Versions
+
+### SNMPv1/v2c
+
+![Community Strings](https://itexamanswers.net/wp-content/uploads/2020/04/10.4.6-Community-Strings.gif)
+
+- Menggunakan **community strings** (read-only / read-write)
+- **Keamanan minimal** — community string dikirim dalam teks
+- SNMPv2c menambahkan GetBulk dan Inform operations
+
+### SNMPv3
+
+- **Authentication** — MD5 atau SHA
+- **Encryption** — DES atau AES
+- **Message Integrity** — memastikan data tidak diubah
+- **User-based security** — bukan community string
+
+### Perbandingan Versi
+
+| Fitur | SNMPv1/v2c | SNMPv3 |
+|---|---|---|
+| Keamanan | Minimal | Tinggi |
+| Autentikasi | Community string | MD5/SHA |
+| Enkripsi | ❌ | DES/AES |
+| User-based | ❌ | ✅ |
+
+## 10.4.4 MIB and OID
+
+![MIB Object ID](https://itexamanswers.net/wp-content/uploads/2020/04/MIB-Object-ID.jpg)
+
+### Apa itu MIB?
+**MIB** adalah database hierarkis yang berisi object-object yang bisa dimonitor/dikelola oleh SNMP. Setiap object punya **OID (Object Identifier)** unik.
+
+### Contoh OID:
+- `1.3.6.1.2.1.1.1.0` — sysDescr (deskripsi sistem)
+- `1.3.6.1.2.1.1.3.0` — sysUpTime (waktu aktif sistem)
+
+## 10.4.5 SNMP Polling Scenario
+
+![SNMP Polling Scenario](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Polling-Scenario.jpg)
+
+### Pola komunikasi SNMP:
+
+![SNMP Polling Scenario - 2](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Polling-Scenario1.jpg)
+
+1. NMS mengirim Get Request ke agent (polling)
+2. Agent membalas dengan Response
+3. Jika ada event penting, agent mengirim Trap
+
+## 10.4.6 SNMP Object Navigator
+
+![SNMP Object Navigator](https://itexamanswers.net/wp-content/uploads/2020/04/SNMP-Object-Navigator.jpg)
+
+Cisco SNMP Object Navigator adalah tool online untuk mencari OID dan informasi MIB. Tersedia di: http://snmp.cloudsapps.io/
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

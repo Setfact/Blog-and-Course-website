@@ -1,0 +1,43 @@
+---
+title: "Why QoS?"
+language: id
+draft: false
+description: "Bagian ini membahas kenapa QoS dibutuhkan dan apa yang terjadi tanpa QoS."
+order: 57
+course: enterprise-network-ensa
+module: ensa-09-qos-concepts
+durationMinutes: 6
+---
+
+# Why QoS?
+
+
+Bagian ini membahas kenapa QoS dibutuhkan dan apa yang terjadi tanpa QoS.
+
+## 9.1.1 Understanding QoS
+
+![Using Queues to Prioritize Communications](https://itexamanswers.net/wp-content/uploads/2020/04/Using-Queues-to-Priorities-Communications.jpg)
+
+### Analogi sederhana
+Bayangkan ambulans di jalan raya yang macet. Tanpa prioritas, ambulans harus antri seperti kendaraan lain. Dengan QoS, ambulans diberi jalan terlebih dahulu. Begitu juga dengan voice dan video di jaringan.
+
+## 9.1.2 Network Congestion Points
+
+![Examples of Congestion Points](https://itexamanswers.net/wp-content/uploads/2020/04/Examples-of-Congestion-Points.jpg)
+
+**Congestion** terjadi ketika volume traffic melebihi kapasitas interface. Tanpa QoS, paket diproses secara **FIFO** (First-In, First-Out), yang menyebabkan:
+- **Delay/Latency** — waktu paket berpindah dari source ke destination
+- **Jitter** — variasi delay antar paket
+- **Packet Loss** — paket yang dibuang saat congestion
+
+<Callout type="warning" title={"QoS hanya aktif saat congestion"}>
+QoS tidak melakukan apapun saat jaringan tidak macet. Mekanismenya aktif hanya saat terjadi congestion.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 9: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-9-qos-concepts.html).

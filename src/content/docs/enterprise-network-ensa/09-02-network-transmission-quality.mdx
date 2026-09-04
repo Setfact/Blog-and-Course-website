@@ -1,0 +1,79 @@
+---
+title: "Network Transmission Quality"
+language: id
+draft: false
+description: "Bagian ini membahas metrik kualitas jaringan dan dampaknya ke berbagai jenis traffic."
+order: 58
+course: enterprise-network-ensa
+module: ensa-09-qos-concepts
+durationMinutes: 6
+---
+
+# Network Transmission Quality
+
+
+Bagian ini membahas metrik kualitas jaringan dan dampaknya ke berbagai jenis traffic.
+
+## 9.2.1 Understanding Delay, Jitter, and Packet Loss
+
+### Delay / Latency
+
+**Delay** adalah waktu yang dibutuhkan paket untuk berpindah dari source ke destination. Delay terbagi menjadi:
+
+| Tipe Delay | Deskripsi |
+|---|---|
+| **Fixed Delay** | Waktu pemrosesan yang prediktif (encoding, packetization, serialization, de-jitter buffer) |
+| **Variable Delay** | Waktu yang berubah-ubah tergantung kondisi jaringan (queuing, propagation) |
+
+### Jitter
+
+**Jitter** adalah variasi delay antar paket. Jika paket A delay 10ms dan paket B delay 50ms, maka jitter-nya 40ms. Jitter harus dikontrol untuk traffic real-time.
+
+![Playout Delay Buffer Compensates for Jitter](https://itexamanswers.net/wp-content/uploads/2020/04/Playout-Delay-Buffer-Compensates-for-Jitter.jpg)
+
+### Packet Loss
+
+**Packet Loss** adalah paket yang dibuang saat congestion. Untuk voice dan video, packet loss sangat kritis.
+
+![Packet Dropped Due to Excessive Jitter](https://itexamanswers.net/wp-content/uploads/2020/04/Packet-Dropped-Due-to-Excessive-Jitter.jpg)
+
+## 9.2.2 Requirements for Voice and Video Traffic
+
+### Voice Traffic
+
+![Voice Traffic](https://itexamanswers.net/wp-content/uploads/2020/04/Video1.jpg)
+
+| Parameter | Requirement |
+|---|---|
+| **Latency** | ≤ 150 ms (one-way) |
+| **Jitter** | ≤ 30 ms |
+| **Packet Loss** | ≤ 1% |
+| **Bandwidth** | 30–128 Kbps |
+
+### Video Traffic
+
+![Video Traffic](https://itexamanswers.net/wp-content/uploads/2020/04/Video2.jpg)
+
+| Parameter | Requirement |
+|---|---|
+| **Latency** | ≤ 200–400 ms |
+| **Jitter** | ≤ 30–50 ms |
+| **Packet Loss** | ≤ 0.1–1% |
+| **Bandwidth** | 384 Kbps – >20 Mbps |
+
+### Perbandingan
+
+| Aspek | Voice | Video | Data |
+|---|---|---|---|
+| **Delay Sensitivity** | Sangat Tinggi | Tinggi | Rendah |
+| **Drop Sensitivity** | Sangat Tinggi | Tinggi | Rendah |
+| **Pattern** | Smooth | Bursty | Smooth/Bursty |
+| **Protocol** | UDP | UDP | TCP/UDP |
+| **Retransmission** | Tidak ada | Tidak ada | Ada (TCP) |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 9: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-9-qos-concepts.html).

@@ -1,0 +1,133 @@
+---
+title: "Router & Switch File Maintenance"
+language: id
+draft: false
+description: "Bagian ini membahas cara membackup, me-restore, dan memelihara file di router/switch."
+order: 68
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 7
+---
+
+# Router & Switch File Maintenance
+
+
+Bagian ini membahas cara membackup, me-restore, dan memelihara file di router/switch.
+
+## 10.6.1 File Systems
+
+### Melihat file system
+
+```text
+Router# show file systems
+```
+
+Menampilkan semua storage yang tersedia: flash, NVRAM, TFTP, USB.
+
+### Struktur file di Cisco IOS
+
+| File | Lokasi | Keterangan |
+|---|---|---|
+| `running-config` | RAM | Konfigurasi aktif saat ini |
+| `startup-config` | NVRAM | Konfigurasi yang dimuat saat boot |
+| IOS image | Flash | File system operasi |
+| Backup config | TFTP/USB | Backup konfigurasi |
+
+## 10.6.2 Backup and Restore with TFTP
+
+### Backup running-config ke TFTP
+
+![Use a Text File to Back Up a Configuration](https://itexamanswers.net/wp-content/uploads/2020/04/Use-a-Text-File-to-Back-Up-a-Configuration.jpg)
+
+```text
+Router# copy running-config tftp:
+Address or name of remote host []? 209.165.200.225
+Destination filename [router-config]? backup-config
+!!
+1567 bytes copied in 0.456 secs
+```
+
+### Restore running-config dari TFTP
+
+![Use a Text File to Restore a Configuration](https://itexamanswers.net/wp-content/uploads/2020/04/Use-a-Text-File-to-Restore-a-Configuration.jpg)
+
+```text
+Router# copy tftp: running-config
+Address or name of remote host []? 209.165.200.225
+Source filename []? backup-config
+Destination filename [running-config]?
+!!
+1567 bytes copied in 0.234 secs
+```
+
+## 10.6.3 Backup and Restore with USB
+
+![USB Ports on a Cisco Router](https://itexamanswers.net/wp-content/uploads/2020/04/USB-Ports-on-a-Cisco-Router.jpg)
+
+### Backup ke USB
+
+```text
+Router# copy running-config usbflash0:backup-config
+```
+
+### Restore dari USB
+
+```text
+Router# copy usbflash0:backup-config running-config
+```
+
+## 10.6.4 Password Recovery Procedure
+
+<Callout type="warning" title={"Procedure ini harus dilakukan dengan hati-hati"}>
+Password recovery memerlukan akses fisik ke perangkat. Di production, pastikan kamu punya otorisasi sebelum melakukan ini.
+</Callout>
+
+
+### Langkah-langkah:
+
+**Step 1:** Masuk ke ROMMON (via break sequence saat boot)
+
+**Step 2:** Set config register untuk mengabaikan startup-config
+
+```text
+rommon 1> confreg 0x2142
+rommon 2> reset
+```
+
+**Step 3:** Setelah reload, copy startup ke running
+
+```text
+Router# copy startup-config running-config
+```
+
+**Step 4:** Ganti password
+
+```text
+Router(config)# enable secret newpassword
+Router(config)# line console 0
+Router(config-line)# password newpassword
+Router(config-line)# login
+Router(config-line)# line vty 0 4
+Router(config-line)# password newpassword
+Router(config-line)# login
+```
+
+**Step 5:** Reset config register ke default
+
+```text
+Router(config)# config-register 0x2102
+```
+
+**Step 6:** Save dan reload
+
+```text
+Router# write memory
+Router# reload
+```
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

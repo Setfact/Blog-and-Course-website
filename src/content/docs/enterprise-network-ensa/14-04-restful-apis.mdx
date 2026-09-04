@@ -1,0 +1,100 @@
+---
+title: "RESTful APIs"
+language: id
+draft: false
+description: "Bagian ini membahas REST (Representational State Transfer) secara lebih detail."
+order: 91
+course: enterprise-network-ensa
+module: ensa-14-network-automation
+durationMinutes: 7
+---
+
+# RESTful APIs
+
+
+Bagian ini membahas REST (Representational State Transfer) secara lebih detail.
+
+## 14.4.1 REST and RESTful API
+
+![REST and RESTful API](https://itexamanswers.net/wp-content/uploads/2020/04/REST-and-RESTful-API.jpg)
+
+**REST** adalah architectural style untuk web services yang menggunakan HTTP protocols. RESTful API adalah implementasi REST yang mematuhi constraint dan prinsip REST.
+
+### Fitur RESTful APIs:
+
+| Fitur | Deskripsi |
+|---|---|
+| **Client-Server** | Front-end (client) dan back-end (server) dipisahkan secara terpisah |
+| **Stateless** | Tidak ada data client yang disimpan antara requests — setiap request harus mengandung semua informasi yang dibutuhkan |
+| **Cacheable** | Clients bisa cache responses untuk mengurangi latency di request berikutnya |
+
+## 14.4.2 RESTful Implementation
+
+![RESTful Implementation](https://itexamanswers.net/wp-content/uploads/2020/04/RESTful-Implementation.jpg)
+
+### HTTP Methods → CRUD Operations:
+
+| HTTP Method | RESTful Operation | Fungsi |
+|---|---|---|
+| **POST** | Create | Membuat resource baru |
+| **GET** | Read | Membaca/mengambil data |
+| **PUT/PATCH** | Update | Memperbarui resource yang ada |
+| **DELETE** | Delete | Menghapus resource |
+
+## 14.4.3 Parts of a URI
+
+![Parts of a URI](https://itexamanswers.net/wp-content/uploads/2020/04/Parts-of-a-URI.jpg)
+
+### Contoh URI:
+```text
+https://www.mapquestapi.com/directions/v2/route?key=KEY&from=San+Jose,Ca&to=Monterey,Ca
+```
+
+| Komponen | Deskripsi |
+|---|---|
+| **Scheme** | `https` — protokol yang digunakan |
+| **Host** | `www.mapquestapi.com` — server tempat API hosted |
+| **Path** | `/directions/v2/route` — resource spesifik yang diminta |
+| **Query Parameters** | `key=KEY&from=...&to=...` — parameter untuk filter/menyesuaikan request |
+
+## 14.4.4 Parts of an API Request
+
+![Parts of an API Request](https://itexamanswers.net/wp-content/uploads/2020/04/Parts-of-an-API-Request.jpg)
+
+### Komponen API Request:
+- **API Server** — URL untuk REST server
+- **Resources** — specific API yang diminta
+- **Query Parameters** — format (JSON/YAML/XML), Key (authorization), Parameters (request data)
+
+## 14.4.5 API Response
+
+![Partial JSON Payload Received from an API Request](https://itexamanswers.net/wp-content/uploads/2020/04/Partial-JSON-Payload-Received-from-an-API-Request.jpg)
+
+Response dari API request biasanya berupa data dalam format JSON, XML, atau YAML. Data ini berisi informasi yang diminta oleh client.
+
+## 14.4.6 Tools for API Interaction
+
+![Developer Web Site](https://itexamanswers.net/wp-content/uploads/2020/04/Developer-Web-Site.jpg)
+
+### 1. Developer Websites
+Situs developer menyediakan API documentation dan testing tools. Kamu bisa mencoba API langsung di browser sebelum mengimplementasikannya di kode.
+
+![Postman](https://itexamanswers.net/wp-content/uploads/2020/04/Postman.jpg)
+
+### 2. Postman
+**Postman** adalah aplikasi populer untuk testing REST APIs. Kamu bisa mengirim GET, POST, PUT, DELETE requests dan melihat responses secara visual.
+
+![Python](https://itexamanswers.net/wp-content/uploads/2020/04/Python.jpg)
+
+### 3. Python
+**Python** bisa digunakan untuk programmatically melakukan API calls. Library seperti `requests` memudahkan pembuatan API calls.
+
+### 4. Network Operating Systems
+Protokol seperti **NETCONF** dan **RESTCONF** memungkinkan konfigurasi network devices secara programmatic melalui API.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 14: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-14-network-automation.html).

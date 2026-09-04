@@ -1,0 +1,103 @@
+---
+title: 'Hardening Perangkat, Akses Aman, dan AAA'
+language: id
+draft: false
+description: 'Kurangi permukaan serangan perangkat dan amankan akses administratif menggunakan secret, SSH, serta prinsip AAA.'
+order: 3
+course: security-fundamentals
+module: security-fundamentals-02-hardening
+durationMinutes: 24
+---
+
+# Hardening Perangkat, Akses Aman, dan AAA
+
+Hardening adalah proses mengurangi permukaan serangan perangkat. Prinsipnya: gunakan protokol aman, matikan layanan yang tidak diperlukan, batasi siapa yang dapat mengelola perangkat, dan simpan bukti aktivitas melalui logging.
+
+## Authentication, authorization, accounting
+
+AAA menjawab tiga pertanyaan berbeda:
+
+- **Authentication** — siapa kamu?
+- **Authorization** — setelah dikenali, tindakan apa yang boleh kamu lakukan?
+- **Accounting** — tindakan apa yang dilakukan dan kapan terjadi?
+
+Pada lab kecil, akun lokal dapat digunakan untuk autentikasi. Pada jaringan yang lebih besar, layanan terpusat seperti RADIUS atau TACACS+ memudahkan pengelolaan identitas dan pencatatan aktivitas.
+
+## Baseline akses administratif
+
+Contoh berikut membuat identitas perangkat, akun lokal, RSA key, dan SSHv2:
+
+```text
+hostname R1
+ip domain-name phinisi.local
+username admin privilege 15 secret GunakanSecretYangKuat
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+line vty 0 4
+ login local
+ transport input ssh
+ exec-timeout 5 0
+```
+
+Gunakan `enable secret`, bukan `enable password`, untuk akses privileged EXEC. Perintah `service password-encryption` hanya menyamarkan sebagian password pada konfigurasi dan bukan pengganti secret yang kuat atau perlindungan file konfigurasi.
+
+<Callout type="remember">
+SSH melindungi sesi manajemen saat melewati jaringan. Ia tidak memperbaiki password lemah, akun bersama, atau privilege yang terlalu tinggi.
+</Callout>
+
+## Kebijakan password yang sehat
+
+Password policy perlu membahas panjang minimum, kompleksitas yang masuk akal, penyimpanan, akun unik, penanganan kredensial bocor, dan alternatif seperti multifactor authentication atau certificate. Hindari akun bersama karena menghilangkan accountability.
+
+## Susun konfigurasi SSH
+
+<CommandOrder
+  activityId="security-ssh-order"
+  courseSlug="security-fundamentals"
+  lessonId="02-hardening-dan-akses-aman"
+  title="Urutkan persiapan SSH pada router"
+  description="Susun command global berikut dari identitas perangkat hingga SSHv2 siap digunakan."
+  steps={['hostname R1', 'ip domain-name phinisi.local', 'username admin privilege 15 secret SandiKuat', 'crypto key generate rsa modulus 2048', 'ip ssh version 2']}
+  scrambledOrder={[3, 1, 4, 0, 2]}
+  xp={30}
+/>
+
+## Verifikasi
+
+<CommandBlock command="show ip ssh" prompt="R1#" title="Periksa status SSH" />
+
+Periksa pula akun, konfigurasi VTY, waktu idle, dan sumber jaringan yang diizinkan mengakses perangkat. Untuk pembatasan berdasarkan alamat sumber, gunakan ACL pada `access-class` VTY.
+
+<LessonQuiz
+  activityId="security-lesson-2-quiz"
+  courseSlug="security-fundamentals"
+  lessonId="02-hardening-dan-akses-aman"
+  questions={[
+    {
+      question: 'Bagian AAA mana yang menentukan command atau resource yang boleh dipakai pengguna setelah login?',
+      options: ['Authentication', 'Authorization', 'Accounting', 'Availability'],
+      correctIndex: 1,
+      explanation: 'Authentication mengenali pengguna, authorization menentukan haknya, dan accounting mencatat aktivitasnya.',
+    },
+    {
+      question: 'Mengapa SSH dipilih menggantikan Telnet untuk akses manajemen?',
+      options: ['SSH tidak membutuhkan autentikasi', 'SSH melindungi sesi manajemen melalui enkripsi', 'SSH hanya bekerja melalui console', 'SSH menghapus kebutuhan password policy'],
+      correctIndex: 1,
+      explanation: 'SSH mengenkripsi sesi yang melewati jaringan, tetapi tetap membutuhkan identitas, secret, dan privilege yang aman.',
+    },
+    {
+      question: 'Command mana yang direkomendasikan untuk akses privileged EXEC?',
+      options: ['enable password', 'enable secret', 'service password-encryption saja', 'password cisco pada line console'],
+      correctIndex: 1,
+      explanation: 'Cisco merekomendasikan enable secret; service password-encryption bukan pengganti mekanisme secret yang kuat.',
+    },
+  ]}
+  passingScore={67}
+  xp={30}
+/>
+
+## Referensi resmi
+
+- [Cisco — Harden Cisco IOS Devices](https://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html)
+- [Cisco — IOS XE Software Hardening Guide](https://sec.cloudapps.cisco.com/security/center/resources/IOS_XE_hardening)

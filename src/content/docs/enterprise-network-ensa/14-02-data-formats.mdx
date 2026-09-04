@@ -1,0 +1,119 @@
+---
+title: "Data Formats"
+language: id
+draft: false
+description: "Bagian ini membahas tiga format data utama yang digunakan dalam network automation: JSON, YAML, dan XML."
+order: 89
+course: enterprise-network-ensa
+module: ensa-14-network-automation
+durationMinutes: 7
+---
+
+# Data Formats
+
+
+Bagian ini membahas tiga format data utama yang digunakan dalam network automation: JSON, YAML, dan XML.
+
+## 14.2.1 Overview of Data Formats
+
+![The Data Formats Concept](https://itexamanswers.net/wp-content/uploads/2020/04/The-Data-Formats-Concept.jpg)
+
+Data formats memungkinkan pertukaran data terstruktur antar perangkat. Format yang berbeda punya aturan syntax yang berbeda, tapi semuanya punya konsep dasar yang sama:
+- **Key/Value Pairs** — key mendeskripsikan data, value adalah data itu sendiri
+- **Object Representation** — karakter, strings, lists, arrays
+- **Syntax Rules** — aturan untuk bracket, indentation, quotes, commas
+
+## 14.2.2 JSON (JavaScript Object Notation)
+
+### Contoh JSON (ISS Location):
+
+```json
+{
+  "message": "success",
+  "timestamp": 1560789260,
+  "iss_position": {
+    "latitude": "25.9990",
+    "longitude": "-132.6992"
+  }
+}
+```
+
+### Aturan JSON:
+- Menggunakan `{}` untuk objects, `[]` untuk arrays
+- Keys harus dalam **double quotes**
+- Values bisa berupa string, number, array, boolean, null, atau object
+- Key/value pairs dipisahkan oleh **colon** (`:`)
+- Multiple pairs dipisahkan oleh **comma** (`,`)
+
+### Kelebihan JSON:
+- **Lightweight** — ringan dan mudah dibaca
+- **Human-readable** — bisa dibaca oleh manusia
+- **Wide support** — didukung oleh hampir semua bahasa pemrograman
+- **Tight syntax** — tidak ada keyword atau tag yang tidak perlu
+
+## 14.2.3 YAML (YAML Ain't Markup Language)
+
+### Contoh YAML (GigabitEthernet2):
+
+```yaml
+ietf-interfaces:interface:
+  name: GigabitEthernet2
+  description: Wide Area Network
+  enabled: true
+  ietf-ip:ipv4:
+    address:
+    - ip: 172.16.0.2
+      netmask: 255.255.255.0
+```
+
+### Fitur YAML:
+- **Superset of JSON** — semua JSON valid di YAML, tapi YAML punya fitur tambahan
+- **Minimalist format** — menggunakan **indentation** alih-alih bracket/commas
+- **Hyphens** (`-`) memisahkan list elements
+- **Lebih mudah dibaca** dari JSON untuk data yang kompleks
+
+### Perbandingan YAML vs JSON:
+| Aspek | JSON | YAML |
+|---|---|---|
+| Syntax | Bracket `{}`, commas `,` | Indentation, hyphens `-` |
+| Readability | Good | Lebih baik |
+| Verbosity | Lebih verbose | Lebih ringkas |
+| Lists | `[1, 2, 3]` | `- 1` (per baris) |
+| Multiline strings | Tidak native | Native (`\|` dan `>`) |
+
+## 14.2.4 XML (eXtensible Markup Language)
+
+### Contoh XML (GigabitEthernet2):
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<ietf-interfaces:interface>
+  <name>GigabitEthernet2</name>
+  <description>Wide Area Network</description>
+  <enabled>true</enabled>
+</ietf-interfaces:interface>
+```
+
+### Fitur XML:
+- **Self-descriptive** — menggunakan tags: `<tag>value</tag>`
+- **No predefined tags** — kamu bisa mendefinisikan tags sendiri
+- **Repeated tags** untuk lists
+- **Verbose** — lebih banyak karakter dari JSON/YAML
+- **Schema validation** — bisa divalidasi dengan XSD
+
+### Perbandingan ketiga format:
+
+| Aspek | JSON | YAML | XML |
+|---|---|---|---|
+| Readability | Good | Sangat baik | Sedang |
+| Verbosity | Sedang | Ringkas | Verbose |
+| Syntax | Brackets, commas | Indentation | Tags |
+| Use case | Web APIs | Configuration files | Enterprise systems |
+| Parsing | Mudah | Mudah | Lebih kompleks |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 14: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-14-network-automation.html).

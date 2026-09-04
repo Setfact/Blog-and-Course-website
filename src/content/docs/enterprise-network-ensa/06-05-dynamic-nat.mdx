@@ -1,0 +1,111 @@
+---
+title: "Dynamic NAT"
+language: id
+draft: false
+description: "Bagian ini membahas konfigurasi dynamic NAT secara lengkap."
+order: 41
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 7
+---
+
+# Dynamic NAT
+
+
+Bagian ini membahas konfigurasi dynamic NAT secara lengkap.
+
+## 6.5.1 Dynamic NAT Scenario
+
+![Dynamic NAT Scenario](https://itexamanswers.net/wp-content/uploads/2020/04/Dynamic-NAT-Scenario.jpg)
+
+### Skenario
+- Banyak host internal yang perlu akses internet
+- Tersedia pool alamat public dari `209.165.200.226` sampai `209.165.200.240`
+- Host mendapat alamat public dari pool saat dibutuhkan
+
+## 6.5.2 Configure Dynamic NAT
+
+### Langkah konfigurasi
+
+**Step 1:** Buat NAT pool
+
+```text
+R2(config)# ip nat pool NAT-POOL1 209.165.200.226 209.165.200.240 netmask 255.255.255.224
+```
+
+**Step 2:** Buat ACL untuk menentukan host yang boleh ditranslate
+
+```text
+R2(config)# access-list 1 permit 192.168.0.0 0.0.255.255
+```
+
+**Step 3:** Bind ACL ke pool
+
+```text
+R2(config)# ip nat inside source list 1 pool NAT-POOL1
+```
+
+**Step 4:** Tentukan interface inside dan outside
+
+```text
+R2(config)# interface GigabitEthernet0/0
+R2(config-if)# ip nat inside
+R2(config-if)# exit
+R2(config)# interface Serial0/1/1
+R2(config-if)# ip nat outside
+R2(config-if)# exit
+```
+
+### Penjelasan command
+
+| Command | Arti |
+|---|---|
+| `ip nat pool NAT-POOL1 ...` | Buat pool alamat public |
+| `access-list 1 permit ...` | Definisikan host mana yang boleh ditranslate |
+| `ip nat inside source list 1 pool NAT-POOL1` | Bind ACL ke pool — host yang match ACL mendapat alamat dari pool |
+
+## 6.5.3 Analyze Dynamic NAT – Inside to Outside
+
+![Analyze Dynamic NAT Inside to Outside](https://itexamanswers.net/wp-content/uploads/2020/04/Analyze-Dynamic-NAT-Inside-to-Outside.jpg)
+
+### Proses
+1. Host internal mengirim packet ke internet
+2. Router memeriksa ACL — apakah host ini diizinkan?
+3. Kalau diizinkan, router mengambil alamat dari pool yang belum terpakai
+4. Mapping disimpan di NAT table
+5. Packet dikirim dengan alamat public sebagai source
+
+## 6.5.4 Analyze Dynamic NAT – Outside to Inside
+
+![Analyze Dynamic NAT Outside to Inside](https://itexamanswers.net/wp-content/uploads/2020/04/Analyze-Dynamic-NAT-Outside-to-Inside.jpg)
+
+### Proses
+1. Server di internet membalas ke alamat public yang ditranslate
+2. Router memeriksa NAT table
+3. Router mengganti destination address ke alamat private host asal
+4. Packet diteruskan ke host internal
+
+## 6.5.5 Verify Dynamic NAT
+
+```text
+R2# show ip nat translations [verbose]
+R2# clear ip nat translation *
+```
+
+### Catatan
+- `clear ip nat translation *` menghapus **semua dynamic entries**
+- Static entries tidak terpengaruh
+
+## 6.5.6 Packet Tracer – Configure Dynamic NAT
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi dynamic NAT. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

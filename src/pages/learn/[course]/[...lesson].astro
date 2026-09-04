@@ -1,0 +1,59 @@
+---
+import { getCollection, render } from 'astro:content';
+import LearningPlayerLayout from '../../../layouts/LearningPlayerLayout.astro';
+import Callout from '../../../components/Callout.astro';
+import Tabs from '../../../components/Tabs.astro';
+import TabItem from '../../../components/TabItem.astro';
+import CustomImage from '../../../components/CustomImage.astro';
+import CommandBlock from '../../../components/ui/CommandBlock.astro';
+import TopologyDiagram from '../../../components/TopologyDiagram.astro';
+import PracticeCTA from '../../../components/PracticeCTA.astro';
+import KnowledgeCheck from '../../../components/KnowledgeCheck.astro';
+import LessonQuiz from '../../../components/LessonQuiz.astro';
+import CommandOrder from '../../../components/CommandOrder.astro';
+import { getCourseBySlug, loadCourses } from '../../../data/learning';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const [allDocs, courses] = await Promise.all([getCollection('lessons'), loadCourses()]);
+  const roots = allDocs.filter(entry => (
+    entry.data.draft !== true
+    && entry.data.language === 'id'
+    && Boolean(entry.data.course)
+    && Boolean(courses.find((course) => course.slug === entry.data.course)?.learningHref?.id)
+    && (entry.id === entry.id.split('/')[0] || entry.id.endsWith('/index'))
+  ));
+  const paths: any[] = [];
+
+  for (const root of roots) {
+    const courseSlug = root.data.course!;
+    const category = root.id.split('/')[0];
+    const courseEntries = allDocs
+      .filter(entry => entry.data.draft !== true && entry.data.language === 'id' && (entry.id === category || entry.id.startsWith(`${category}/`)))
+      .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+
+    for (const entry of courseEntries) {
+      const isOverview = entry.id === category || entry.id === `${category}/index`;
+      paths.push({
+        params: {
+          course: courseSlug,
+          lesson: isOverview ? undefined : entry.id.replace(`${category}/`, ''),
+        },
+        props: { entry, courseEntries, courseSlug },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { entry, courseEntries, courseSlug } = Astro.props;
+const course = await getCourseBySlug(courseSlug);
+if (!course) throw new Error(`Course ${courseSlug} tidak ditemukan.`);
+const { Content } = await render(entry);
+---
+
+<LearningPlayerLayout entry={entry} course={course} courseEntries={courseEntries}>
+  <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder }} />
+</LearningPlayerLayout>

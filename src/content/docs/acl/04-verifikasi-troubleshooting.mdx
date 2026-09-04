@@ -1,0 +1,118 @@
+---
+title: 'Verifikasi dan Troubleshooting ACL'
+language: id
+draft: false
+description: 'Gunakan show command, hit counter, dan pengujian terarah untuk menemukan kesalahan ACL.'
+order: 5
+---
+
+# Verifikasi dan Troubleshooting ACL
+
+Troubleshooting ACL bukan menebak command. Mulailah dari hasil yang diharapkan, uji satu alur traffic, lalu ikuti perjalanan paket melalui interface.
+
+## Tiga lapis verifikasi
+
+### 1. Periksa isi ACL
+
+<CommandBlock command="show access-lists" prompt="R1#" title="Cisco IOS" />
+
+Perhatikan urutan ACE, wildcard mask, protocol, port, dan hit counter. Counter yang tetap `0` setelah pengujian sering menandakan paket tidak melewati rule tersebut.
+
+### 2. Periksa penerapan pada interface
+
+<CommandBlock command="show ip interface GigabitEthernet0/0" prompt="R1#" title="Cisco IOS" />
+
+Cari baris **Inbound access list** dan **Outgoing access list**. Pastikan nama serta arahnya sesuai desain.
+
+### 3. Uji traffic yang spesifik
+
+Jangan hanya memakai ping jika ACL dirancang untuk HTTP atau SSH. Uji protokol yang benar dari sumber yang benar menuju tujuan yang benar.
+
+## Pola kesalahan yang sering terjadi
+
+| Gejala | Kemungkinan penyebab | Tindakan |
+| --- | --- | --- |
+| seluruh traffic gagal | lupa rule permit sebelum implicit deny | periksa urutan ACE |
+| ACL tidak memiliki hit | interface atau arah salah | ikuti jalur paket |
+| satu subnet tidak cocok | wildcard mask salah | hitung ulang wildcard |
+| rule spesifik tidak pernah dipakai | rule umum berada di atasnya | ubah sequence |
+| web gagal tetapi ping berhasil | port atau dependency belum diizinkan | uji DNS dan port aplikasi |
+
+<Callout type="mistake">
+Jangan langsung menambahkan `permit ip any any` ketika layanan gagal. Rule itu memang dapat menyembunyikan masalah, tetapi sekaligus menghilangkan kontrol yang ingin dibangun oleh ACL.
+</Callout>
+
+## Alur troubleshooting
+
+```text
+Tetapkan expected result
+        ↓
+Uji satu sumber dan satu layanan
+        ↓
+Periksa route serta interface yang dilewati
+        ↓
+Periksa ACL in/out pada interface tersebut
+        ↓
+Periksa ACE dan hit counter
+        ↓
+Ubah satu hal, lalu uji ulang
+```
+
+Jika akan menguji ulang hit counter dari nol di lingkungan lab, kamu dapat membersihkannya:
+
+<CommandBlock command="clear access-list counters SISWA_KE_APLIKASI" prompt="R1#" title="Lab only" />
+
+<Callout type="warning" title="Gunakan hati-hati di perangkat production">
+Membersihkan counter menghapus data observasi yang mungkin sedang dibutuhkan engineer lain. Koordinasikan perubahan dan simpan output sebelum melakukan clear.
+</Callout>
+
+<PracticeCTA
+  title="Selesaikan mini-lab ACL"
+  description="Bangun ACL, jalankan test matrix, dan jelaskan alasan setiap permit atau deny."
+  href="#latihan"
+/>
+
+## Latihan
+
+Gunakan kebutuhan berikut:
+
+- LAN siswa `192.168.10.0/24`
+- web server `172.16.10.10`
+- DNS server `172.16.10.53`
+- admin PC `192.168.99.10`
+- siswa hanya boleh memakai HTTPS dan DNS
+- hanya admin PC yang boleh SSH ke router
+
+Tugasmu:
+
+1. tulis extended ACL untuk LAN siswa
+2. tulis standard ACL untuk VTY
+3. tentukan interface dan arah pemasangan
+4. buat test matrix minimal lima baris
+5. lampirkan output `show access-lists` setelah pengujian
+
+## Checklist selesai
+
+- [ ] kebutuhan traffic sudah diterjemahkan menjadi rule
+- [ ] urutan ACE dari spesifik ke umum
+- [ ] wildcard mask benar
+- [ ] ACL terpasang pada interface dan arah yang tepat
+- [ ] traffic permit dan deny sama-sama diuji
+- [ ] hit counter mendukung hasil pengujian
+
+<Callout type="success" title="Kamu sudah menutup siklus ACL">
+Engineer yang baik tidak berhenti setelah command diterima router. Ia membuktikan perilaku jaringan, mendokumentasikan hasil, dan menyiapkan jalan kembali jika perubahan bermasalah.
+</Callout>
+
+<PracticeCTA
+  title="Kembali ke petualangan CCNA"
+  description="Gunakan referensi ini saat menyelesaikan mission networking pada peta belajar."
+  href="/learning-path/ccna-200-301"
+  label="Buka Learning Path"
+/>
+
+## Referensi resmi
+
+- [Cisco — Configure IP Access Lists](https://www.cisco.com/c/en/us/support/docs/security/ios-firewall/23602-confaccesslists.html)
+- [Cisco — Troubleshoot Common IP ACL Issues](https://www.cisco.com/c/en/us/support/docs/security/ios-firewall/212082-troubleshoot-common-ip-access-list-issu.html)
+

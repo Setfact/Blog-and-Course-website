@@ -1,0 +1,68 @@
+---
+interface Props {
+  command: string;
+  prompt?: string;
+  title?: string;
+  showCopy?: boolean;
+  output?: string;
+}
+
+const {
+  command,
+  prompt = 'Router>',
+  title = 'Cisco IOS',
+  showCopy = true,
+  output,
+} = Astro.props;
+---
+
+<div class="command-block">
+  <div class="command-toolbar">
+    <span class="toolbar-title"><i></i><i></i><i></i>{title}</span>
+    {showCopy && (
+      <button type="button" class="copy-button" data-command-copy={command} aria-label="Salin command">
+        <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+        <span data-copy-label>Salin</span>
+      </button>
+    )}
+  </div>
+  <pre><code><span class="prompt">{prompt}</span> {command}</code></pre>
+  {output && <div class="command-output">{output}</div>}
+</div>
+
+<script>
+  document.addEventListener('click', async (event) => {
+    const target = event.target as HTMLElement;
+    const button = target.closest<HTMLButtonElement>('[data-command-copy]');
+    if (!button) return;
+
+    const command = button.dataset.commandCopy;
+    const label = button.querySelector<HTMLElement>('[data-copy-label]');
+    if (!command || !label) return;
+
+    try {
+      await navigator.clipboard.writeText(command);
+      const previous = label.textContent;
+      label.textContent = 'Tersalin!';
+      window.setTimeout(() => { label.textContent = previous; }, 1500);
+    } catch {
+      label.textContent = 'Gagal';
+    }
+  });
+</script>
+
+<style>
+  .command-block { overflow: hidden; border: 1px solid #213c68; border-radius: 1.1rem; background: var(--color-navy); box-shadow: 0 16px 34px rgba(8, 26, 58, 0.2); color: #d9ebff; }
+  .command-toolbar { display: flex; min-height: 46px; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #213c68; padding: 0.65rem 0.9rem; background: #10264c; }
+  .toolbar-title { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; }
+  .toolbar-title i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger); }
+  .toolbar-title i:nth-child(2) { background: var(--color-gold); }
+  .toolbar-title i:nth-child(3) { margin-right: 0.35rem; background: var(--color-success); }
+  .copy-button { display: inline-flex; align-items: center; gap: 0.35rem; border: 0; border-radius: 0.6rem; padding: 0.4rem 0.55rem; background: rgba(255, 255, 255, 0.08); color: #d9ebff; font-family: var(--font-heading); font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+  .copy-button:hover { background: rgba(255, 255, 255, 0.14); }
+  .copy-button .material-symbols-outlined { font-size: 0.95rem; }
+  pre { margin: 0; overflow-x: auto; padding: 1.15rem; font-family: var(--font-mono); font-size: 0.86rem; line-height: 1.65; }
+  code { font-family: inherit; }
+  .prompt { color: var(--color-sky); font-weight: 700; }
+  .command-output { border-top: 1px dashed #2a4776; padding: 0.9rem 1.15rem; color: #a8e7ff; font-family: var(--font-mono); font-size: 0.76rem; white-space: pre-wrap; }
+</style>

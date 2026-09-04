@@ -1,0 +1,98 @@
+---
+title: "Network Security Best Practices"
+language: id
+draft: false
+description: "Bagian ini membahas praktik terbaik untuk melindungi jaringan dari berbagai serangan yang sudah dibahas di bagian sebelumnya."
+order: 22
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 7
+---
+
+# Network Security Best Practices
+
+
+Bagian ini membahas praktik terbaik untuk melindungi jaringan dari berbagai serangan yang sudah dibahas di bagian sebelumnya.
+
+## 3.9.1 The CIA Triad
+
+Dasar dari semua keamanan jaringan adalah **CIA Triad**:
+
+![CIA Triad](https://itexamanswers.net/wp-content/uploads/2020/04/CIA-Triad.jpg)
+
+| Prinsip | Arti | Implementasi |
+|---|---|---|
+| **Confidentiality** | Data hanya bisa diakses oleh yang berwenang | Enkripsi (AES) |
+| **Integrity** | Data tidak diubah secara tidak sah | Hashing (SHA) |
+| **Availability** | Sistem dan data selalu bisa diakses | Redundancy, backup |
+
+### Kenapa CIA Triad penting?
+Karena semua strategi keamanan harus mengarah ke tiga tujuan ini. Kalau salah satu terganggu, maka keamanan secara keseluruhan terancam.
+
+## 3.9.2 Defense-in-Depth
+
+**Defense-in-depth** adalah pendekatan keamanan dengan **multiple layers of defense**. Kalau satu layer gagal, layer lain masih bisa melindungi.
+
+![Protecting Against Network Attacks](https://itexamanswers.net/wp-content/uploads/2020/04/Protecting-Against-Network-Attacks.jpg)
+
+Gambar di atas memperlihatkan berbagai lapisan pertahanan yang harus ada di jaringan.
+
+## 3.9.3 Firewalls
+
+Firewall adalah lapisan pertahanan pertama yang mengontrol traffic masuk dan keluar berdasarkan rules yang ditetapkan.
+
+![Firewalls](https://itexamanswers.net/wp-content/uploads/2020/04/3.9.3-Firewalls.gif)
+
+### Tipe firewall:
+- **Packet Filtering** — filter berdasarkan IP, port, protocol
+- **Stateful Inspection** — memantau state koneksi aktif
+- **Application Gateway (Proxy)** — filter di level aplikasi
+- **Next-Generation Firewall (NGFW)** — kombinasi semua plus deep packet inspection
+
+## 3.9.4 IPS/IDS
+
+### IDS (Intrusion Detection System)
+- **mendeteksi** aktivitas mencurigakan
+- **tidak memblokir** — hanya memberikan alert
+
+### IPS (Intrusion Prevention System)
+- **mendeteksi DAN memblokir** serangan secara real-time
+- berada inline dengan traffic
+
+![IPS Operation](https://itexamanswers.net/wp-content/uploads/2020/04/IPS-Operation.jpg)
+
+### Cara kerja IPS:
+1. traffic melewati IPS
+2. IPS membandingkan traffic dengan signature database
+3. kalau cocok dengan signature serangan, IPS memblokir paket tersebut
+
+## 3.9.5 Cisco Email Security Appliance (ESA)
+
+ESA adalah perangkat yang melindungi organisasi dari email berbahaya.
+
+![Cisco Email Security Appliance (ESA)](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-Email-Security-Appliance-ESA.jpg)
+
+### Fungsi ESA:
+- memindai lampiran untuk malware
+- memblokir phishing email
+- melakukan filtering konten
+- enkripsi email keluar
+
+## 3.9.6 Cisco Web Security Appliance (WSA)
+
+WSA adalah perangkat yang melindungi pengguna dari ancaman berbasis web.
+
+![Cisco Web Security Appliance (WSA)](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-Web-Security-Appliance-WSA.jpg)
+
+### Fungsi WSA:
+- memblokir akses ke situs berbahaya
+- memindai unduhan untuk malware
+- melakukan content filtering
+- menerapkan kebijakan web organisasi
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

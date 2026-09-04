@@ -1,0 +1,54 @@
+---
+title: "Guidelines for ACL Creation"
+language: id
+draft: false
+description: "Bagian ini membahas batasan dan best practices saat membuat ACL."
+order: 27
+course: enterprise-network-ensa
+module: ensa-04-acl-concepts
+durationMinutes: 6
+---
+
+# Guidelines for ACL Creation
+
+
+Bagian ini membahas batasan dan best practices saat membuat ACL.
+
+## 4.3.1 Limited Number of ACLs per Interface
+
+Setiap interface bisa memiliki **maksimal 4 ACL** dalam konfigurasi dual-stack:
+
+| Direction | IPv4 | IPv6 |
+|---|---|---|
+| **Inbound** | 1 ACL | 1 ACL |
+| **Outbound** | 1 ACL | 1 ACL |
+
+![Limited Number of ACLs per Interface](https://itexamanswers.net/wp-content/uploads/2020/04/Limited-Number-of-ACLs-per-Interface.jpg)
+
+### Catatan penting
+- ACL tidak wajib diterapkan di kedua arah — penempatan tergantung kebijakan keamanan
+- kamu bisa hanya memasang inbound ACL tanpa outbound, atau sebaliknya
+
+## 4.3.2 ACL Best Practices
+
+| Panduan | Manfaat |
+|---|---|
+| Buat ACL berdasarkan **kebijakan keamanan organisasi** | Memastikan selaras dengan pedoman keamanan |
+| **Tulis dulu** apa yang ingin dicapai ACL | Membantu menghindari masalah akses |
+| Gunakan **text editor** untuk membuat, mengedit, dan menyimpan ACL | Membuat library ACL yang bisa dipakai ulang |
+| Gunakan **permit** sesuai kebutuhan, **deny** dengan hati-hati | Menghindari blocking traffic yang seharusnya boleh |
+| **Simpan ACL di file** sebelum di-apply ke router | Memudikan troubleshooting dan dokumentasi |
+
+### Kenapa best practices penting?
+Karena ACL yang buruk bisa:
+- memblokir traffic penting
+- membuka celah keamanan
+- sulit di-troubleshoot
+- menyebabkan downtime
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 4: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-4-acl-concepts.html).

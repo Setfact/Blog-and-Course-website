@@ -1,0 +1,116 @@
+---
+title: "Modify IPv4 ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas cara mengedit ACL yang sudah ada di router. Ada dua metode yang bisa dipakai."
+order: 32
+course: enterprise-network-ensa
+module: ensa-05-acls-for-ipv4-configuration
+durationMinutes: 7
+---
+
+# Modify IPv4 ACLs
+
+
+Bagian ini membahas cara mengedit ACL yang sudah ada di router. Ada dua metode yang bisa dipakai.
+
+![Modify IPv4 ACLs](https://itexamanswers.net/wp-content/uploads/2020/04/Modify-IPv4-ACLs.jpg)
+
+## 5.2.1 Two Methods to Modify an ACL
+
+| Metode | Kapan Dipakai |
+|---|---|
+| **Text Editor** | Perubahan besar / rewrite ACL |
+| **Sequence Numbers** | Perubahan kecil / edit个别 ACE |
+
+## 5.2.2 Text Editor Method
+
+### Langkah-langkah
+1. Copy ACL yang salah dari `show running-config`
+2. Edit di text editor
+3. **Hapus seluruh ACL lama** dari router
+4. Paste ACL yang sudah diperbaiki
+
+```text
+Router(config)# no access-list access-list-number
+```
+
+### Kekurangan
+- harus menghapus seluruh ACL dulu
+- ada downtime singkat saat ACL dihapus dan diganti
+
+## 5.2.3 Sequence Numbers Method
+
+Setiap ACE dalam named ACL (atau numbered ACL yang diakses lewat `ip access-list`) memiliki **sequence number** otomatis. Kamu bisa mengedit ACE berdasarkan nomor ini.
+
+### Langkah-langkah
+1. Masuk ke ACL configuration mode
+2. Hapus ACE yang salah dengan `no <sequence-number>`
+3. Masukkan ACE yang benar
+
+### Contoh: memperbaiki typo di ACL 1, sequence 10
+
+```text
+R1(config)# ip access-list standard 1
+R1(config-std-nacl)# no 10
+R1(config-std-nacl)# 10 deny host 192.168.10.10
+```
+
+### Kelebihan method sequence numbers
+- bisa menghapus satu ACE tanpa menghapus seluruh ACL
+- bisa menyisipkan ACE baru di antara ACE yang sudah ada
+- tidak ada downtime
+
+## 5.2.4 Modify a Named ACL Example
+
+Untuk named ACL, kamu bisa masuk ke ACL config mode lalu edit langsung:
+
+```text
+R1(config)# ip access-list standard PERMIT-ACCESS
+R1(config-std-nacl)# no 10
+R1(config-std-nacl)# 10 permit host 192.168.10.20
+R1(config-std-nacl)# exit
+```
+
+Sequence number bisa disisipkan di antara nomor yang sudah ada (misal: 15 di antara 10 dan 20) untuk mengontrol urutan eksekusi.
+
+## 5.2.5 ACL Statistics
+
+### Melihat statistik match per ACE
+
+```text
+Router# show access-lists
+```
+
+Output akan menunjukkan berapa kali setiap ACE berhasil match dengan packet.
+
+### Catatan penting
+- **Implicit deny any** di akhir ACL **tidak menampilkan statistik** kecuali kamu menambahkan `deny any` secara eksplisit
+- Kalau kamu ingin melihat berapa banyak packet yang ditolak oleh implicit deny, tambahkan baris `deny any` di akhir ACL
+
+### Reset counters
+
+```text
+Router# clear access-list counters [name|number]
+```
+
+## 5.2.6 Syntax Checker – Modify IPv4 ACLs
+
+<Callout type="remember" title={"Syntax Checker"}>
+Source menyediakan syntax checker interaktif untuk praktik modifikasi ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+## 5.2.7 Packet Tracer – Configure and Modify Standard IPv4 ACLs
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi dan modifikasi standard ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 5: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html).

@@ -1,0 +1,109 @@
+---
+title: "Troubleshooting Process"
+language: id
+draft: false
+description: "Bagian ini membahas proses troubleshooting 7 langkah dan pendekatan structured."
+order: 77
+course: enterprise-network-ensa
+module: ensa-12-network-troubleshooting
+durationMinutes: 7
+---
+
+# Troubleshooting Process
+
+
+Bagian ini membahas proses troubleshooting 7 langkah dan pendekatan structured.
+
+## 12.2.1 General Troubleshooting Procedures
+
+![General Troubleshooting Procedures](https://itexamanswers.net/wp-content/uploads/2020/04/General-Troubleshooting-Procedures.jpg)
+
+## 12.2.2 Seven-Step Troubleshooting Process
+
+![Seven-Step Troubleshooting Process](https://itexamanswers.net/wp-content/uploads/2020/04/Seven-Step-Troubleshooting-Process.jpg)
+
+| Langkah | Deskripsi |
+|---|---|
+| **1. Define the Problem** | Identifikasi symptoms, lokalisasi masalah |
+| **2. Gather Information** | Kumpulkan data dari perangkat menggunakan IOS commands |
+| **3. Analyze Information** | Interpretasi data menggunakan dokumentasi dan baseline |
+| **4. Eliminate Possible Causes** | Persempit penyebab berdasarkan bukti |
+| **5. Propose Hypothesis** | Formulasikan solusi potensial |
+| **6. Test Hypothesis** | Evaluasi dampak, implementasi solusi, verifikasi fix. **Punya rencana rollback!** |
+| **7. Solve the Problem** | Dokumentasi penyebab dan solusi; informasikan pihak terkait |
+
+## 12.2.3 Effective User Questioning
+
+Pertanyaan yang efektif saat mengumpulkan informasi dari user:
+- *Apa yang tidak berfungsi?*
+- *Siapa yang terpengaruh?*
+- *Kapan pertama kali terjadi?*
+- *Bisa mereproduksi masalah?*
+- *Apa yang berubah sejak terakhir kali berfungsi?*
+
+## 12.2.4 Gathering Information from Devices
+
+![Troubleshooting with Layered Models](https://itexamanswers.net/wp-content/uploads/2020/04/Troubleshooting-with-Layered-Models.jpg)
+
+| Command | Fungsi |
+|---|---|
+| `ping {host \| ip-address}` | Test konektivitas end-to-end |
+| `traceroute destination` | Identifikasi path paket dan di mana kegagalan terjadi |
+| `ssh -l user-id ip-address` | Akses remote aman untuk investigasi |
+| `show protocols` | Cek status protocol Layer 3 |
+| `debug` | Lihat events real-time (**gunakan dengan hati-hati** di production!) |
+
+## 12.2.5 Structured Troubleshooting Approaches
+
+### Bottom-Up
+
+![Bottom-Up](https://itexamanswers.net/wp-content/uploads/2020/04/Bottom-Up.jpg)
+
+Mulai dari **Physical layer** (kabel, port) dan naik ke atas.
+
+**Cocok untuk:** masalah hardware/physical
+
+### Top-Down
+
+![Top-Down](https://itexamanswers.net/wp-content/uploads/2020/04/Top-Down.jpg)
+
+Mulai dari **Application layer** dan turun ke bawah.
+
+**Cocok untuk:** masalah software/application
+
+### Divide-and-Conquer
+
+![Divide-and-Conquer](https://itexamanswers.net/wp-content/uploads/2020/04/Divide-and-Conquer.jpg)
+
+Test layer tengah (misal: Network layer) lalu kerja ke atas/bawah.
+
+**Cocok untuk:** saat layer spesifik dicurigai
+
+### Substitution
+Ganti perangkat yang dicurigai rusak dengan yang known-good.
+
+**Cocok untuk:** quick fix untuk critical failures
+
+### Comparison
+Bandingkan konfigurasi yang tidak berfungsi dengan yang berfungsi.
+
+**Cocok untuk:** menemukan perbedaan konfigurasi
+
+![Guidelines for Selecting a Troubleshooting Method](https://itexamanswers.net/wp-content/uploads/2020/04/Guidelines-for-Selecting-a-Troubleshooting-Method.jpg)
+
+### Perbandingan Metode
+
+| Metode | Mulai dari | Cocok untuk |
+|---|---|---|
+| Bottom-Up | Physical (Layer 1) | Hardware/physical issues |
+| Top-Down | Application (Layer 7) | Software/application issues |
+| Divide-and-Conquer | Tengah (misal Layer 3) | Layer spesifik dicurigai |
+| Substitution | Ganti perangkat | Quick fix critical failures |
+| Comparison | Bandingkan config | Config discrepancies |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 12: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-12-network-troubleshooting.html).

@@ -1,0 +1,155 @@
+---
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  fullWidth?: boolean;
+  target?: string;
+  rel?: string;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  type = 'button',
+  disabled = false,
+  fullWidth = false,
+  target,
+  rel,
+  ariaLabel,
+  class: className,
+} = Astro.props;
+
+const classes = ['ph-button', `is-${variant}`, `is-${size}`, fullWidth && 'is-full', className];
+---
+
+{href ? (
+  <a
+    href={disabled ? undefined : href}
+    class:list={classes}
+    target={target}
+    rel={rel}
+    aria-label={ariaLabel}
+    aria-disabled={disabled ? 'true' : undefined}
+    tabindex={disabled ? -1 : undefined}
+  >
+    <slot name="leading" />
+    <span><slot /></span>
+    <slot name="trailing" />
+  </a>
+) : (
+  <button type={type} class:list={classes} disabled={disabled} aria-label={ariaLabel}>
+    <slot name="leading" />
+    <span><slot /></span>
+    <slot name="trailing" />
+  </button>
+)}
+
+<style>
+  .ph-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 2px solid transparent;
+    border-radius: var(--radius-DEFAULT);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+  }
+
+  .ph-button:hover { transform: translateY(-1px); }
+
+  .ph-button:active {
+    transform: translateY(3px);
+    box-shadow: none;
+  }
+
+  .is-sm {
+    min-height: 38px;
+    padding: 0.62rem 0.95rem;
+    border-radius: 0.7rem;
+    font-size: 0.82rem;
+  }
+
+  .is-md {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.94rem;
+  }
+
+  .is-lg {
+    min-height: 52px;
+    padding: 0.95rem 1.45rem;
+    border-radius: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .is-full {
+    width: 100%;
+  }
+
+  .is-primary {
+    background: var(--color-phinisi-600);
+    box-shadow: var(--shadow-button);
+    color: white;
+  }
+
+  .is-primary:hover {
+    background: var(--color-phinisi-700);
+  }
+
+  .is-secondary {
+    background: var(--color-sky);
+    box-shadow: var(--shadow-button-sky);
+    color: var(--color-navy);
+  }
+
+  .is-secondary:hover {
+    background: #61cdfb;
+  }
+
+  .is-outline {
+    border-color: var(--color-phinisi-200);
+    background: white;
+    box-shadow: 0 4px 0 var(--color-phinisi-100);
+    color: var(--color-phinisi-700);
+  }
+
+  .is-outline:hover {
+    border-color: var(--color-phinisi-400);
+    background: var(--color-phinisi-50);
+  }
+
+  .is-ghost {
+    background: transparent;
+    color: var(--color-phinisi-700);
+  }
+
+  .is-ghost:hover {
+    background: var(--color-phinisi-50);
+  }
+
+  .is-danger {
+    background: var(--color-danger);
+    box-shadow: 0 4px 0 #b72f35;
+    color: white;
+  }
+
+  .ph-button[disabled],
+  .ph-button[aria-disabled='true'] {
+    transform: none;
+    opacity: 0.5;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+</style>

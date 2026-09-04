@@ -1,0 +1,147 @@
+---
+import { getCoursesForPath, getPathBySlug, loadCourses } from '../data/learning';
+
+const [path, courses] = await Promise.all([getPathBySlug('ccna-200-301'), loadCourses()]);
+if (!path) throw new Error('CCNA learning path data was not found.');
+
+const pathCourses = getCoursesForPath(path, courses);
+const totalHours = pathCourses.reduce((total, course) => total + course.durationHours, 0);
+---
+
+<main class="learning-path-page">
+  <section class="path-hero">
+    <div class="page-shell hero-inner">
+      <span class="path-label">Learning Path · CCNA 200-301</span>
+      <h1>Roadmap course menuju <span>Network Engineer.</span></h1>
+      <p>Ikuti enam course Networking secara berurutan, dari fondasi jaringan hingga automation.</p>
+      <div class="path-meta">{pathCourses.length} course · ±{totalHours} jam · Level pemula</div>
+      <div class="hero-actions">
+        <a class="primary-action" href={'/courses/' + pathCourses[0].slug}>Mulai course pertama →</a>
+        <a class="secondary-action" href="/courses">Lihat katalog course</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="roadmap-section" aria-labelledby="roadmap-title">
+    <div class="page-shell roadmap-shell">
+      <header class="roadmap-heading">
+        <h2 id="roadmap-title">Urutan yang direkomendasikan.</h2>
+        <p>Course tidak dikunci. Kamu tetap dapat membuka topik yang sudah kamu butuhkan.</p>
+      </header>
+
+      <ol class="course-route">
+        {pathCourses.map((course, index) => {
+          const materialAvailable = Boolean(course.contentHref?.id);
+          return (
+            <li>
+              <span class="route-number">{String(index + 1).padStart(2, '0')}</span>
+              <article
+                class="roadmap-course"
+                data-route-course
+                data-course={course.slug}
+                data-total-lessons={course.lessonCount}
+                data-learning-href={course.learningHref?.id}
+              >
+                <img src={course.cover} alt="" width="960" height="540" loading="lazy" decoding="async" />
+                <div class="course-copy">
+                  <div class="course-topline">
+                    <span>Course {index + 1}</span>
+                    <strong class:list={{ available: materialAvailable }} data-route-course-state>
+                      {materialAvailable ? 'Tersedia' : 'Segera hadir'}
+                    </strong>
+                  </div>
+                  <h3>{course.title}</h3>
+                  <p>{course.description.id}</p>
+                  <div class="course-meta">{course.moduleCount} modul · {course.lessonCount} lesson · ±{course.durationHours} jam</div>
+                  <div class="course-local-progress" data-route-progress hidden>
+                    <span><i data-route-progress-fill></i></span>
+                    <strong data-route-progress-label></strong>
+                  </div>
+                  <a href={'/courses/' + course.slug} data-route-course-link>Lihat course →</a>
+                </div>
+              </article>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </section>
+</main>
+
+<script>
+  import { getCourseProgress } from '../scripts/learning-store';
+
+  const renderRoadmapProgress = () => {
+    document.querySelectorAll<HTMLElement>('[data-route-course]').forEach((card) => {
+      const learningHref = card.dataset.learningHref;
+      if (!learningHref) return;
+      const totalLessons = Number(card.dataset.totalLessons) || 0;
+      const progress = getCourseProgress(card.dataset.course ?? '', totalLessons);
+      if (progress.completedLessons === 0) return;
+
+      const container = card.querySelector<HTMLElement>('[data-route-progress]');
+      const fill = card.querySelector<HTMLElement>('[data-route-progress-fill]');
+      const label = card.querySelector<HTMLElement>('[data-route-progress-label]');
+      const state = card.querySelector<HTMLElement>('[data-route-course-state]');
+      const link = card.querySelector<HTMLAnchorElement>('[data-route-course-link]');
+      if (container) container.hidden = false;
+      if (fill) fill.style.width = progress.percent + '%';
+      if (label) label.textContent = progress.completedLessons + '/' + totalLessons + ' lesson · ' + progress.percent + '%';
+      if (state) state.textContent = progress.percent === 100 ? 'Selesai' : 'Sedang dipelajari';
+      if (link) {
+        link.href = progress.resumeHref ?? learningHref;
+        link.textContent = progress.percent === 100 ? 'Tinjau course →' : 'Lanjutkan course →';
+      }
+    });
+  };
+
+  renderRoadmapProgress();
+  window.addEventListener('phinisi-progress-updated', renderRoadmapProgress);
+</script>
+
+<style>
+  .learning-path-page { background: var(--color-canvas); }
+  .path-hero { border-bottom: 1px solid var(--color-line); background: #f7faff; }
+  .hero-inner { max-width: 900px; padding-block: clamp(4rem, 8vw, 6rem); text-align: center; }
+  .path-label { color: var(--color-primary); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hero-inner h1 { margin: 0.8rem 0 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.8rem, 6vw, 4.8rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+  .hero-inner h1 span { color: var(--color-primary); }
+  .hero-inner > p { max-width: 700px; margin: 1rem auto 0; color: var(--color-muted); font-size: 1rem; line-height: 1.65; }
+  .path-meta { margin-top: 1rem; color: var(--color-ink); font-size: 0.76rem; font-weight: 800; }
+  .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; margin-top: 1.7rem; }
+  .primary-action, .secondary-action { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; border-radius: var(--radius-DEFAULT); padding: 0.7rem 1rem; font-family: var(--font-heading); font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+  .primary-action { background: var(--color-primary); box-shadow: var(--shadow-button); color: #fff; }
+  .secondary-action { border: 1px solid var(--color-line); background: #fff; color: var(--color-primary); }
+
+  .roadmap-section { padding: clamp(4rem, 8vw, 6.5rem) 0; }
+  .roadmap-shell { max-width: 960px; }
+  .roadmap-heading { margin-bottom: 2rem; }
+  .roadmap-heading h2 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2rem, 4vw, 3rem); font-weight: 600; letter-spacing: -0.015em; }
+  .roadmap-heading p { margin: 0.55rem 0 0; color: var(--color-muted); line-height: 1.6; }
+  .course-route { position: relative; display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+  .course-route::before { position: absolute; top: 2rem; bottom: 2rem; left: 1.35rem; width: 1px; background: var(--color-phinisi-200); content: ''; }
+  .course-route > li { position: relative; display: grid; grid-template-columns: 2.7rem minmax(0, 1fr); gap: 1.1rem; padding-bottom: 1.2rem; }
+  .route-number { position: relative; z-index: 1; display: grid; width: 2.7rem; height: 2.7rem; place-items: center; border: 1px solid var(--color-phinisi-200); border-radius: 50%; background: #fff; color: var(--color-primary); font-size: 0.64rem; font-weight: 900; }
+  .roadmap-course { display: grid; overflow: hidden; grid-template-columns: 220px minmax(0, 1fr); border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: #fff; }
+  .roadmap-course > img { display: block; width: 100%; height: 100%; min-height: 190px; object-fit: cover; }
+  .course-copy { padding: 1.2rem; }
+  .course-topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .course-topline > span { color: var(--color-primary); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; }
+  .course-topline strong { color: var(--color-muted); font-size: 0.6rem; }
+  .course-topline strong.available { color: var(--color-success); }
+  .course-copy h3 { margin: 0.45rem 0 0; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.3rem; font-weight: 600; line-height: 1.35; }
+  .course-copy > p { display: -webkit-box; overflow: hidden; margin: 0.45rem 0 0; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--color-muted); font-size: 0.78rem; line-height: 1.5; }
+  .course-meta { margin-top: 0.65rem; color: var(--color-muted); font-size: 0.66rem; font-weight: 750; }
+  .course-copy > a { display: inline-flex; margin-top: 0.8rem; color: var(--color-primary); font-size: 0.72rem; font-weight: 900; text-decoration: none; }
+  .course-local-progress { display: grid; gap: 0.3rem; margin-top: 0.7rem; }
+  .course-local-progress[hidden] { display: none; }
+  .course-local-progress > span { display: block; height: 0.4rem; overflow: hidden; border-radius: 999px; background: var(--color-phinisi-100); }
+  .course-local-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-primary); }
+  .course-local-progress strong { color: var(--color-primary); font-size: 0.6rem; }
+
+  @media (max-width: 680px) {
+    .hero-actions { align-items: stretch; flex-direction: column; }
+    .roadmap-course { grid-template-columns: 1fr; }
+    .roadmap-course > img { min-height: 0; aspect-ratio: 16 / 7; }
+  }
+</style>

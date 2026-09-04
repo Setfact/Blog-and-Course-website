@@ -1,37 +1,46 @@
 ---
-// src/layouts/BaseLayout.astro
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
 interface Props {
-	title: string;
+  title: string;
+  description?: string;
+  preloadImage?: string;
 }
 
-const { title } = Astro.props;
+const {
+  title,
+  description = 'Phinisi Learn — belajar networking dan Cisco melalui misi praktik yang terarah.',
+  preloadImage,
+} = Astro.props;
+
+const lang = Astro.url.pathname.startsWith('/en') ? 'en' : 'id';
+const fullTitle = title === 'Phinisi Learn' ? title : `${title} | Phinisi Learn`;
 ---
 
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="description" content="Phinisi Network - E-Learning & Technical Blog" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/png" href="/logo.png" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title} | Phinisi Network</title>
-		
-		<!-- Google Fonts as per Design System -->
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-		<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-	</head>
-	<body class="flex min-h-screen flex-col bg-slate-50 text-slate-900 font-['Inter']">
-		<Header />
-		<main class="flex-grow">
-			<slot />
-		</main>
-		<Footer />
-	</body>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#145bd7" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
 </html>

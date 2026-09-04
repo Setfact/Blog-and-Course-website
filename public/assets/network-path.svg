@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1920" height="1080" viewBox="0 0 1920 1080"
+     fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Phinisi Learn animated island network paths</title>
+  <desc id="desc">Five curved, animated connection paths linking the islands in the Phinisi Learn ocean hero.</desc>
+
+  <defs>
+    <linearGradient id="routeGradient" x1="960" y1="260" x2="1810" y2="800" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67E8F9"/>
+      <stop offset="0.52" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#FACC15"/>
+    </linearGradient>
+    <radialGradient id="nodeGradient">
+      <stop offset="0" stop-color="#FFF7C2"/>
+      <stop offset="0.35" stop-color="#FACC15"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </radialGradient>
+    <filter id="cyanGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    .route-shadow {
+      stroke: #075985;
+      stroke-width: 11;
+      stroke-linecap: round;
+      opacity: .28;
+    }
+    .route-flow {
+      stroke: url(#routeGradient);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 18 16;
+      filter: url(#cyanGlow);
+      animation: packet-flow 1.8s linear infinite;
+    }
+    .node-ring {
+      fill: #22D3EE;
+      opacity: .25;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: node-pulse 2.4s ease-out infinite;
+    }
+    .node-core {
+      fill: url(#nodeGradient);
+      stroke: #FFF7C2;
+      stroke-width: 3;
+      filter: url(#nodeGlow);
+    }
+    @keyframes packet-flow {
+      to { stroke-dashoffset: -68; }
+    }
+    @keyframes node-pulse {
+      0% { transform: scale(.72); opacity: .5; }
+      70%, 100% { transform: scale(1.65); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .route-flow, .node-ring { animation: none; }
+    }
+  </style>
+
+  <!-- Dark under-strokes keep the routes readable over both bright and dark water. -->
+  <g aria-hidden="true">
+    <path class="route-shadow" d="M1035 500 C1105 440 1162 345 1240 300"/>
+    <path class="route-shadow" d="M1240 300 C1370 252 1505 278 1605 345"/>
+    <path class="route-shadow" d="M1605 345 C1710 405 1768 505 1740 610"/>
+    <path class="route-shadow" d="M1740 610 C1652 694 1528 752 1395 770"/>
+    <path class="route-shadow" d="M1395 770 C1255 705 1134 592 1035 500"/>
+  </g>
+
+  <!-- Each segment has a stable id so animation timing can be customized in CSS/JS. -->
+  <g id="animated-routes">
+    <path id="route-1" class="route-flow" data-route="cave-to-north" d="M1035 500 C1105 440 1162 345 1240 300"/>
+    <path id="route-2" class="route-flow" data-route="north-to-lighthouse" d="M1240 300 C1370 252 1505 278 1605 345" style="animation-delay:-.3s"/>
+    <path id="route-3" class="route-flow" data-route="lighthouse-to-east" d="M1605 345 C1710 405 1768 505 1740 610" style="animation-delay:-.6s"/>
+    <path id="route-4" class="route-flow" data-route="east-to-main" d="M1740 610 C1652 694 1528 752 1395 770" style="animation-delay:-.9s"/>
+    <path id="route-5" class="route-flow" data-route="main-to-cave" d="M1395 770 C1255 705 1134 592 1035 500" style="animation-delay:-1.2s"/>
+  </g>
+
+  <!-- Hidden continuous path can be copied inline as CSS offset-path for data-packet.png. -->
+  <path id="packet-motion-path" d="M1035 500 C1105 440 1162 345 1240 300 C1370 252 1505 278 1605 345 C1710 405 1768 505 1740 610 C1652 694 1528 752 1395 770 C1255 705 1134 592 1035 500" stroke="none"/>
+
+  <g id="network-nodes" aria-hidden="true">
+    <g transform="translate(1035 500)"><circle class="node-ring" r="19"/><circle class="node-core" r="8"/></g>
+    <g transform="translate(1240 300)"><circle class="node-ring" r="19" style="animation-delay:-.45s"/><circle class="node-core" r="8"/></g>
+    <g transform="translate(1605 345)"><circle class="node-ring" r="19" style="animation-delay:-.9s"/><circle class="node-core" r="8"/></g>
+    <g transform="translate(1740 610)"><circle class="node-ring" r="19" style="animation-delay:-1.35s"/><circle class="node-core" r="8"/></g>
+    <g transform="translate(1395 770)"><circle class="node-ring" r="19" style="animation-delay:-1.8s"/><circle class="node-core" r="8"/></g>
+  </g>
+</svg>

@@ -1,0 +1,103 @@
+---
+title: 'Keamanan Layer 2'
+language: id
+draft: false
+description: 'Bangun trust boundary pada access layer menggunakan port security, DHCP snooping, dan Dynamic ARP Inspection.'
+order: 4
+course: security-fundamentals
+module: security-fundamentals-03-layer-2
+durationMinutes: 22
+---
+
+# Keamanan Layer 2
+
+Switch berada dekat dengan endpoint sehingga menjadi tempat penting untuk membentuk **trust boundary**. Port menuju pengguna umumnya diperlakukan sebagai untrusted, sedangkan uplink menuju infrastruktur tepercaya hanya diberi status trusted setelah topologi benar-benar dipahami.
+
+## Port security
+
+Port security membatasi MAC address yang boleh muncul pada access port. Kontrol ini berguna untuk mencegah pergantian perangkat tanpa izin dan membatasi jumlah endpoint pada satu port.
+
+```text
+interface GigabitEthernet0/10
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+```
+
+Mode violation perlu dipilih dengan sadar. `shutdown` menempatkan port dalam kondisi error-disabled, sedangkan `restrict` menjatuhkan frame pelanggar dan mencatat pelanggaran tanpa mematikan port.
+
+## DHCP snooping
+
+DHCP snooping membedakan message dari port trusted dan untrusted. Tujuan utamanya adalah mencegah server DHCP rogue memberikan alamat, gateway, atau DNS palsu kepada client. Switch juga membangun **DHCP snooping binding database** yang memetakan VLAN, IP, MAC, interface, dan lease.
+
+```text
+ip dhcp snooping
+ip dhcp snooping vlan 10
+
+interface GigabitEthernet0/1
+ description UPLINK_KE_DHCP_SERVER
+ ip dhcp snooping trust
+```
+
+Jangan menandai seluruh port sebagai trusted. Hanya jalur yang benar-benar mengarah menuju DHCP server atau relay tepercaya yang diberi trust.
+
+## Dynamic ARP Inspection
+
+DAI memeriksa ARP pada port untrusted dan membandingkan binding IP-to-MAC dengan database tepercaya—umumnya hasil DHCP snooping. ARP yang tidak valid dapat dijatuhkan dan dicatat.
+
+```text
+ip arp inspection vlan 10
+
+interface GigabitEthernet0/1
+ ip arp inspection trust
+```
+
+<Callout type="mistake" title="Urutan dependency penting">
+Pada lingkungan DHCP, DAI mengandalkan binding database dari DHCP snooping. Mengaktifkan DAI tanpa menyiapkan dependency serta trust boundary dengan benar dapat memutus konektivitas pengguna yang sah.
+</Callout>
+
+## Verifikasi
+
+```text
+show port-security interface GigabitEthernet0/10
+show ip dhcp snooping
+show ip dhcp snooping binding
+show ip arp inspection vlan 10
+show ip arp inspection interfaces
+```
+
+<LessonQuiz
+  activityId="security-lesson-3-quiz"
+  courseSlug="security-fundamentals"
+  lessonId="03-keamanan-layer-2"
+  questions={[
+    {
+      question: 'Data apa yang paling umum digunakan DAI untuk memvalidasi binding IP-to-MAC pada lingkungan DHCP?',
+      options: ['Routing table OSPF', 'DHCP snooping binding database', 'VLAN trunk native', 'Daftar username lokal'],
+      correctIndex: 1,
+      explanation: 'DAI umumnya memanfaatkan binding database yang dibangun DHCP snooping untuk memvalidasi ARP pada port untrusted.',
+    },
+    {
+      question: 'Port mana yang biasanya diberi DHCP snooping trust?',
+      options: ['Seluruh port pengguna', 'Port kosong', 'Uplink yang benar-benar mengarah ke DHCP server atau relay tepercaya', 'Semua access port VLAN 10'],
+      correctIndex: 2,
+      explanation: 'Trust hanya diberikan pada jalur infrastruktur yang benar-benar tepercaya. Memberi trust terlalu luas menciptakan celah.',
+    },
+    {
+      question: 'Apa fungsi port security maximum 1 pada access port?',
+      options: ['Membatasi satu VLAN', 'Membatasi jumlah MAC address yang dipelajari atau diizinkan menjadi satu', 'Membatasi satu paket per detik', 'Mematikan DHCP'],
+      correctIndex: 1,
+      explanation: 'Nilai maximum menentukan jumlah MAC address yang diizinkan pada port tersebut.',
+    },
+  ]}
+  passingScore={67}
+  xp={30}
+/>
+
+## Referensi resmi
+
+- [Cisco — Dynamic ARP Inspection](https://www.cisco.com/c/en/us/td/docs/switches/lan/c9000/sec-crypto/fhs-sisf/fhs-and-sisf-configuration-guide/dynamic-arp-inspection.html)
+- [Cisco — Troubleshoot DAI and IP Source Guard](https://www.cisco.com/c/en/us/support/docs/switches/lan-switch-software/222274-troubleshoot-dynamic-arp-inspection-dai.html)

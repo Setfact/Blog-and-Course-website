@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CourseDetail from '../../components/CourseDetail.astro';
+import { loadCourses, type Course } from '../../data/learning';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const courses = await loadCourses();
+  return courses.map(course => ({ params: { slug: course.slug }, props: { course } }));
+}
+
+interface Props { course: Course; }
+const { course } = Astro.props;
+---
+
+<BaseLayout title={course.title} description={course.description.id}>
+  <CourseDetail course={course} language="id" />
+</BaseLayout>

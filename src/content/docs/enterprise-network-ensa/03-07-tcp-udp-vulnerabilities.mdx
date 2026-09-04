@@ -1,0 +1,91 @@
+---
+title: "TCP/UDP Vulnerabilities"
+language: id
+draft: false
+description: "Bagian ini membahas kerentanan pada dua protokol transport yang paling banyak dipakai: TCP dan UDP."
+order: 20
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 6
+---
+
+# TCP/UDP Vulnerabilities
+
+
+Bagian ini membahas kerentanan pada dua protokol transport yang paling banyak dipakai: TCP dan UDP.
+
+## 3.7.1 TCP Segment Header
+
+Untuk memahami serangan TCP, kamu harus tahu dulu struktur TCP header.
+
+![TCP Segment Header](https://itexamanswers.net/wp-content/uploads/2020/04/TCP-Segment-Heade.jpg)
+
+TCP header berisi field-field seperti sequence number, acknowledgement number, flags (SYN, ACK, RST, FIN), dan lainnya. Serangan TCP biasanya mengeksploitasi field-field ini.
+
+## 3.7.2 TCP Three-Way Handshake
+
+TCP menggunakan **three-way handshake** untuk membangun koneksi:
+1. Client mengirim **SYN**
+2. Server membalas **SYN-ACK**
+3. Client membalas **ACK**
+
+![TCP Three-Way Handshake](https://itexamanswers.net/wp-content/uploads/2020/04/TCP-Three-Way-Handshake.jpg)
+
+### Kenapa ini penting?
+Karena banyak serangan TCP mengeksploitasi proses handshake ini.
+
+## 3.7.3 TCP SYN Flood Attack
+
+SYN Flood mengeksploitasi three-way handshake dengan mengirim banyak SYN request palsu ke target.
+
+![TCP SYN Flood Attack](https://itexamanswers.net/wp-content/uploads/2020/04/TCP-SYN-Flood-Attack.jpg)
+
+### Cara kerja:
+1. Attacker mengirim SYN dengan **IP sumber palsu** ke target
+2. Target membalas SYN-ACK dan menunggu ACK
+3. Karena IP palsu, ACK tidak pernah datang
+4. Target menyimpan "half-open connection" di memory
+5. Setelah cukup banyak, memory target penuh dan **layanan baru tidak bisa diterima**
+
+### Dampak:
+- target tidak bisa menerima koneksi baru
+- bisa menyebabkan layanan crash
+
+## 3.7.4 TCP Reset Attack
+
+Attacker mengirim paket **RST (Reset)** yang palsu untuk mengakhiri koneksi TCP yang sedang aktif.
+
+![Terminating a TCP Connection](https://itexamanswers.net/wp-content/uploads/2020/04/Terminating-a-TCP-Connection.jpg)
+
+### Cara kerja:
+1. Attacker memprediksi sequence number dari koneksi aktif
+2. Attacker mengirim RST packet dengan sequence number yang benar
+3. Target menerima RST dan **menutup koneksi**
+
+## 3.7.5 TCP Session Hijacking
+
+Attacker memprediksi sequence number untuk mengambil alih sesi TCP yang sudah terotentikasi. Setelah berhasil, attacker bisa mengirim data seolah-olah dia adalah klien yang sah.
+
+## 3.7.6 UDP Segment Header and Operation
+
+UDP adalah protokol **connectionless** — tidak ada handshake, tidak ada jaminan pengiriman.
+
+![UDP Segment Header and Operation](https://itexamanswers.net/wp-content/uploads/2020/04/UDP-Segment-Header-and-Operation.jpg)
+
+### Kelebihan UDP:
+- lebih cepat (low overhead)
+- cocok untuk DNS, TFTP, VoIP
+
+### Kelemahan UDP:
+- **tidak terenkripsi secara default**
+- tidak ada mekanisme deteksi koneksi terputus
+
+### UDP Flood Attack
+Attacker membanjiri port UDP di target dengan paket palsu. Target merespons dengan ICMP unreachable, yang justru menambah beban.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

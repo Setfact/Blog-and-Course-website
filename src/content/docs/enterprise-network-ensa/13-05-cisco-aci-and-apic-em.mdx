@@ -1,0 +1,102 @@
+---
+title: "Cisco ACI and APIC-EM"
+language: id
+draft: false
+description: "Bagian ini membahas solusi SDN dari Cisco."
+order: 86
+course: enterprise-network-ensa
+module: ensa-13-network-virtualization
+durationMinutes: 8
+---
+
+# Cisco ACI and APIC-EM
+
+
+Bagian ini membahas solusi SDN dari Cisco.
+
+## 13.5.1 Cisco Application Centric Infrastructure (ACI)
+
+![Core Components of ACI](https://itexamanswers.net/wp-content/uploads/2020/04/Core-Components-of-ACI.jpg)
+
+**Cisco ACI** adalah solusi berbasis hardware untuk **data center automation** dan **policy management**. ACI mengintegrasikan switching, management, dan automation ke dalam satu sistem terpusat yang dikelola melalui APIC (Application Policy Infrastructure Controller).
+
+### Komponen ACI:
+
+| Komponen | Fungsi |
+|---|---|
+| **ANP** (Application Network Profile) | Mendefinisikan aplikasi, endpoints, dan hubungan antar komponen application. ANP mencakup semua contract, EPG, dan connectivity requirements untuk sebuah aplikasi |
+| **EPG** (Endpoint Group) | Kumpulan endpoints (VMs, hosts, containers) yang memiliki kebijakan keamanan dan connectivity yang sama. EPG memungkinkan kebijakan diterapkan berdasarkan grup logical alih-alih IP address |
+| **APIC** (Application Policy Infrastructure Controller) | Centralized controller untuk ACI. APIC mengelola seluruh fabric, menjalankan policy, dan menyediakan GUI/API untuk administrator |
+
+### Topologi Spine-Leaf
+
+![Spine-Leaf Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Spine-Leaf-Topology.jpg)
+
+ACI menggunakan topologi **spine-leaf** (juga dikenal sebagai fat-tree) di mana:
+- **Spine switches** — membentuk backbone data center. Setiap spine terhubung ke SEMUA leaf switches
+- **Leaf switches** — menghubungkan servers, storage, dan perangkat lain ke fabric. Setiap leaf terhubung ke SEMUA spine switches
+- **Full mesh** — setiap leaf terhubung ke setiap spine, menciptakan path redundant dan bandwidth yang tinggi
+- **Scalability** — untuk menambah kapasitas, cukup tambah spine atau leaf baru tanpa mengubah topologi yang ada
+
+Topologi spine-leaf memberikan **latency yang konsisten** (selalu sama jumlah hop-nya), **bandwidth tinggi**, dan **fault tolerance** yang excellent.
+
+## 13.5.2 Cisco APIC-EM
+
+![APIC-EM Features](https://itexamanswers.net/wp-content/uploads/2020/04/APIC-EM-Features.jpg)
+
+**APIC-EM** (Application Policy Infrastructure Controller Enterprise Module) adalah SDN controller berbasis software untuk enterprise. Berbeda dengan ACI yang berbasis hardware, APIC-EM berjalan sebagai software application dan bisa mengelola perangkat jaringan yang sudah ada (brownfield deployment).
+
+### Fitur APIC-EM:
+
+| Fitur | Deskripsi |
+|---|---|
+| **Discovery** | Otomatis menemukan perangkat jaringan di seluruh infrastruktur enterprise. APIC-EM bisa mendiscovery switches, routers, firewalls, dan perangkat lain tanpa konfigurasi manual |
+| **Inventory** | Mengelola inventarisasi lengkap perangkat: model, IOS version, interfaces, serial numbers. Memudahkan capacity planning dan lifecycle management |
+| **Topology** | Menyediakan visualisasi topologi jaringan secara real-time. Administrator bisa melihat bagaimana semua perangkat terhubung satu sama lain |
+| **Path Trace** | Memungkinkan trace path traffic dari source ke destination secara end-to-end, termasuk semua devices dan interfaces yang dilalui |
+| **Policy** | Menerapkan kebijakan keamanan dan QoS secara konsisten ke seluruh jaringan melalui pendekatan berbasis policy |
+
+### APIC-EM Path Trace
+
+![APIC-EM Path Trace](https://itexamanswers.net/wp-content/uploads/2020/04/APIC-EM-Path-Trace.jpg)
+
+Path Trace adalah salah satu fitur paling powerful dari APIC-EM. Fitur ini memungkinkan administrator melihat **path lengkap** yang ditempuh traffic dari source ke destination, termasuk semua devices, interfaces, dan hop yang dilalui. Sangat berguna untuk troubleshooting konektivitas — administrator bisa langsung melihat di mana traffic berhenti atau dialihkan tanpa harus manual tracing di setiap perangkat.
+
+---
+
+# Ringkasan modul 13
+
+| Bagian | Isi utama |
+|---|---|
+| 13.0 | Pengenalan — cloud dan virtualization |
+| 13.1 | Cloud Computing — definisi, manfaat, layanan (SaaS/PaaS/IaaS), model (public/private/hybrid/community) |
+| 13.2 | Virtualization — dedicated vs virtual, abstraction layers, hypervisors (Type 1/2), kelebihan |
+| 13.3 | Virtual Network Infrastructure — VLAN, VRF, traffic flow types, CEF |
+| 13.4 | SDN — control/data/management plane, OpenFlow, APIs, flow tables, tipe SDN |
+| 13.5 | Cisco ACI & APIC-EM — ANP, EPG, spine-leaf, path trace |
+
+---
+
+# Kata-kata kunci modul 13
+
+- **SaaS** — Software as a Service
+- **PaaS** — Platform as a Service
+- **IaaS** — Infrastructure as a Service
+- **Hypervisor** — software untuk abstraksi hardware/OS
+- **Type 1** — Bare-Metal hypervisor (ESXi, Hyper-V)
+- **Type 2** — Hosted hypervisor (VirtualBox, VMware Workstation)
+- **SDN** — Software-Defined Networking
+- **Control Plane** — keputusan forwarding
+- **Data Plane** — forwarding paket
+- **OpenFlow** — protokol SDN
+- **ACI** — Application Centric Infrastructure
+- **APIC-EM** — Application Policy Infrastructure Controller Enterprise Module
+- **ANP** — Application Network Profile
+- **EPG** — Endpoint Group
+- **CEF** — Cisco Express Forwarding
+- **VRF** — Virtual Routing and Forwarding
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 13: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-13-network-virtualization.html).

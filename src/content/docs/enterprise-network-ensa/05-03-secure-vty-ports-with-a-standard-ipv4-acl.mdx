@@ -1,0 +1,104 @@
+---
+title: "Secure VTY Ports with a Standard IPv4 ACL"
+language: id
+draft: false
+description: "Bagian ini membahas cara mengamankan akses remote (Telnet/SSH) ke router menggunakan standard ACL."
+order: 33
+course: enterprise-network-ensa
+module: ensa-05-acls-for-ipv4-configuration
+durationMinutes: 6
+---
+
+# Secure VTY Ports with a Standard IPv4 ACL
+
+
+Bagian ini membahas cara mengamankan akses remote (Telnet/SSH) ke router menggunakan standard ACL.
+
+## 5.3.1 The access-class Command
+
+Untuk mengamankan VTY lines, kamu menggunakan command `access-class` — bukan `ip access-group`.
+
+### Syntax
+
+```text
+Router(config-line)# access-class {access-list-number | access-list-name} {in | out}
+```
+
+### Perbedaan dengan interface ACL
+
+| Command | Digunakan di |
+|---|---|
+| `ip access-group` | Interface (physical/virtual) |
+| `access-class` | VTY lines (line vty 0 4) |
+
+## 5.3.2 Secure VTY Access Example
+
+### Skenario
+Hanya host `192.168.10.10` yang boleh mengakses router via Telnet/SSH.
+
+### Konfigurasi
+
+```text
+R1(config)# ip access-list standard ADMIN-HOST
+R1(config-std-nacl)# permit 192.168.10.10
+R1(config-std-nacl)# deny any
+R1(config-std-nacl)# exit
+R1(config)# line vty 0 4
+R1(config-line)# access-class ADMIN-HOST in
+R1(config-line)# exit
+```
+
+![Secure VTY Access Example](https://itexamanswers.net/wp-content/uploads/2020/04/Secure-VTY-Access-Example.jpg)
+
+### Kenapa `deny any` ditambahkan?
+Untuk **melihat statistik** berapa kali akses ditolak. Tanpa `deny any` eksplisit, implicit deny tidak mencatat statistik.
+
+## 5.3.3 Verify the VTY Port is Secured
+
+### Verifikasi dari luar
+
+```text
+R1# show access-lists
+```
+
+### Test akses dari host yang tidak diizinkan
+
+```text
+C:\> telnet 192.168.1.1
+% Connection refused by remote host
+```
+
+![Verify the VTY Port is Secured - 1](https://itexamanswers.net/wp-content/uploads/2020/04/Verify-the-VTY-Port-is-Secured1.jpg)
+
+![Verify the VTY Port is Secured - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Verify-the-VTY-Port-is-Secured2.jpg)
+
+### Test akses dari host yang diizinkan
+
+```text
+C:\> telnet 192.168.1.1
+Trying 192.168.1.1 ... Open
+Password:
+R1>
+```
+
+### Best practice di production
+Gunakan `transport input ssh` di VTY lines daripada Telnet. SSH lebih aman karena traffic-nya terenkripsi.
+
+```text
+R1(config)# line vty 0 4
+R1(config-line)# transport input ssh
+```
+
+## 5.3.4 Syntax Checker – Secure the VTY Ports
+
+<Callout type="remember" title={"Syntax Checker"}>
+Source menyediakan syntax checker interaktif untuk praktik securing VTY ports. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 5: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html).

@@ -1,0 +1,67 @@
+---
+title: "Syslog"
+language: id
+draft: false
+description: "Bagian ini membahas Syslog — protokol standar untuk mengirim pesan log dari perangkat ke collector server."
+order: 67
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 6
+---
+
+# Syslog
+
+
+Bagian ini membahas **Syslog** — protokol standar untuk mengirim pesan log dari perangkat ke collector server.
+
+## 10.5.1 Introduction to Syslog
+
+![Introduction to Syslog](https://itexamanswers.net/wp-content/uploads/2020/04/Introduction-to-Syslog.jpg)
+
+### Kenapa Syslog penting?
+- semua perangkat mengirim log ke satu tempat
+- memudahkan **troubleshooting** dan **audit**
+- **UDP port 514**
+
+### Format pesan Syslog
+
+```text
+%FACILITY-SEVERITY-MNEMONIC: description
+```
+
+Contoh:
+```text
+%LINK-3-UPDOWN: Interface GigabitEthernet0/0, changed state to up
+```
+
+## 10.5.2 Syslog Operation
+
+![Syslog Operation](https://itexamanswers.net/wp-content/uploads/2020/04/Syslog-Operation.jpg)
+
+### Severity Levels
+
+| Level | Nama | Keterangan |
+|---|---|---|
+| **0** | Emergency | Sistem tidak bisa digunakan |
+| **1** | Alert | Perlu tindakan segera |
+| **2** | Critical | Kondisi kritis |
+| **3** | Error | Error conditions |
+| **4** | Warning | Warning conditions |
+| **5** | Notification | Normal tapi signifikan (interface up/down) |
+| **6** | Informational | Pesan operasional normal |
+| **7** | Debugging | Pesan debugging |
+
+### Konfigurasi timestamp
+
+```text
+Router(config)# service timestamps log datetime
+```
+
+Command ini menambahkan timestamp yang akurat ke setiap log message.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

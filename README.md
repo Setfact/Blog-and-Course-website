@@ -1,43 +1,82 @@
-# Astro Starter Kit: Minimal
+# Phinisi Learn
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Platform belajar praktik untuk membangun kemampuan Networking, Linux, Automation, dan Internet of Things yang siap digunakan di dunia industri.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Phinisi Learn memakai Astro untuk website dan learning player, Fumadocs untuk referensi belajar, serta Keystatic sebagai CMS lokal berbasis Git. Blog tetap menjadi bagian dari platform dan dikelola melalui CMS yang sama.
 
-## 🚀 Project Structure
+## Struktur konten
 
-Inside of your Astro project, you'll see the following folders and files:
+Konten belajar memiliki susunan berikut:
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+Learning Path
+└── Course (diurutkan sesuai roadmap)
+    └── Module (kelompok materi)
+        └── Lesson (unit belajar terkecil)
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+- **Course** adalah produk belajar yang dapat berdiri sendiri.
+- **Module** mengelompokkan beberapa lesson dalam satu topik.
+- **Lesson** berisi materi, latihan, quiz, atau praktik.
+- **Learning Path** hanya menyusun course yang sudah ada menjadi roadmap. Course baru dapat dimasukkan tanpa menduplikasi materinya.
+- **Blog** tetap terpisah dari materi course dan digunakan untuk artikel, kabar, serta insight industri.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Menjalankan project
 
-Any static assets, like images, can be placed in the `public/` directory.
+Persyaratan: Node.js `22.12.0` atau lebih baru.
 
-## 🧞 Commands
+```sh
+npm install
+npm run dev:background
+```
 
-All commands are run from the root of the project, from a terminal:
+Website tersedia di `http://localhost:4321`. Gunakan perintah berikut untuk mengelola server background:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```sh
+npx astro dev status
+npx astro dev logs
+npx astro dev stop
+```
 
-## 👀 Want to learn more?
+## Mengelola konten
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Panduan lengkap seluruh collection, field, komponen editor, workflow publikasi, dan troubleshooting tersedia di [CMS-GUIDE.md](./CMS-GUIDE.md).
+
+1. Buka `http://localhost:4321/keystatic`.
+2. Buat atau perbarui **Course** terlebih dahulu.
+3. Buat **Module**, pilih course induknya, lalu tentukan urutannya.
+4. Buat **Lesson**, pilih course dan module induknya, lalu tentukan urutannya.
+5. Jika course perlu menjadi bagian roadmap, buka **Learning Paths** dan tambahkan course sesuai urutan belajar.
+6. Artikel tetap dibuat melalui collection **Blog**.
+
+Homepage dan katalog membaca data collection yang sama. Perubahan metadata course akan ikut tersinkron ke homepage, katalog, halaman detail, learning player, dan learning path.
+
+## Keamanan panel admin
+
+Pada development lokal di `127.0.0.1` atau `localhost`, panel Keystatic dapat langsung dibuka tanpa login. Deployment production tetap melindungi route `/keystatic` dan `/api/keystatic` dengan Basic Authentication dan wajib menyediakan environment variable berikut:
+
+```sh
+ADMIN_USERNAME=username-admin
+ADMIN_PASSWORD=password-yang-kuat
+```
+
+Salin `.env.example` menjadi `.env` untuk konfigurasi lokal pribadi. Jangan commit file `.env`.
+
+## Validasi
+
+```sh
+npm run build
+```
+
+Perintah tersebut menjalankan pemeriksaan Astro/TypeScript kemudian membuat production build.
+
+## Direktori utama
+
+```text
+src/content/courses/   metadata dan pengantar course
+src/content/modules/   struktur module per course
+src/content/docs/      lesson dan referensi belajar
+src/content/paths/     susunan course pada learning path
+src/content/blog/      artikel blog
+src/data/learning.ts   pemetaan data CMS ke UI
+```

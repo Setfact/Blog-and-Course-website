@@ -1,0 +1,112 @@
+---
+title: 'Menghubungkan ESP32 ke Wi-Fi'
+language: id
+draft: false
+description: 'Hubungkan ESP32 sebagai station, periksa alamat IP, dan pahami troubleshooting dasarnya.'
+order: 3
+course: iot-fundamentals
+module: iot-fundamentals-02-wifi
+durationMinutes: 24
+---
+
+# Menghubungkan ESP32 ke Wi-Fi
+
+Pada misi ini, ESP32 akan bekerja dalam **station mode**. Artinya, ESP32 bertindak sebagai client dan terhubung ke access point seperti laptop atau ponsel.
+
+## Tujuan misi
+
+Setelah menyelesaikan materi ini, kamu dapat:
+
+- menjelaskan station mode pada ESP32
+- menghubungkan ESP32 ke SSID menggunakan library Wi-Fi
+- membaca alamat IP dari DHCP
+- melakukan troubleshooting koneksi dasar
+
+## Sebelum mulai
+
+Siapkan:
+
+- board ESP32 yang didukung
+- kabel USB data
+- Arduino IDE dengan dukungan ESP32
+- access point Wi-Fi 2,4 GHz
+- SSID dan password jaringan lab
+
+<Callout type="warning" title="Gunakan jaringan lab">
+Jangan menuliskan password Wi-Fi pribadi atau production ke repository publik. Gunakan placeholder, file konfigurasi yang diabaikan Git, atau secret management saat project berkembang.
+</Callout>
+
+## Program koneksi dasar
+
+```cpp
+#include <WiFi.h>
+
+const char* ssid = "NAMA_WIFI_LAB";
+const char* password = "PASSWORD_WIFI_LAB";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Menghubungkan ke Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("Wi-Fi terhubung");
+  Serial.print("Alamat IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  // Misi berikutnya akan mengirim data dari sini.
+}
+```
+
+## Apa yang terjadi di jaringan?
+
+Saat program berhasil berjalan:
+
+1. ESP32 mencari SSID yang ditentukan
+2. access point melakukan autentikasi
+3. DHCP server memberikan alamat IP, subnet mask, gateway, dan DNS
+4. ESP32 dapat berkomunikasi dengan host lain sesuai aturan jaringan
+
+## Verifikasi
+
+Buka Serial Monitor pada baud rate `115200`. Catat alamat IP yang muncul, kemudian periksa:
+
+- apakah alamatnya berada di subnet yang benar?
+- apakah DHCP lease ESP32 terlihat pada router?
+- apakah perangkat dapat menjangkau gateway?
+- apakah firewall atau client isolation membatasi komunikasi?
+
+## Troubleshooting dasar
+
+| Gejala | Kemungkinan penyebab | Pemeriksaan |
+| --- | --- | --- |
+| terus menampilkan titik | SSID/password salah atau sinyal lemah | periksa ejaan dan jarak |
+| SSID tidak terlihat | access point hanya menggunakan band yang tidak didukung board | aktifkan jaringan 2,4 GHz |
+| mendapat IP tetapi server tidak dapat dijangkau | gateway, DNS, VLAN, atau firewall | periksa konfigurasi jaringan |
+| sering terputus | sinyal, catu daya, atau logika reconnect | cek RSSI dan sumber daya |
+
+<PracticeCTA
+  title="Ukur kualitas koneksi ESP32"
+  description="Hubungkan board ke Wi-Fi lab, catat alamat IP, lalu bandingkan RSSI di dua lokasi."
+  href="#tantangan"
+/>
+
+## Tantangan
+
+Tambahkan output Serial Monitor yang menampilkan kekuatan sinyal menggunakan `WiFi.RSSI()` setelah perangkat terhubung. Bandingkan nilainya pada dua lokasi berbeda.
+
+## Ringkasan
+
+Koneksi Wi-Fi yang berhasil tidak berhenti pada status `connected`. Seorang engineer juga memeriksa alamat IP, gateway, segmentasi, sinyal, dan jalur menuju layanan tujuan.
+
+## Referensi resmi
+
+- [Espressif Arduino ESP32 — Wi-Fi API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/wifi.html)
+- [Espressif — ESP32 Wi-Fi Driver](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/wifi.html)

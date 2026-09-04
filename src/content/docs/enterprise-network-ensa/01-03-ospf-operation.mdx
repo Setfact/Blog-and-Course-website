@@ -1,0 +1,161 @@
+---
+title: "OSPF Operation"
+language: id
+draft: false
+description: "Bagian ini menjelaskan proses kerja OSPF dari awal sampai jaringan dianggap converged."
+order: 4
+course: enterprise-network-ensa
+module: ensa-01-single-area-ospfv2-concepts
+durationMinutes: 8
+---
+
+# OSPF Operation
+
+
+Bagian ini menjelaskan proses kerja OSPF dari awal sampai jaringan dianggap converged.
+
+## 1.3.1 Video – OSPF Operation
+
+Section ini juga tercantum sebagai video di halaman sumber.
+
+<Callout type="info" title={"Video"}>
+Link video aslinya belum tampil jelas di snapshot yang aku ambil, jadi untuk sementara aku tandai sebagai section video sumber.
+</Callout>
+
+
+## 1.3.2 OSPF Operational States
+
+OSPF adjacency berkembang lewat beberapa state. Yang paling penting untuk dipahami adalah:
+- **Down**
+- **Init**
+- **Two-Way**
+- **ExStart**
+- **Exchange**
+- **Loading**
+- **Full**
+
+### Gambaran singkat
+
+![Down State to Init State](https://itexamanswers.net/wp-content/uploads/2020/04/Down-State-to-Init-State.jpg)
+
+- **Down**: belum ada Hello yang diterima
+- **Init**: Hello sudah diterima, tapi belum dua arah
+
+![The Init State](https://itexamanswers.net/wp-content/uploads/2020/04/The-Init-State.jpg)
+
+![Two-Way State](https://itexamanswers.net/wp-content/uploads/2020/04/Two-Way-State.jpg)
+
+- **Two-Way**: komunikasi dua arah sudah terbentuk
+- **ExStart**: mulai negosiasi DBD
+- **Exchange**: tukar DBD
+- **Loading**: minta LSA yang belum lengkap
+- **Full**: adjacency selesai dan database sinkron
+
+### Kenapa state ini penting?
+Karena OSPF itu tidak langsung "connect" gitu aja. Dia punya tahapan supaya router yakin:
+- neighbor valid
+- database sinkron
+- informasi route akurat
+
+## 1.3.3 Establish Neighbor Adjacencies
+
+![Creating Adjacencies With Every Neighbor](https://itexamanswers.net/wp-content/uploads/2020/04/Creating-Adjacencies-With-Every-Neighbor.jpg)
+
+Router OSPF membentuk adjacency lewat **Hello packets**.
+
+Pada jaringan **point-to-point**, adjacency biasanya terbentuk langsung antar dua router.
+
+Pada jaringan **broadcast multiaccess**, tidak semua router harus membentuk adjacency penuh satu sama lain. Di sinilah **DR** dan **BDR** dibutuhkan.
+
+### Kenapa tidak semua router bikin adjacency full ke semua router?
+Kalau ada banyak router dalam satu LAN, jumlah hubungan yang harus dibangun bisa meledak. Itu bikin overhead besar.
+
+Makanya OSPF pakai konsep **Two-Way state** dan pemilihan **DR/BDR** untuk mengefisienkan proses adjacency.
+
+## 1.3.4 Synchronizing OSPF Databases
+
+Setelah adjacency terbentuk, router saling menyinkronkan database mereka.
+
+![Exchange DBDs](https://itexamanswers.net/wp-content/uploads/2020/04/Exchange-DBDs.jpg)
+
+Alurnya biasanya:
+1. tukar **DBD**
+2. kirim **LSR** jika ada data yang kurang
+
+![Getting Additional Route Information](https://itexamanswers.net/wp-content/uploads/2020/04/Getting-Additional-Route-Information.jpg)
+
+3. balas dengan **LSU**
+4. akhiri dengan **LSAck**
+
+### Apa tujuan sinkronisasi ini?
+Supaya semua router punya gambaran topologi yang konsisten. Kalau database belum sama, SPF calculation bisa beda hasil. Karena itu sinkronisasi harus rapi dulu sebelum routing dianggap siap.
+
+## 1.3.5 The Need for a DR
+
+Di jaringan multiaccess, kalau ada banyak router, jumlah adjacency bisa meledak.
+
+Rumusnya:
+
+```text
+n (n – 1) / 2
+```
+
+Contoh:
+- kalau ada **5 router**
+- maka adjacency yang mungkin terjadi adalah:
+
+```text
+5 (5 – 1) / 2 = 10 adjacencies
+```
+
+Supaya lebih efisien, OSPF memilih:
+
+![Elect the DR and BDR](https://itexamanswers.net/wp-content/uploads/2020/04/Elect-the-DR-and-BDR.jpg)
+
+- **DR (Designated Router)**
+- **BDR (Backup Designated Router)**
+
+### Kenapa DR dibutuhkan?
+
+![Decide Which Router](https://itexamanswers.net/wp-content/uploads/2020/04/Decide-Which-Router.jpg)
+
+- mengurangi jumlah adjacency penuh
+- mengurangi overhead pertukaran LSA
+- membuat flooding lebih efisien
+
+### Makna DR dan BDR
+- **DR** jadi pusat distribusi LSA di network broadcast
+- **BDR** jadi cadangan kalau DR gagal
+- router lain cukup fokus bertukar dengan DR/BDR sesuai aturan OSPF
+
+## 1.3.6 LSA Flooding With a DR
+
+Dengan adanya **DR**:
+- router lain tidak perlu membentuk full adjacency satu sama lain
+- router cukup membentuk adjacency ke DR/BDR sesuai aturan OSPF
+- LSA disebarkan lewat DR sehingga flooding jadi lebih terkontrol
+
+Ini penting banget buat broadcast network yang isinya banyak router.
+
+### Gambar / animasi referensi
+
+![Flooding LSAs](https://itexamanswers.net/wp-content/uploads/2020/04/1.3.6-Flooding-LSAs.gif)
+
+![LSAs and DR](https://itexamanswers.net/wp-content/uploads/2020/04/1.3.6-LSAs-and-DR.gif)
+
+### Penjelasan gambar
+Gambar-gambar ini nunjukin proses **LSA flooding** di network multiaccess.
+
+Intinya:
+- router mengirim LSA ke neighbor yang relevan
+- LSA diteruskan lagi ke router lain
+- flooding berlangsung sampai semua router dalam area punya informasi yang sama
+
+Kalau ada DR, alur flooding jadi lebih terpusat dan efisien.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 1: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-1-single-area-ospfv2-concepts.html).

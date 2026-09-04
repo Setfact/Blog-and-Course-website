@@ -1,0 +1,131 @@
+---
+title: 'Internet of Things: Dari Sensor ke Cloud'
+language: id
+draft: false
+description: 'Kenali komponen utama IoT dan ikuti perjalanan data dari sensor hingga aplikasi.'
+order: 1
+course: iot-fundamentals
+durationMinutes: 8
+---
+
+# Internet of Things: Dari Sensor ke Cloud
+
+Internet of Things atau **IoT** adalah konsep ketika benda fisik memiliki kemampuan untuk membaca kondisi, memproses data, terhubung ke jaringan, dan bertukar informasi dengan sistem lain.
+
+Contohnya bukan hanya lampu yang dapat dinyalakan dari ponsel. Sistem monitoring suhu ruang server, pelacak kendaraan, penyiram tanaman otomatis, dan sensor kualitas udara juga termasuk sistem IoT.
+
+## Tujuan misi
+
+Setelah menyelesaikan materi ini, kamu dapat:
+
+- menjelaskan fungsi sensor, aktuator, controller, gateway, dan aplikasi
+- menggambarkan perjalanan data dari perangkat ke pengguna
+- membedakan sistem IoT dari perangkat elektronik biasa
+- mengenali peran dasar seorang network engineer di lingkungan IoT
+
+## Lima bagian utama sistem IoT
+
+### 1. Sensor dan aktuator
+
+**Sensor** membaca kondisi dunia nyata dan mengubahnya menjadi data. Contohnya sensor suhu, kelembapan, cahaya, gerak, dan jarak.
+
+**Aktuator** melakukan tindakan berdasarkan perintah. Contohnya menyalakan kipas, menggerakkan motor, membuka katup air, atau membunyikan alarm.
+
+### 2. Controller
+
+Controller membaca sensor dan menjalankan logika program. Pada lab pemula kita akan menggunakan **ESP32**, sebuah system-on-chip yang mendukung Wi-Fi 2,4 GHz, Bluetooth, dan berbagai peripheral.
+
+### 3. Konektivitas
+
+Perangkat membutuhkan media untuk mengirim data. Pilihannya dapat berupa:
+
+| Teknologi | Cocok untuk | Catatan |
+| --- | --- | --- |
+| Wi-Fi | rumah, sekolah, dan lab | mudah terhubung ke jaringan IP |
+| Bluetooth Low Energy | perangkat jarak dekat | hemat energi |
+| Ethernet | perangkat tetap | stabil dan latensi rendah |
+| Seluler | perangkat bergerak | jangkauan luas, membutuhkan layanan operator |
+| LoRaWAN | sensor jarak jauh | data kecil dengan jangkauan panjang |
+
+### 4. Gateway atau platform
+
+Gateway menjadi jembatan antara perangkat lokal dan jaringan lain. Platform IoT menerima, menyimpan, memproses, dan menampilkan data dari banyak perangkat.
+
+### 5. Aplikasi
+
+Aplikasi adalah bagian yang dilihat pengguna: dashboard, notifikasi, laporan, atau tombol kendali.
+
+## Perjalanan satu data suhu
+
+Bayangkan sensor suhu berada di ruang server sekolah:
+
+1. sensor membaca suhu `31°C`
+2. ESP32 mengubah hasil pembacaan menjadi data
+3. ESP32 terhubung ke access point melalui Wi-Fi
+4. data dikirim ke broker atau server
+5. dashboard menampilkan suhu terbaru
+6. jika suhu melewati batas, sistem mengirim peringatan atau menyalakan kipas
+
+Alurnya dapat diringkas menjadi:
+
+```text
+Sensor → ESP32 → Wi-Fi → Router → Broker/Server → Dashboard
+                                      ↓
+                                  Perintah balik
+                                      ↓
+                                   Aktuator
+```
+
+<TopologyDiagram
+  title="Perjalanan data dari perangkat ke aplikasi"
+  caption="Gateway dan jaringan IP menghubungkan dunia fisik dengan layanan digital."
+  leftLabel="Sensor + ESP32"
+  leftMeta="Membaca dan mengirim data"
+  leftIcon="sensors"
+  centerLabel="Gateway / Broker"
+  centerMeta="Menghubungkan dan meneruskan"
+  centerIcon="hub"
+  rightLabel="Dashboard"
+  rightMeta="Menampilkan dan memberi perintah"
+  rightIcon="monitoring"
+/>
+
+## Apa peran network engineer?
+
+IoT tetap bergantung pada jaringan. Seorang network engineer membantu memastikan:
+
+- perangkat memperoleh alamat IP yang benar
+- segmentasi perangkat dilakukan menggunakan VLAN atau subnet terpisah
+- hanya traffic yang dibutuhkan yang diizinkan
+- DNS, gateway, dan akses internet tersedia
+- koneksi tetap dapat dimonitor dan ditroubleshoot
+
+<Callout type="mistake" title="Jangan langsung taruh semua perangkat di jaringan utama">
+Perangkat IoT sebaiknya dipisahkan dari perangkat penting sekolah atau kantor. Segmentasi membatasi dampak jika sebuah perangkat memiliki konfigurasi yang lemah.
+</Callout>
+
+<PracticeCTA
+  title="Petakan satu sistem IoT"
+  description="Tentukan sensor, controller, jaringan, platform, dan aktuator pada skenario penyiram tanaman."
+  href="#tantangan-singkat"
+/>
+
+## Tantangan singkat
+
+Sebuah sistem penyiram tanaman memiliki sensor kelembapan tanah, ESP32, access point, server MQTT, dan pompa air.
+
+Coba tentukan:
+
+1. mana yang berperan sebagai sensor?
+2. mana yang berperan sebagai controller?
+3. mana yang berperan sebagai aktuator?
+4. jalur apa yang dilewati data sebelum tampil di dashboard?
+
+## Ringkasan
+
+Sistem IoT bukan satu perangkat tunggal. Ia merupakan rangkaian sensor, controller, jaringan, platform, dan aplikasi yang bekerja bersama. Setelah memahami alurnya, lanjutkan ke materi berikutnya untuk mengenal ESP32, sensor, dan aktuator lebih dekat.
+
+## Referensi resmi
+
+- [Espressif — Get Started with ESP32](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+- [MQTT — The Standard for IoT Messaging](https://mqtt.org/)

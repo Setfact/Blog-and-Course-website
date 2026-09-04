@@ -1,0 +1,167 @@
+---
+interface Props {
+  title?: string;
+  caption?: string;
+  leftLabel?: string;
+  leftMeta?: string;
+  leftIcon?: string;
+  centerLabel?: string;
+  centerMeta?: string;
+  centerIcon?: string;
+  rightLabel?: string;
+  rightMeta?: string;
+  rightIcon?: string;
+}
+
+const {
+  title = 'Topologi latihan',
+  caption,
+  leftLabel = 'Jaringan Sumber',
+  leftMeta = 'LAN pengguna',
+  leftIcon = 'devices',
+  centerLabel = 'Router',
+  centerMeta = 'Perangkat transit',
+  centerIcon = 'router',
+  rightLabel = 'Jaringan Tujuan',
+  rightMeta = 'Server tujuan',
+  rightIcon = 'dns',
+} = Astro.props;
+---
+
+<figure class="topology-card">
+  <figcaption>
+    <span class="caption-kicker">Ilustrasi jaringan</span>
+    <strong>{title}</strong>
+    {caption && <span>{caption}</span>}
+  </figcaption>
+
+  <div class="topology-flow" aria-label={`${leftLabel} terhubung ke ${centerLabel}, lalu ke ${rightLabel}`}>
+    <div class="topology-node">
+      <span class="material-symbols-outlined" aria-hidden="true">{leftIcon}</span>
+      <strong>{leftLabel}</strong>
+      <small>{leftMeta}</small>
+    </div>
+    <div class="topology-link" aria-hidden="true"><span></span></div>
+    <div class="topology-node topology-node--primary">
+      <span class="material-symbols-outlined" aria-hidden="true">{centerIcon}</span>
+      <strong>{centerLabel}</strong>
+      <small>{centerMeta}</small>
+    </div>
+    <div class="topology-link" aria-hidden="true"><span></span></div>
+    <div class="topology-node">
+      <span class="material-symbols-outlined" aria-hidden="true">{rightIcon}</span>
+      <strong>{rightLabel}</strong>
+      <small>{rightMeta}</small>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .topology-card {
+    margin: 2rem 0;
+    overflow: hidden;
+    border: 1px solid var(--color-phinisi-200);
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(rgba(20, 91, 215, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 91, 215, 0.06) 1px, transparent 1px),
+      linear-gradient(145deg, #fff, var(--color-section));
+    background-size: 22px 22px, 22px 22px, auto;
+    box-shadow: var(--shadow-soft);
+  }
+
+  figcaption {
+    display: grid;
+    gap: 0.2rem;
+    border-bottom: 1px solid rgba(20, 91, 215, 0.12);
+    padding: 1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  figcaption strong {
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  figcaption > span:last-child:not(.caption-kicker) {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+  }
+
+  .caption-kicker {
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .topology-flow {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) minmax(52px, 0.42fr) minmax(130px, 1fr) minmax(52px, 0.42fr) minmax(130px, 1fr);
+    align-items: center;
+    padding: 2rem 1.4rem;
+  }
+
+  .topology-node {
+    display: grid;
+    min-height: 128px;
+    place-items: center;
+    align-content: center;
+    gap: 0.35rem;
+    border: 2px solid var(--color-phinisi-200);
+    border-radius: 1.1rem;
+    padding: 1rem;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 7px 0 #d4e6fb;
+  }
+
+  .topology-node--primary {
+    border-color: var(--color-primary);
+    background: var(--color-navy);
+    color: #fff;
+    box-shadow: 0 7px 0 #05142d;
+  }
+
+  .topology-node .material-symbols-outlined { color: var(--color-primary); font-size: 2rem; }
+  .topology-node--primary .material-symbols-outlined { color: var(--color-sky); }
+  .topology-node strong { font-size: 0.88rem; }
+  .topology-node small { color: var(--color-muted); font-size: 0.72rem; }
+  .topology-node--primary small { color: #bbd7ff; }
+
+  .topology-link { position: relative; height: 3px; background: var(--color-primary); }
+  .topology-link::after {
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 9px;
+    height: 9px;
+    content: '';
+    border-top: 3px solid var(--color-primary);
+    border-right: 3px solid var(--color-primary);
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .topology-link span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--color-sky);
+    transform: translate(-50%, -50%);
+  }
+
+  @media (max-width: 700px) {
+    .topology-flow { grid-template-columns: 1fr; padding: 1.4rem; }
+    .topology-node { width: min(100%, 250px); min-height: 112px; justify-self: center; }
+    .topology-link { width: 3px; height: 42px; justify-self: center; }
+    .topology-link::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
+  }
+</style>

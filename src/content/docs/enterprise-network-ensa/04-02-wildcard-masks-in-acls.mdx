@@ -1,0 +1,115 @@
+---
+title: "Wildcard Masks in ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas wildcard mask — komponen kunci dalam ACL yang menentukan bit mana yang harus diperiksa saat pencocokan alamat."
+order: 26
+course: enterprise-network-ensa
+module: ensa-04-acl-concepts
+durationMinutes: 7
+---
+
+# Wildcard Masks in ACLs
+
+
+Bagian ini membahas wildcard mask — komponen kunci dalam ACL yang menentukan **bit mana** yang harus diperiksa saat pencocokan alamat.
+
+## 4.2.1 Wildcard Mask Overview
+
+**Wildcard mask** adalah mask 32-bit yang digunakan dalam ACE untuk menentukan bit mana dari alamat IPv4 yang harus **diperiksa** untuk mencocokkan.
+
+### Perbandingan dengan subnet mask
+
+| Bit | Subnet Mask | Wildcard Mask |
+|---|---|---|
+| **0** | Net bit (harus match) | **Harus match** |
+| **1** | Host bit (tidak diperiksa) | **Ignore (tidak diperiksa)** |
+
+Wildcard mask menggunakan logika yang **terbalik** dari subnet mask.
+
+### Contoh wildcard mask
+
+| Wildcard Mask | Arti |
+|---|---|
+| `0.0.0.0` | Cocokkan semua bit → **satu host spesifik** |
+| `0.0.0.255` | Cocokkan 3 oktet pertama, abaikan oktet ke-4 → **seluruh subnet /24** |
+| `0.0.0.63` | Cocokkan 3 oktet pertama + 2 bit teratas oktet ke-4 |
+
+## 4.2.2 Wildcard Mask Types
+
+### Match satu host
+Gunakan wildcard mask `0.0.0.0` atau keyword `host`.
+
+```text
+access-list 10 permit 192.168.1.1 0.0.0.0
+```
+
+### Match satu subnet
+Gunakan wildcard yang merupakan kebalikan dari subnet mask.
+
+```text
+access-list 10 permit 192.168.1.0 0.0.0.255
+```
+
+### Match range alamat
+Gunakan wildcard yang mencakup beberapa subnet sekaligus.
+
+```text
+access-list 10 permit 192.168.16.0 0.0.15.255
+```
+
+Wildcard `0.0.15.255` mencakup range dari `192.168.16.0` sampai `192.168.31.0` — yaitu 16 subnet sekaligus.
+
+## 4.2.3 Wildcard Mask Calculation
+
+### Rumus cepat
+
+```text
+Wildcard Mask = 255.255.255.255 - Subnet Mask
+```
+
+### Contoh perhitungan
+
+**Contoh 1:** `192.168.3.0/24`
+- Subnet Mask: `255.255.255.0`
+- Wildcard: `255.255.255.255 - 255.255.255.0 = 0.0.0.255`
+
+**Contoh 2:** `192.168.3.32/28`
+- Subnet Mask: `255.255.255.240`
+- Wildcard: `255.255.255.255 - 255.255.255.240 = 0.0.0.15`
+
+![Wildcard Mask Calculation](https://itexamanswers.net/wp-content/uploads/2020/04/2020-06-19_195702.jpg)
+
+Gambar di atas memperlihatkan contoh perhitungan wildcard mask dari subnet mask. Perhatikan bagaimana bit yang bernilai 1 di wildcard mask artinya "tidak diperiksa".
+
+## 4.2.4 Wildcard Mask Keywords
+
+Cisco IOS menyediakan dua keyword untuk menyederhanakan penulisan wildcard mask:
+
+### `host`
+Menggantikan wildcard mask `0.0.0.0` — cocok untuk **satu host spesifik**.
+
+```text
+access-list 10 permit host 192.168.10.10
+```
+
+### `any`
+Menggantikan wildcard mask `255.255.255.255` — cocok untuk **semua alamat**.
+
+```text
+access-list 11 permit any
+```
+
+### Perbandingan
+
+| Keyword | Wildcard Mask | Arti |
+|---|---|---|
+| `host` | `0.0.0.0` | Cocokkan satu host tertentu |
+| `any` | `255.255.255.255` | Cocokkan semua alamat |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 4: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-4-acl-concepts.html).

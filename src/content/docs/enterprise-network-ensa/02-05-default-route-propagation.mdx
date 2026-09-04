@@ -1,0 +1,56 @@
+---
+title: "Default Route Propagation"
+language: id
+draft: false
+description: "R2(config-if) ip address 64.100.0.1 255.255.255.252"
+order: 11
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 6
+---
+
+# Default Route Propagation
+
+
+## 2.5.1 Configure Default Route
+
+```text
+R2(config)# interface lo1
+R2(config-if)# ip address 64.100.0.1 255.255.255.252 
+R2(config-if)# exit
+R2(config)# ip route 0.0.0.0 0.0.0.0 loopback 1
+R2(config)# router ospf 10
+R2(config-router)# default-information originate
+R2(config-router)# end
+```
+
+## 2.5.2 Verify Default Route
+
+### Di R2 (ASBR)
+```text
+R2# show ip route | begin Gateway
+Gateway of last resort is 0.0.0.0 to network 0.0.0.0
+S*    0.0.0.0/0 is directly connected, Loopback1
+```
+
+### Di R1 (router internal)
+```text
+R1# show ip route | begin Gateway
+Gateway of last resort is 10.1.1.6 to network 0.0.0.0
+O*E2  0.0.0.0/0 [110/1] via 10.1.1.6, 00:11:08, GigabitEthernet0/0/0
+```
+**O*E2** = OSPF External Type 2, default route via R2 (ASBR).
+
+### Di R3 (router internal)
+```text
+R3# show ip route | begin Gateway
+Gateway of last resort is 10.1.1.9 to network 0.0.0.0
+O*E2  0.0.0.0/0 [110/1] via 10.1.1.9, 00:12:04, GigabitEthernet0/0/1
+```
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

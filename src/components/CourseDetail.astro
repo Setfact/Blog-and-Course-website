@@ -1,0 +1,190 @@
+---
+import { categoryLabels, getPathsForCourse, type Course, type Language } from '../data/learning';
+import LearningStatus from './LearningStatus.astro';
+
+interface Props { course: Course; language?: Language; }
+
+const { course, language = 'id' } = Astro.props;
+const isEnglish = language === 'en';
+const prefix = isEnglish ? '/en' : '';
+const materialHref = course.contentHref?.[language];
+const learningHref = course.learningHref?.[language] ?? materialHref;
+const relatedPaths = await getPathsForCourse(course.slug);
+
+const copy = isEnglish ? {
+  courses: 'Courses', available: 'Available', planned: 'Coming soon',
+  beginner: 'Beginner', intermediate: 'Intermediate', hours: 'hours', modules: 'modules', lessons: 'lessons',
+  pathLabel: 'Learning path', outcomes: 'What you will learn', syllabus: 'Course outline',
+  syllabusDescription: 'Learn each module in order, then practice through short lessons and checks.',
+  tools: 'Tools used', updated: 'Last updated', finalProject: 'Final project',
+  start: 'Start course', preparingTitle: 'Lessons are being prepared.',
+  preparingDescription: 'The course outline is ready and its position in the learning path is already visible.',
+  back: 'Back to course catalog', module: 'Module',
+} : {
+  courses: 'Course', available: 'Tersedia', planned: 'Segera hadir',
+  beginner: 'Pemula', intermediate: 'Menengah', hours: 'jam', modules: 'modul', lessons: 'lesson',
+  pathLabel: 'Learning path', outcomes: 'Yang akan kamu kuasai', syllabus: 'Susunan course',
+  syllabusDescription: 'Pelajari modul secara berurutan, lalu praktikkan melalui lesson dan quiz singkat.',
+  tools: 'Tools yang digunakan', updated: 'Terakhir diperbarui', finalProject: 'Project akhir',
+  start: 'Mulai course', preparingTitle: 'Lesson sedang disiapkan.',
+  preparingDescription: 'Struktur course dan posisinya di learning path sudah dapat kamu lihat.',
+  back: 'Kembali ke katalog course', module: 'Modul',
+};
+
+const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
+---
+
+<main class="course-detail">
+  <section class="course-hero">
+    <div class="page-shell">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href={prefix + '/courses'}>{copy.courses}</a><span>/</span><span>{course.title}</span>
+      </nav>
+
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="course-label">
+            <span>{categoryLabels[course.category][language]}</span>
+            <i aria-hidden="true">·</i>
+            <strong class:list={{ available: Boolean(materialHref) }}>{materialHref ? copy.available : copy.planned}</strong>
+          </div>
+          <h1>{course.title}</h1>
+          <p>{course.description[language]}</p>
+          <div class="course-meta">{level} · {course.moduleCount} {copy.modules} · {course.lessonCount} {copy.lessons} · ±{course.durationHours} {copy.hours}</div>
+          <div class="updated-at">{copy.updated}: {new Intl.DateTimeFormat(isEnglish ? 'en-US' : 'id-ID', { dateStyle: 'medium' }).format(new Date(course.updatedAt))}</div>
+
+          {materialHref && language === 'id' && <LearningStatus courseSlug={course.slug} totalLessons={course.lessonCount} />}
+
+          {materialHref ? (
+            <a
+              class="primary-action"
+              href={learningHref}
+              data-course-start
+              data-course={course.slug}
+              data-total-lessons={course.lessonCount}
+            ><span data-course-start-label>{copy.start}</span> →</a>
+          ) : (
+            <div class="preparing-note"><strong>{copy.preparingTitle}</strong><span>{copy.preparingDescription}</span></div>
+          )}
+        </div>
+
+        <img class="course-image" src={course.cover} alt="" width="960" height="540" />
+      </div>
+    </div>
+  </section>
+
+  <section class="course-body page-shell">
+    <div class="syllabus">
+      <header>
+        <h2>{copy.syllabus}</h2>
+        <p>{copy.syllabusDescription}</p>
+      </header>
+      <ol class="module-list">
+        {course.modules.map((module, index) => (
+          <li><span>{String(index + 1).padStart(2, '0')}</span><div><small>{copy.module} {index + 1}</small><strong>{module.title[language]}</strong>{module.lessonCount > 0 && <em>{module.lessonCount} lesson</em>}</div></li>
+        ))}
+      </ol>
+      {course.projectTitle && (
+        <section class="final-project">
+          <span>{copy.finalProject}</span>
+          <h3>{course.projectTitle}</h3>
+          {course.projectDescription && <p>{course.projectDescription}</p>}
+        </section>
+      )}
+    </div>
+
+    <aside class="course-sidebar">
+      <section class="outcomes">
+        <h2>{copy.outcomes}</h2>
+        <ul>{course.outcomes.map((outcome) => <li>{outcome[language]}</li>)}</ul>
+      </section>
+
+      {course.tools.length > 0 && (
+        <section class="course-tools">
+          <h2>{copy.tools}</h2>
+          <div>{course.tools.map((tool) => <span>{tool}</span>)}</div>
+        </section>
+      )}
+
+      {relatedPaths.length > 0 && (
+        <section class="related-paths">
+          <span>{copy.pathLabel}</span>
+          {relatedPaths.map((path) => (
+            <a href={'/learning-path/' + path.slug}>
+              <strong>{path.title[language]}</strong>
+              <small>Course {path.courseSlugs.indexOf(course.slug) + 1} dari {path.courseSlugs.length}</small>
+            </a>
+          ))}
+        </section>
+      )}
+
+      <a class="back-link" href={prefix + '/courses'}>← {copy.back}</a>
+    </aside>
+  </section>
+</main>
+
+<script>
+  import { getCourseProgress } from '../scripts/learning-store';
+
+  document.querySelectorAll<HTMLAnchorElement>('[data-course-start]').forEach((link) => {
+    const totalLessons = Number(link.dataset.totalLessons) || 0;
+    const progress = getCourseProgress(link.dataset.course ?? '', totalLessons);
+    const label = link.querySelector<HTMLElement>('[data-course-start-label]');
+    if (progress.resumeHref) link.href = progress.resumeHref;
+    if (label && progress.completedLessons > 0) label.textContent = progress.percent === 100 ? 'Tinjau kembali course' : 'Lanjutkan course';
+  });
+</script>
+
+<style>
+  .course-detail { background: var(--color-canvas); }
+  .course-hero { border-bottom: 1px solid var(--color-line); padding: 1.5rem 0 clamp(3.5rem, 7vw, 5rem); background: #f7faff; }
+  .breadcrumb { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 2rem; color: var(--color-muted); font-size: 0.7rem; }
+  .breadcrumb a { color: var(--color-primary); font-weight: 800; text-decoration: none; }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(350px, 0.85fr); align-items: center; gap: clamp(2rem, 6vw, 5rem); }
+  .course-label { display: flex; align-items: center; gap: 0.45rem; color: var(--color-primary); font-size: 0.68rem; font-style: normal; font-weight: 850; text-transform: uppercase; }
+  .course-label i { color: var(--color-phinisi-300); font-style: normal; }
+  .course-label strong { color: var(--color-muted); }
+  .course-label strong.available { color: var(--color-success); }
+  .hero-copy h1 { max-width: 740px; margin: 0.7rem 0 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.6rem, 5vw, 4.2rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+  .hero-copy > p { max-width: 670px; margin: 1rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.65; }
+  .course-meta { margin-top: 1rem; color: var(--color-ink); font-size: 0.76rem; font-weight: 800; }
+  .updated-at { margin-top: 0.35rem; color: var(--color-muted); font-size: 0.72rem; }
+  .primary-action { display: inline-flex; min-height: 44px; align-items: center; margin-top: 1.4rem; border-radius: var(--radius-DEFAULT); padding: 0.72rem 1rem; background: var(--color-primary); box-shadow: var(--shadow-button); color: #fff; font-family: var(--font-heading); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+  .preparing-note { display: grid; gap: 0.2rem; max-width: 600px; margin-top: 1.4rem; border-left: 3px solid var(--color-gold); padding-left: 0.8rem; color: var(--color-muted); font-size: 0.76rem; }
+  .preparing-note strong { color: var(--color-navy); }
+  .course-image { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--color-line); border-radius: var(--radius-xl); object-fit: cover; }
+
+  .course-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr); gap: clamp(2.5rem, 7vw, 6rem); padding-block: clamp(4rem, 8vw, 6.5rem); }
+  .syllabus header h2, .outcomes h2 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.6rem; font-weight: 600; }
+  .syllabus header p { margin: 0.45rem 0 0; color: var(--color-muted); font-size: 0.86rem; line-height: 1.6; }
+  .module-list { margin: 1.5rem 0 0; border-block: 1px solid var(--color-line); padding: 0; list-style: none; }
+  .module-list li { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1rem; padding: 1rem 0.2rem; }
+  .module-list li + li { border-top: 1px solid var(--color-line); }
+  .module-list li > span { color: var(--color-phinisi-300); font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; }
+  .module-list li div { display: grid; gap: 0.15rem; }
+  .module-list small { color: var(--color-primary); font-size: 0.58rem; font-weight: 850; text-transform: uppercase; }
+  .module-list strong { color: var(--color-ink); font-size: 0.86rem; }
+  .module-list em { color: var(--color-muted); font-size: 0.7rem; font-style: normal; }
+  .final-project { margin-top: 2rem; border: 1px solid var(--color-line); border-radius: var(--radius-lg); padding: 1.25rem; background: var(--color-section); }
+  .final-project span { color: var(--color-primary); font-size: .68rem; font-weight: 650; text-transform: uppercase; }
+  .final-project h3 { margin: .45rem 0 0; color: var(--color-navy); font-size: 1.1rem; font-weight: 650; }
+  .final-project p { margin: .5rem 0 0; color: var(--color-muted); font-size: .84rem; line-height: 1.6; }
+  .course-sidebar { display: grid; align-content: start; gap: 1.5rem; }
+  .outcomes { border-top: 3px solid var(--color-primary); padding-top: 1rem; }
+  .outcomes h2 { font-size: 1.15rem; }
+  .outcomes ul { display: grid; gap: 0.75rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  .outcomes li { position: relative; padding-left: 1rem; color: var(--color-muted); font-size: 0.78rem; line-height: 1.5; }
+  .outcomes li::before { position: absolute; top: 0.5em; left: 0; width: 0.38rem; height: 0.38rem; border-radius: 50%; background: var(--color-success); content: ''; }
+  .course-tools { border-top: 1px solid var(--color-line); padding-top: 1rem; }
+  .course-tools h2 { margin: 0; color: var(--color-navy); font-size: 1rem; font-weight: 650; }
+  .course-tools > div { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; }
+  .course-tools span { border: 1px solid var(--color-line); border-radius: 999px; padding: .35rem .6rem; background: #fff; color: var(--color-muted); font-size: .72rem; font-weight: 550; }
+  .related-paths { display: grid; gap: 0.6rem; border-top: 1px solid var(--color-line); padding-top: 1rem; }
+  .related-paths > span { color: var(--color-muted); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; }
+  .related-paths a { display: grid; gap: 0.18rem; color: var(--color-navy); text-decoration: none; }
+  .related-paths strong { font-size: 0.84rem; }
+  .related-paths small { color: var(--color-muted); font-size: 0.68rem; }
+  .back-link { color: var(--color-primary); font-size: 0.72rem; font-weight: 850; text-decoration: none; }
+
+  @media (max-width: 900px) { .hero-grid, .course-body { grid-template-columns: 1fr; } .course-image { max-width: 720px; } }
+</style>

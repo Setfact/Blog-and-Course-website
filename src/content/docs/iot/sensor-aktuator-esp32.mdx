@@ -1,0 +1,123 @@
+---
+title: 'Sensor, Aktuator, dan ESP32'
+language: id
+draft: false
+description: 'Pahami peran input, proses, dan output sebelum mulai merakit perangkat IoT.'
+order: 2
+course: iot-fundamentals
+module: iot-fundamentals-01-device
+durationMinutes: 20
+---
+
+# Sensor, Aktuator, dan ESP32
+
+Sistem IoT sederhana dapat dipahami sebagai tiga langkah: **input, process, output**.
+
+```text
+Sensor (input) → ESP32 (process) → Aktuator (output)
+```
+
+ESP32 juga dapat mengirim hasil proses tersebut melalui jaringan agar data bisa disimpan atau dilihat dari tempat lain.
+
+## Tujuan misi
+
+Setelah materi ini, kamu dapat:
+
+- membedakan sensor dan aktuator
+- menjelaskan peran ESP32 sebagai controller
+- mengenali pin digital, analog, power, dan ground
+- menyusun rancangan sederhana sebelum merakit hardware
+
+## Sensor sebagai input
+
+Sensor menghasilkan nilai yang mewakili kondisi tertentu.
+
+| Sensor | Data yang dibaca | Contoh penggunaan |
+| --- | --- | --- |
+| DHT11/DHT22 | suhu dan kelembapan | monitoring ruangan |
+| LDR | intensitas cahaya | lampu otomatis |
+| PIR | pergerakan | alarm atau lampu koridor |
+| Ultrasonik | jarak | level air atau parkir |
+| Soil moisture | kelembapan tanah | penyiram tanaman |
+
+Nilai sensor dapat berupa **digital** seperti `HIGH/LOW`, atau **analog** berupa rentang nilai yang berubah.
+
+## Aktuator sebagai output
+
+Aktuator mengubah perintah program menjadi tindakan fisik.
+
+- LED memberikan indikator visual
+- buzzer menghasilkan suara
+- relay mengendalikan perangkat dengan rangkaian daya berbeda
+- servo menggerakkan posisi sudut
+- motor atau pompa menghasilkan gerakan dan aliran
+
+<Callout type="danger" title="Perhatikan tegangan dan arus">
+Jangan menghubungkan motor, pompa, atau perangkat berdaya besar langsung ke pin ESP32. Gunakan driver, transistor, relay, dan sumber daya yang sesuai. Pastikan ground rangkaian terhubung dengan benar.
+</Callout>
+
+## ESP32 sebagai controller
+
+ESP32 menerima input, menjalankan program, dan menghasilkan output. Board ESP32 umumnya menyediakan:
+
+- pin GPIO untuk input atau output digital
+- input analog melalui ADC
+- interface komunikasi seperti I2C, SPI, dan UART
+- konektivitas Wi-Fi 2,4 GHz dan Bluetooth
+
+Tidak semua board memiliki susunan pin yang sama. Selalu periksa **pinout resmi board** yang sedang digunakan.
+
+## Pola program dasar
+
+Program controller biasanya memiliki dua tahap:
+
+```cpp
+void setup() {
+  // dijalankan sekali saat perangkat menyala
+  // atur pin, serial monitor, sensor, dan koneksi
+}
+
+void loop() {
+  // dijalankan berulang
+  // baca sensor, ambil keputusan, lalu kendalikan output
+}
+```
+
+Contoh logika sistem penyiram:
+
+```text
+baca kelembapan tanah
+jika nilai lebih rendah dari batas aman:
+    hidupkan pompa
+jika tidak:
+    matikan pompa
+tunggu beberapa detik
+ulangi
+```
+
+<PracticeCTA
+  title="Rancang sebelum merakit"
+  description="Susun tabel input–process–output dan cek kebutuhan listrik setiap komponen."
+  href="#rancang-sebelum-merakit"
+/>
+
+## Rancang sebelum merakit
+
+Sebelum memasang kabel, tulis empat hal berikut:
+
+1. data apa yang ingin dibaca?
+2. sensor apa yang dibutuhkan?
+3. tindakan apa yang akan dilakukan?
+4. bagaimana data dikirim dan diamankan?
+
+### Latihan desain
+
+Buat rancangan alarm suhu ruang server. Tentukan sensor, output peringatan, batas suhu, dan data yang perlu dikirim ke dashboard.
+
+## Ringkasan
+
+Sensor adalah input, ESP32 memproses, dan aktuator menghasilkan tindakan. Memahami alur ini membuat proses troubleshooting jauh lebih mudah karena kamu dapat memeriksa setiap bagian secara terpisah.
+
+## Referensi resmi
+
+- [Espressif — ESP32 Getting Started](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)

@@ -1,0 +1,93 @@
+---
+title: 'Konsep Keamanan dan Pengurangan Risiko'
+language: id
+draft: false
+description: 'Bedakan threat, vulnerability, exploit, dan mitigation lalu hubungkan dengan aset serta dampak bisnis.'
+order: 2
+course: security-fundamentals
+module: security-fundamentals-01-concepts
+durationMinutes: 18
+---
+
+# Konsep Keamanan dan Pengurangan Risiko
+
+Sebelum memilih fitur keamanan, tentukan dahulu aset yang perlu dilindungi. Aset dapat berupa kredensial administrator, konfigurasi router, data siswa, layanan DNS, koneksi internet, atau reputasi organisasi.
+
+## Empat istilah yang tidak boleh tertukar
+
+| Istilah | Arti praktis | Contoh |
+| --- | --- | --- |
+| Threat | sesuatu yang berpotensi menyebabkan kerugian | penyerang, malware, kebakaran, atau salah konfigurasi |
+| Vulnerability | kelemahan yang dapat dimanfaatkan | password bawaan, port tidak terpakai yang aktif, software usang |
+| Exploit | teknik atau tindakan untuk memanfaatkan kelemahan | mencoba kredensial bawaan untuk masuk ke perangkat |
+| Mitigation | kontrol yang mengurangi kemungkinan atau dampak | mengganti secret, menutup layanan, patching, segmentasi, dan monitoring |
+
+Hubungannya sederhana: **threat menggunakan exploit terhadap vulnerability dan menimbulkan dampak pada aset**. Mitigation memutus atau memperlemah rantai tersebut.
+
+<Callout type="mistake" title="Produk bukan strategi">
+Membeli firewall tidak otomatis membuat jaringan aman. Kontrol harus dipilih berdasarkan aset, risiko, topologi, dan cara operasional organisasi.
+</Callout>
+
+## Confidentiality, integrity, availability
+
+Tiga tujuan dasar keamanan sering diringkas menjadi CIA:
+
+- **Confidentiality**: informasi hanya dapat dilihat pihak yang berwenang.
+- **Integrity**: informasi dan konfigurasi tidak berubah tanpa izin.
+- **Availability**: layanan tetap dapat digunakan ketika dibutuhkan.
+
+Satu insiden dapat menyerang lebih dari satu tujuan. Kredensial administrator yang bocor merusak confidentiality; perubahan route tanpa izin merusak integrity; dan serangan yang membuat gateway tidak dapat dipakai merusak availability.
+
+## Defense in depth
+
+Jangan bergantung pada satu kontrol. Gabungkan beberapa lapisan:
+
+1. **Administrative**: kebijakan, pelatihan, change approval, dan pembagian tanggung jawab.
+2. **Physical**: penguncian ruang perangkat, pencatatan tamu, UPS, dan perlindungan kabel.
+3. **Technical**: autentikasi, least privilege, ACL, segmentasi, logging, serta patching.
+
+User awareness penting karena banyak insiden dimulai dari tindakan manusia: membuka lampiran, memberikan password, menggunakan kredensial berulang, atau memasang perangkat tanpa persetujuan.
+
+## Mini-skenario
+
+Sebuah switch laboratorium masih memakai username dan password bawaan. Ruang rack tidak terkunci dan seluruh siswa dapat menghubungkan perangkat ke port kosong.
+
+Analisis awal:
+
+- aset: konfigurasi switch dan ketersediaan jaringan lab
+- vulnerability: kredensial bawaan, akses fisik bebas, port kosong aktif
+- threat: pengguna tidak berwenang atau perangkat rogue
+- mitigation: secret unik, SSH, penguncian rack, menonaktifkan port kosong, dan monitoring
+
+<LessonQuiz
+  activityId="security-lesson-1-quiz"
+  courseSlug="security-fundamentals"
+  lessonId="01-konsep-keamanan"
+  questions={[
+    {
+      question: 'Sebuah router masih memakai password bawaan. Manakah yang merupakan vulnerability?',
+      options: ['Orang yang mencoba masuk ke router', 'Percobaan login menggunakan password bawaan', 'Password bawaan yang belum diganti', 'Mengganti password dan membatasi akses SSH'],
+      correctIndex: 2,
+      explanation: 'Password bawaan adalah kelemahan. Pelaku adalah threat, percobaan login adalah eksploitasi, sedangkan penggantian password merupakan mitigation.',
+    },
+    {
+      question: 'Perubahan routing tanpa izin terutama merusak tujuan keamanan apa?',
+      options: ['Integrity', 'Availability saja', 'Confidentiality saja', 'Physical security'],
+      correctIndex: 0,
+      explanation: 'Integrity memastikan informasi dan konfigurasi tidak diubah tanpa izin.',
+    },
+    {
+      question: 'Manakah contoh defense in depth?',
+      options: ['Mengandalkan satu firewall', 'Menggabungkan pelatihan pengguna, kontrol fisik, autentikasi, ACL, dan logging', 'Mengganti nama perangkat', 'Mengizinkan semua traffic internal'],
+      correctIndex: 1,
+      explanation: 'Defense in depth memakai beberapa lapisan administratif, fisik, dan teknis agar kegagalan satu kontrol tidak langsung membuka seluruh sistem.',
+    },
+  ]}
+  passingScore={67}
+  xp={30}
+/>
+
+## Referensi resmi
+
+- [Cisco — CCNA Exam Topics](https://learningnetwork.cisco.com/s/ccna-exam-topics)
+- [Cisco — IOS XE Software Hardening Guide](https://sec.cloudapps.cisco.com/security/center/resources/IOS_XE_hardening)

@@ -1,0 +1,96 @@
+---
+title: "Verify Single-Area OSPFv2"
+language: id
+draft: false
+description: "Neighbor ID Pri State Dead Time Address Interface"
+order: 12
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 7
+---
+
+# Verify Single-Area OSPFv2
+
+
+## 2.6.1 show ip ospf neighbor (final)
+```text
+R1# show ip ospf neighbor 
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+3.3.3.3           0   FULL/  -        00:00:19    10.1.1.13       GigabitEthernet0/0/1
+2.2.2.2           0   FULL/  -        00:00:18    10.1.1.6        GigabitEthernet0/0/0
+```
+State **FULL/  -** (bukan FULL/DR) karena semua link sudah point-to-point.
+
+## 2.6.2 show ip protocols
+```text
+R1# show ip protocols
+```
+```text
+Routing Protocol is "ospf 10"
+  Router ID 1.1.1.1
+  Number of areas in this router is 1.  1 normal 0 stub 0 nssa
+  Routing on Interfaces Configured Explicitly (Area 0):
+    Loopback0
+    GigabitEthernet0/0/1
+    GigabitEthernet0/0/0
+  Passive Interface(s):
+    Loopback0
+```
+
+## 2.6.3 show ip ospf
+```text
+R1# show ip ospf      
+ Routing Process "ospf 10" with ID 1.1.1.1
+ Number of areas in this router is 1. 1 normal 0 stub 0 nssa
+    Area BACKBONE(0)
+        Number of interfaces in this area is 3
+        Number of LSA 11. Checksum Sum 0x0449EB
+```
+
+## 2.6.4 show ip ospf interface
+```text
+R1# show ip ospf interface GigabitEthernet 0/0/0
+  Process ID 10, Router ID 1.1.1.1, Network Type POINT_TO_POINT, Cost: 10
+  Transmit Delay is 1 sec, State POINT_TO_POINT
+  Timer intervals configured, Hello 5, Dead 20, Wait 20, Retransmit 5
+  Neighbor count is 1, Adjacent neighbor count is 1
+    Adjacent with neighbor 2.2.2.2
+```
+
+## 2.6.5 show ip ospf interface brief
+```text
+R1# show ip ospf interface brief
+Interface    PID   Area            IP Address/Mask    Cost  State Nbrs F/C
+Lo0          10    0               10.10.1.1/24       10    P2P   0/0
+Gi0/0/1      10    0               10.1.1.14/30       30    P2P   1/1
+Gi0/0/0      10    0               10.1.1.5/30        10    P2P   1/1
+```
+Semua interface **Area 0**, **State P2P**, cost sesuai konfigurasi.
+
+## 2.6.6 Troubleshooting Dasar
+
+| Problem | Kemungkinan Penyebab |
+|---|---|
+| Adjacency tidak terbentuk | Area mismatch, timer mismatch, network statement salah |
+| Neighbor tapi bukan Full | Authentication mismatch, MTU mismatch, network type beda |
+| Route tidak muncul | Network statement tidak cover interface, passive-interface |
+| Cost tidak sesuai | Reference bandwidth belum diubah, manual cost belum di-set |
+| Default route tidak tersebar | `default-information originate` belum di-run |
+
+---
+
+# Ringkasan Modul 2
+
+| Bagian | Isi utama |
+|---|---|
+| 2.0 | Pengenalan konfigurasi OSPFv2 |
+| 2.1 | Router ID dan penentuan identitas OSPF |
+| 2.2 | Point-to-point OSPF, `network`, `ip ospf`, passive-interface |
+| 2.3 | Multiaccess OSPF, DR/BDR, interface priority |
+| 2.4 | Modifikasi cost, timers, dan perilaku OSPF |
+| 2.5 | Default route propagation ke OSPF |
+| 2.6 | Verifikasi konfigurasi dan troubleshooting |
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

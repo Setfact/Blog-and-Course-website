@@ -1,0 +1,80 @@
+---
+title: "Introduction"
+language: id
+draft: false
+description: "Bagian ini memperkenalkan Single-Area OSPFv2 Concepts. Modul ini adalah modul pertama dalam CCNA Enterprise Networking, Security, and Automation v7.0 (ENSA)."
+order: 1
+course: enterprise-network-ensa
+module: ensa-01-single-area-ospfv2-concepts
+durationMinutes: 7
+---
+
+# Introduction
+
+
+Bagian ini memperkenalkan **Single-Area OSPFv2 Concepts**. Modul ini adalah modul pertama dalam **CCNA Enterprise Networking, Security, and Automation v7.0 (ENSA)**.
+
+Fokus utamanya adalah membantu kamu memahami kenapa **OSPF (Open Shortest Path First)** dipakai sebagai routing protocol yang lebih modern dibanding protocol lama seperti **RIP**.
+
+## 1.0.1 Why should I take this module?
+
+Kamu perlu belajar modul ini karena OSPF adalah salah satu routing protocol paling penting di networking enterprise.
+
+### Inti pembelajarannya
+- **OSPF** memilih **fastest available path** untuk mengirim packet dari source ke destination.
+- OSPF termasuk **link-state routing protocol**.
+- OSPF lebih cocok untuk network yang besar dan kompleks dibanding routing protocol berbasis hop count seperti **RIP**.
+- OSPF mendukung konsep **area** untuk mengatur routing domain agar lebih efisien.
+- Modul ini membahas **single-area OSPFv2**, terutama pada:
+  - **point-to-point network**
+  - **broadcast multiaccess network**
+
+### Kenapa OSPF penting?
+Kalau di network ada banyak jalur menuju destination, router harus memilih jalur terbaik. OSPF melakukan ini berdasarkan **cost**, lalu memilih path dengan total cost paling kecil.
+
+### Analogi sederhana
+Kalau kamu lagi perjalanan:
+- ada jalan cepat
+- ada jalan macet
+- ada jalan muter jauh
+
+OSPF akan memilih jalur yang paling efisien, bukan sekadar jalur yang “kelihatan enak” atau paling santai.
+
+## 1.0.2 What will I learn to do in this module?
+
+Di modul ini, kamu akan belajar untuk:
+- memahami **OSPF features and characteristics**
+- mengenali **OSPF packets**
+- menjelaskan **OSPF operation**
+- memahami cara kerja OSPF pada:
+  - **point-to-point topology**
+  - **broadcast multiaccess topology**
+- menjelaskan kenapa **DR (Designated Router)** dan **BDR (Backup Designated Router)** dibutuhkan pada jaringan multiaccess
+- memahami proses OSPF membangun:
+  - **neighbor adjacency**
+  - **link-state database (LSDB)**
+  - **routing table**
+
+## 1.0.5 Packet Tracer – Logical and Physical Mode Exploration
+
+Bagian ini adalah aktivitas **Packet Tracer** untuk mengeksplorasi jaringan kecil sampai menengah.
+
+### Tujuan aktivitas
+- membedakan **logical mode** dan **physical mode**
+- memahami struktur jaringan secara visual
+- menjawab pertanyaan berdasarkan topologi yang ditampilkan
+
+### Fokus yang dipelajari
+- hubungan antar device
+- posisi fisik perangkat
+- bagaimana topologi logis merepresentasikan alur komunikasi
+
+### Link aktivitas
+Di halaman sumber, bagian ini mengarah ke aktivitas Packet Tracer dan link jawaban.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 1: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-1-single-area-ospfv2-concepts.html).

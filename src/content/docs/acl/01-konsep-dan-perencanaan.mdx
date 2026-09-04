@@ -1,0 +1,117 @@
+---
+title: 'Konsep dan Perencanaan ACL'
+language: id
+draft: false
+description: 'Pahami cara router membaca ACL, wildcard mask, arah traffic, dan aturan penempatannya.'
+order: 2
+---
+
+# Konsep dan Perencanaan ACL
+
+Sebelum menulis command, ubah kebutuhan bisnis menjadi alur paket yang jelas: **siapa sumbernya, ke mana tujuannya, layanan apa yang digunakan, dan lewat interface mana paket bergerak**.
+
+## Tujuan lesson
+
+Setelah menyelesaikan lesson ini, kamu dapat:
+
+- membedakan standard dan extended IPv4 ACL
+- menjelaskan pemrosesan ACL dari atas ke bawah
+- menghitung wildcard mask dasar
+- menentukan interface serta arah penerapan ACL
+
+## Standard atau extended?
+
+| Jenis | Dapat memeriksa | Pedoman penempatan |
+| --- | --- | --- |
+| Standard ACL | alamat IPv4 sumber | dekat tujuan |
+| Extended ACL | sumber, tujuan, protokol, dan port | dekat sumber |
+
+Pedoman itu mengurangi dampak yang tidak diinginkan. Namun, topologi dan kebutuhan operasional tetap menjadi penentu akhir.
+
+<Callout type="remember">
+Standard ACL tidak mengetahui tujuan paket. Jika diletakkan terlalu dekat ke sumber, satu rule dapat memblokir sumber tersebut menuju banyak jaringan sekaligus.
+</Callout>
+
+## Urutan pemeriksaan paket
+
+Router membaca Access Control Entry atau **ACE** dari sequence paling kecil:
+
+1. paket dibandingkan dengan ACE pertama
+2. jika cocok, aksi `permit` atau `deny` langsung dijalankan
+3. jika tidak cocok, router lanjut ke ACE berikutnya
+4. jika seluruh ACE tidak cocok, implicit deny menolak paket
+
+Karena itu, rule yang spesifik biasanya ditempatkan sebelum rule yang umum.
+
+```text
+10 permit host 192.168.10.10
+20 deny 192.168.10.0 0.0.0.255
+30 permit any
+```
+
+Host `192.168.10.10` diizinkan oleh baris 10. Host lain dari subnet yang sama ditolak oleh baris 20. Traffic lain diizinkan oleh baris 30.
+
+## Memahami wildcard mask
+
+Wildcard mask adalah kebalikan dari subnet mask:
+
+- bit `0` berarti alamat harus sama
+- bit `1` berarti bagian tersebut diabaikan
+
+| Kebutuhan | Penulisan |
+| --- | --- |
+| satu host | `host 192.168.10.10` |
+| subnet `/24` | `192.168.10.0 0.0.0.255` |
+| semua alamat | `any` |
+
+Untuk subnet mask `255.255.255.0`, wildcard mask-nya adalah `0.0.0.255`.
+
+<Callout type="mistake">
+Jangan menyalin subnet mask ke posisi wildcard. Menulis `192.168.10.0 255.255.255.0` akan menghasilkan pencocokan yang berbeda dari subnet `/24` yang kamu maksud.
+</Callout>
+
+## Menentukan arah in dan out
+
+- **in**: paket diperiksa ketika masuk ke interface, sebelum keputusan routing
+- **out**: paket diperiksa setelah keputusan routing, tepat sebelum keluar dari interface
+
+<TopologyDiagram
+  title="Membaca arah ACL dari sudut pandang router"
+  caption="Paket masuk dari LAN melalui G0/0 dan keluar menuju server melalui G0/1."
+  leftLabel="PC Siswa"
+  leftMeta="Masuk G0/0 (in)"
+  centerLabel="Router R1"
+  centerMeta="Routing decision"
+  rightLabel="Server Lab"
+  rightMeta="Keluar G0/1 (out)"
+/>
+
+## Checklist perencanaan
+
+Sebelum konfigurasi, tulis jawaban untuk lima pertanyaan:
+
+1. Sumber traffic berada di subnet mana?
+2. Tujuannya host atau subnet apa?
+3. Protokol dan port apa yang dibutuhkan?
+4. Jalur interface mana yang dilewati?
+5. Traffic lain harus diizinkan atau ditolak?
+
+<PracticeCTA
+  title="Rancang rule sebelum mengetik"
+  description="Gunakan skenario di bawah untuk menentukan jenis, lokasi, dan arah ACL."
+  href="#latihan"
+/>
+
+## Latihan
+
+Siswa pada `192.168.10.0/24` hanya boleh mengakses web server `172.16.10.10` melalui HTTPS. Traffic siswa masuk ke R1 melalui `G0/0`.
+
+Tentukan:
+
+- standard atau extended ACL?
+- interface penerapan?
+- arah `in` atau `out`?
+- field apa saja yang harus diperiksa?
+
+Jawaban yang paling efisien adalah **extended ACL pada G0/0 arah in**, karena rule dapat membuang traffic yang tidak diizinkan sedekat mungkin dengan sumber.
+

@@ -1,0 +1,148 @@
+---
+title: "Multiaccess OSPF Networks"
+language: id
+draft: false
+description: "R1 show ip ospf interface GigabitEthernet 0/0/0"
+order: 9
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 8
+---
+
+# Multiaccess OSPF Networks
+
+
+## 2.3.1 OSPF Network Types
+
+![OSPF Multiaccess Network](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Multiaccess-Network.jpg)
+
+- **Point-to-point** = antar dua router, DR/BDR tidak diperlukan
+- **Broadcast multiaccess** = banyak router, perlu DR/BDR
+
+## 2.3.2 OSPF Designated Router
+
+![Role of the DR](https://itexamanswers.net/wp-content/uploads/2020/04/Role-of-the-DR.gif)
+
+- **DR (Designated Router)** — pusat pertukaran LSA
+- **BDR (Backup Designated Router)** — standby kalau DR gagal
+- **DROTHER** — router yang bukan DR/BDR
+- Multicast: **224.0.0.5** (all OSPF routers), **224.0.0.6** (DR/BDR only)
+
+## 2.3.3 OSPF Multiaccess Reference Topology
+
+![OSPF Multiaccess Reference Topology](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Multiaccess-Reference-Topology.jpg)
+
+## 2.3.4 Verify OSPF Router Roles
+
+### R1 — State DROTHER
+```text
+R1# show ip ospf interface GigabitEthernet 0/0/0
+  Process ID 10, Router ID 1.1.1.1, Network Type BROADCAST, Cost: 1
+  Transmit Delay is 1 sec, State DROTHER, Priority 1
+  Designated Router (ID) 3.3.3.3, Interface address 192.168.1.3
+```
+
+### R2 — State BDR
+```text
+R2# show ip ospf interface GigabitEthernet 0/0/0
+  Process ID 10, Router ID 2.2.2.2, Network Type BROADCAST, Cost: 1
+  Transmit Delay is 1 sec, State BDR, Priority 1
+  Designated Router (ID) 3.3.3.3, Interface address 192.168.1.3
+  Backup Designated router (ID) 2.2.2.2, Interface address 192.168.1.2
+```
+
+### R3 — State DR
+```text
+R3# show ip ospf interface GigabitEthernet 0/0/0
+  Process ID 10, Router ID 3.3.3.3, Network Type BROADCAST, Cost: 1
+  Transmit Delay is 1 sec, State DR, Priority 1
+  Designated Router (ID) 3.3.3.3, Interface address 192.168.1.3
+  Backup Designated router (ID) 2.2.2.2, Interface address 192.168.1.2
+```
+
+## 2.3.5 Verify DR/BDR Adjacencies
+
+```text
+R1# show ip ospf neighbor 
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+2.2.2.2           1   FULL/BDR        00:00:31    192.168.1.2     GigabitEthernet0/0/0
+3.3.3.3           1   FULL/DR         00:00:39    192.168.1.3     GigabitEthernet0/0/0
+```
+
+```text
+R2# show ip ospf neighbor 
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+1.1.1.1           1   FULL/DROTHER    00:00:31    192.168.1.1     GigabitEthernet0/0/0
+3.3.3.3           1   FULL/DR         00:00:34    192.168.1.3     GigabitEthernet0/0/0
+```
+
+```text
+R3# show ip ospf neighbor 
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+1.1.1.1           1   FULL/DROTHER    00:00:37    192.168.1.1     GigabitEthernet0/0/0
+2.2.2.2           1   FULL/BDR        00:00:33    192.168.1.2     GigabitEthernet0/0/0
+```
+
+DROTHER membentuk adjacency penuh ke DR dan BDR, tapi **antar DROTHER tidak saling full adjacency**.
+
+## 2.3.6 Default DR/BDR Election Process
+
+1. **interface priority** tertinggi → DR
+2. **interface priority** tertinggi kedua → BDR
+3. kalau priority sama, **router ID** tertinggi menang
+
+**Penting:** DR/BDR election **tidak pre-emptive** — router baru dengan priority lebih tinggi tidak otomatis menggusur DR yang sudah terpilih.
+
+## 2.3.7 DR Failure and Recovery
+
+![R4 Joins Network](https://itexamanswers.net/wp-content/uploads/2020/04/R4-Joins-Network.jpg)
+![R2 Fails](https://itexamanswers.net/wp-content/uploads/2020/04/R2-Fails.jpg)
+![R3 Fails](https://itexamanswers.net/wp-content/uploads/2020/04/R3-Fails.jpg)
+![R3 Re-Joins Network](https://itexamanswers.net/wp-content/uploads/2020/04/R3-Re-Joins-Network.jpg)
+
+Kalau DR gagal, BDR naik jadi DR. OSPF tidak perlu membangun semuanya dari awal.
+
+## 2.3.8 Adjusting Interface Priority
+
+### Set R1 priority tinggi
+```text
+R1(config)# interface GigabitEthernet 0/0/0 
+R1(config-if)# ip ospf priority 255 
+R1(config-if)# end
+```
+
+### Set R3 priority 0 (tidak ikut election)
+```text
+R3(config)# interface GigabitEthernet 0/0/0
+R3(config-if)# ip ospf priority 0
+R3(config-if)# end
+```
+
+### Reset OSPF process
+```text
+R1# clear ip ospf process
+```
+```text
+Reset ALL OSPF processes? [no]: y
+*Jun  5 03:47:41.563: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from FULL to DOWN
+*Jun  5 03:47:41.563: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 from FULL to DOWN
+*Jun  5 03:47:41.569: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from LOADING to FULL, Loading Done
+*Jun  5 03:47:41.570: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 from LOADING to FULL, Loading Done
+```
+
+### Verifikasi
+```text
+R1# show ip ospf interface GigabitEthernet 0/0/0
+  Transmit Delay is 1 sec, State DR, Priority 255
+  Designated Router (ID) 1.1.1.1, Interface address 192.168.1.1
+  Backup Designated router (ID) 2.2.2.2, Interface address 192.168.1.2
+```
+
+Sekarang R1 (priority 255) menjadi **DR**, R2 (priority 1) menjadi **BDR**, dan R3 (priority 0) tidak ikut election.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

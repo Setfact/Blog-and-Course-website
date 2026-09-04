@@ -1,0 +1,178 @@
+---
+title: "Configure Extended IPv4 ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas cara mengkonfigurasi extended ACL — yang lebih fleksibel karena bisa memfilter berdasarkan source, destination, protocol, dan port."
+order: 34
+course: enterprise-network-ensa
+module: ensa-05-acls-for-ipv4-configuration
+durationMinutes: 9
+---
+
+# Configure Extended IPv4 ACLs
+
+
+Bagian ini membahas cara mengkonfigurasi extended ACL — yang lebih fleksibel karena bisa memfilter berdasarkan **source, destination, protocol, dan port**.
+
+## 5.4.1 Extended ACLs
+
+Extended ACL memberikan kontrol yang lebih detail dibanding standard ACL:
+
+| Fitur | Standard ACL | Extended ACL |
+|---|---|---|
+| Source IP | ✅ | ✅ |
+| Destination IP | ❌ | ✅ |
+| Protocol | ❌ | ✅ |
+| Port Number | ❌ | ✅ |
+
+### Penempatan
+Extended ACL ditempatkan **sedekat mungkin dengan source** karena sudah cukup spesifik.
+
+## 5.4.2 Numbered Extended IPv4 ACL Syntax
+
+### Syntax
+
+```text
+Router(config)# access-list access-list-number {deny | permit | remark text} protocol source source-wildcard [operator [port]] destination destination-wildcard [operator [port]] [established] [log]
+```
+
+### Parameter
+
+| Parameter | Keterangan |
+|---|---|
+| `access-list-number` | **100–199** atau **2000–2699** |
+| `protocol` | `ip`, `tcp`, `udp`, `icmp`, dll |
+| `source` / `destination` | Host, network, atau `any` |
+| `source-wildcard` / `destination-wildcard` | Wildcard mask |
+| `operator` | `eq` (equals), `neq` (not equal), `gt` (greater than), `lt` (less than), `range` |
+| `port` | Nomor port atau nama service (www, https, ftp, dll) |
+| `established` | Untuk return traffic (ACK/RST set) |
+| `log` | Generate message untuk matching packet |
+
+## 5.4.3 Protocols and Ports
+
+### Protocol yang sering dipakai
+
+| Protocol | Keterangan |
+|---|---|
+| `ip` | Semua IP traffic |
+| `tcp` | TCP traffic |
+| `udp` | UDP traffic |
+| `icmp` | ICMP traffic (ping, traceroute) |
+
+### Port yang sering dipakai
+
+| Service | Port | Protocol |
+|---|---|---|
+| FTP (data) | 20 | TCP |
+| FTP (control) | 21 | TCP |
+| SSH | 22 | TCP |
+| Telnet | 23 | TCP |
+| SMTP | 25 | TCP |
+| DNS | 53 | TCP/UDP |
+| HTTP | 80 | TCP |
+| HTTPS | 443 | TCP |
+
+## 5.4.4 Protocols and Port Numbers Configuration Examples
+
+### Contoh: izinkan HTTP dan HTTPS dari LAN ke internet
+
+```text
+R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq www
+R1(config)# access-list 100 permit tcp 192.168.10.0 0.0.0.255 any eq 443
+```
+
+### Penjelasan
+- `tcp` — hanya TCP traffic
+- `192.168.10.0 0.0.0.255` — source dari subnet /24
+- `any` — ke mana saja
+- `eq www` — port 80 (HTTP)
+- `eq 443` — port HTTPS
+
+## 5.4.5 Apply a Numbered Extended IPv4 ACL
+
+### Apply ke interface
+
+```text
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group 100 in
+```
+
+![Apply a Numbered Extended IPv4 ACL](https://itexamanswers.net/wp-content/uploads/2020/04/Apply-a-Numbered-Extended-IPv4-ACL.jpg)
+
+### Catatan
+Extended ACL ditempatkan **dekat source** (inbound di source interface) supaya traffic yang tidak diinginkan ditolak sejak awal.
+
+## 5.4.6 TCP Established Keyword
+
+Keyword `established` memungkinkan extended ACL untuk berfungsi seperti **stateful firewall sederhana**.
+
+### Apa itu `established`?
+- hanya mengizinkan paket TCP yang memiliki flag **ACK** atau **RST** set
+- paket dengan flag **SYN** saja (koneksi baru) akan ditolak
+- berguna untuk mengizinkan **return traffic** tanpa membuka koneksi baru
+
+### Contoh konfigurasi
+
+```text
+R1(config)# access-list 120 permit tcp any 192.168.10.0 0.0.0.255 established
+```
+
+![TCP Established Extended ACL](https://itexamanswers.net/wp-content/uploads/2020/04/TCP-Established-Extended-ACL.jpg)
+
+![TCP Established Extended ACL - 2](https://itexamanswers.net/wp-content/uploads/2020/04/TCP-Established-Extended-ACL1.jpg)
+
+### Cara kerja
+1. Host dari luar mencoba koneksi TCP ke host di dalam
+2. Paket SYN ditolak karena belum ada established connection
+3. Tapi kalau host di dalam yang menginisiasi koneksi, return traffic (ACK/RST) diizinkan
+
+## 5.4.7 Named Extended IPv4 ACL Example
+
+### Contoh konfigurasi: mengizinkan browsing
+
+```text
+R1(config)# ip access-list extended SURFING
+R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 80
+R1(config-ext-nacl)# permit tcp 192.168.10.0 0.0.0.255 any eq 443
+```
+
+![Named Extended IPv4 ACL Example](https://itexamanswers.net/wp-content/uploads/2020/04/Named-Extended-IPv4-ACL-Example.jpg)
+
+### Contoh konfigurasi: return traffic dengan established
+
+```text
+R1(config)# ip access-list extended BROWSING
+R1(config-ext-nacl)# permit tcp any 192.168.10.0 0.0.0.255 established
+```
+
+![Another Named Extended IPv4 ACL Example](https://itexamanswers.net/wp-content/uploads/2020/04/Another-Named-Extended-IPv4-ACL-Example.jpg)
+
+### Apply ke interface
+
+```text
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group SURFING in
+R1(config-if)# ip access-group BROWSING out
+```
+
+### Penjelasan flow
+- **SURFING (inbound)** — mengizinkan host di LAN mengakses web (HTTP/HTTPS)
+- **BROWSING (outbound)** — mengizinkan return traffic dari web server kembali ke LAN
+
+## 5.4.8 Verify Extended ACL
+
+Verifikasi sama seperti standard ACL:
+
+```text
+R1# show access-lists
+R1# show ip interface Serial 0/1/0 | include access list
+R1# show running-config | section access-list
+```
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 5: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html).

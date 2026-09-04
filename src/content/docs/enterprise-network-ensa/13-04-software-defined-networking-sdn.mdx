@@ -1,0 +1,94 @@
+---
+title: "Software-Defined Networking (SDN)"
+language: id
+draft: false
+description: "Bagian ini membahas konsep SDN — pemisahan control plane dari data plane."
+order: 85
+course: enterprise-network-ensa
+module: ensa-13-network-virtualization
+durationMinutes: 8
+---
+
+# Software-Defined Networking (SDN)
+
+
+Bagian ini membahas konsep SDN — pemisahan control plane dari data plane.
+
+## 13.4.1 Traditional vs. SDN Architecture
+
+![Traditional and SDN Architectures](https://itexamanswers.net/wp-content/uploads/2020/04/Traditional-and-SDN-Architectures.jpg)
+
+![Traditional and SDN Architectures - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Traditional-and-SDN-Architectures2.jpg)
+
+### Three Planes di Network Device
+
+| Plane | Fungsi | Contoh |
+|---|---|---|
+| **Control Plane** | "Otak" — membuat keputusan forwarding | Routing tables, ARP tables, STP |
+| **Data Plane** | "Forwarding" — meneruskan paket | Switching, routing paket |
+| **Management Plane** | Mengakses dan mengkonfigurasi device | SSH, HTTPS, SNMP |
+
+### Perbedaan tradisional vs SDN
+
+| Aspek         | Tradisional                               | SDN                                                          |
+| ------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| Control Plane | Terdistribusi (tiap device punya sendiri) | **Terpusat** (SDN controller)                                |
+| Data Plane    | Perangkat forwarding sendiri              | Perangkat forwarding berdasarkan flow tables dari controller |
+| Konfigurasi   | Manual per device                         | **Programmable** via controller                              |
+
+## 13.4.2 SDN and Central Controller
+
+![SDN and Central Controller](https://itexamanswers.net/wp-content/uploads/2020/04/SDN-and-Central-Controller.jpg)
+
+### SDN Controller
+
+Dalam arsitektur SDN, **SDN Controller** berfungsi sebagai central authority yang mengelola control plane untuk semua perangkat jaringan. Berbeda dengan arsitektur tradisional di mana setiap router/switch punya control plane sendiri-sendiri, SDN memusatkan semua keputusan forwarding di satu controller.
+
+SDN Controller memiliki beberapa tanggung jawab utama:
+- **Memverifikasi flow** — controller memeriksa setiap flow baru yang masuk dan memutuskan bagaimana traffic harus ditangani
+- **Menghitung route** — controller menentukan path terbaik untuk traffic dari source ke destination
+- **Memprogram flow tables** — controller mengirimkan instruksi ke switches tentang bagaimana menangani traffic tertentu (forward, drop, modify)
+- **Policy enforcement** — controller menerapkan kebijakan keamanan dan QoS secara konsisten ke semua perangkat
+- **Traffic management** — controller bisa melakukan traffic engineering secara dinamis berdasarkan kondisi jaringan saat ini
+
+![SDN Controller and Operations](https://itexamanswers.net/wp-content/uploads/2020/04/SDN-Controller-and-Operations.jpg)
+
+Dengan pendekatan ini, administrator tidak perlu mengkonfigurasi setiap perangkat secara manual. Cukup define policy di controller, dan controller akan menerapkannya ke semua perangkat yang dikelolanya. Ini mengurangi human error dan mempercepat deployment.
+
+## 13.4.3 SDN Components
+
+![Network Virtualization Technologies](https://itexamanswers.net/wp-content/uploads/2020/04/Network-Virtualization-Technologies.jpg)
+
+| Komponen | Deskripsi |
+|---|---|
+| **OpenFlow** | Protokol dasar untuk komunikasi antara controller dan network devices |
+| **Northbound API** | Interface untuk aplikasi berinteraksi dengan controller |
+| **Southbound API** | Interface untuk controller berinteraksi dengan devices (misal: OpenFlow) |
+| **Flow Tables** | Tabel yang didefinisikan controller untuk memberitahu switches cara menangani traffic |
+
+## 13.4.4 Types of SDN
+
+### Device-based SDN
+
+![Device-based SDN](https://itexamanswers.net/wp-content/uploads/2020/04/Device-based-SDN.jpg)
+
+Dalam device-based SDN, SDN dikonfigurasi **per device**. Setiap perangkat jaringan dikonfigurasi secara individual oleh administrator atau oleh controller yang berinteraksi langsung dengan setiap device. Pendekatan ini lebih tradisional dan masih mengharuskan admin memahami konfigurasi tiap perangkat, namun dengan tambahan kemampuan programmability dari SDN.
+
+### Controller-based SDN
+
+![Controller-based SDN](https://itexamanswers.net/wp-content/uploads/2020/04/Controller-based-SDN.jpg)
+
+Dalam controller-based SDN, semua konfigurasi dan keputusan forwarding dikelola oleh **centralized controller**. Controller mengelola semua devices secara terpusat — administrator cukup define policy di controller, dan controller akan menerapkannya ke seluruh jaringan. Ini adalah model SDN yang paling umum digunakan di enterprise modern karena mengurangi kompleksitas konfigurasi per-device dan memungkinkan visibilitas menyeluruh terhadap jaringan.
+
+### Policy-based SDN
+
+![Policy-based SDN](https://itexamanswers.net/wp-content/uploads/2020/04/Policy-based-SDN.jpg)
+
+Dalam policy-based SDN, SDN berbasis **policy** yang didefinisikan oleh administrator berdasarkan kebutuhan bisnis. Alih-alih mengkonfigurasi perangkat satu per satu, administrator mendefinisikan policy tingkat tinggi (misal: "app A boleh berkomunikasi dengan app B, tapi tidak dengan app C"), dan controller menerjemahkan policy tersebut menjadi instruksi spesifik untuk setiap perangkat. Pendekatan ini paling fleksibel dan scalable karena policy bisa diubah tanpa harus menyentuh konfigurasi perangkat.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 13: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-13-network-virtualization.html).

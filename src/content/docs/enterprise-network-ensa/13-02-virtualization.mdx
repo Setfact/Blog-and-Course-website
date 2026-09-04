@@ -1,0 +1,112 @@
+---
+title: "Virtualization"
+language: id
+draft: false
+description: "Bagian ini membahas konsep virtualization dan hypervisors."
+order: 83
+course: enterprise-network-ensa
+module: ensa-13-network-virtualization
+durationMinutes: 9
+---
+
+# Virtualization
+
+
+Bagian ini membahas konsep virtualization dan hypervisors.
+
+## 13.2.1 Traditional Servers vs. Virtualization
+
+### Dedicated Servers
+
+![Dedicated Servers](https://itexamanswers.net/wp-content/uploads/2020/04/Dedicated-Servers.jpg)
+
+Secara historis, enterprise server terdiri dari **server OS** (seperti Windows Server atau Linux Server) yang diinstal pada **hardware khusus**. Seluruh RAM, processing power, dan hard drive space server didedikasikan untuk satu service tertentu (misal: web server, email server, dll).
+
+Masalah utama dari konfigurasi ini:
+
+**Single Point of Failure (SPOF)**
+Ketika satu komponen hardware gagal (misal: hard drive rusak, RAM error, atau power supply mati), service yang disediakan oleh server tersebut menjadi **tidak tersedia**. Karena semua resource didedikasikan untuk satu service, tidak ada redundancy — satu kegagalan komponen = seluruh service down. Ini sangat berbahaya di lingkungan production di mana uptime sangat kritis.
+
+**Server Sprawl**
+Dedicated server seringkali **underutilized** — artinya server tersebut duduk diam dalam waktu lama, menunggu sampai ada permintaan untuk deliver service yang disediakannya. Server-server ini membuang energi (listrik untuk power + cooling) dan memakan ruang fisik yang lebih besar dari yang seharusnya dibutuhkan oleh jumlah service yang diberikan. Fenomena ini disebut **server sprawl** — banyak server yang berdiri sendiri dengan resource yang sebagian besar terbuang percuma.
+
+### Server Virtualization
+
+![Server Virtualization](https://itexamanswers.net/wp-content/uploads/2020/04/Server-Virtualization.jpg)
+
+Virtualization memecahkan masalah tersebut dengan menjalankan multiple OS di satu physical server.
+
+## 13.2.2 Abstraction Layers
+
+![Abstraction Layers](https://itexamanswers.net/wp-content/uploads/2020/04/Abstraction-Layers1.jpg)
+
+![Abstraction Layers - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Abstraction-Layers2.jpg)
+
+### Layer arsitektur:
+1. **Hardware** — physical server
+2. **Firmware** — BIOS/UEFI
+3. **Hypervisor** — software/firmware yang membuat abstraksi antara hardware dan OS
+4. **Operating System** — OS virtual machines
+5. **Applications** — aplikasi yang berjalan di VM
+
+## 13.2.3 Hypervisors
+
+**Hypervisor** adalah software atau firmware yang membuat abstraksi antara hardware dan OS. Hypervisor memungkinkan multiple operating systems berjalan secara bersamaan di satu physical server, masing-masing mendapatkan resource (CPU, RAM, storage) yang dialokasikan secara virtual.
+
+### Type 2 (Hosted)
+
+![Type 2 Hypervisors](https://itexamanswers.net/wp-content/uploads/2020/04/Type-2-Hypervisors.jpg)
+
+Type 2 hypervisor diinstal di atas **operating system yang sudah ada** (host OS). Artinya ada satu lapisan OS lagi antara hypervisor dan hardware. Contoh: **VirtualBox**, **VMware Workstation**, **Parallels Desktop**.
+
+Type 2 cocok untuk **development dan testing** karena mudah diinstal di laptop/desktop yang sudah punya OS. Namun performanya lebih rendah karena setiap akses hardware harus melewati OS host terlebih dahulu. Untuk lingkungan production, Type 2 kurang optimal karena overhead ini.
+
+### Type 1 (Bare-Metal)
+
+![Type 1 Hypervisors](https://itexamanswers.net/wp-content/uploads/2020/04/Type-1-Hypervisors.jpg)
+
+Type 1 hypervisor diinstal **langsung di atas hardware** tanpa melalui OS host. Hypervisor ini mengambil alih kontrol penuh atas hardware dan menyediakan resource langsung ke virtual machines. Contoh: **VMware ESXi**, **Microsoft Hyper-V**, **Xen**, **KVM**.
+
+Karena tidak ada lapisan OS tambahan, Type 1 memiliki **performa yang lebih tinggi** dan **skalabilitas yang lebih baik**. Ini adalah pilihan standar untuk **lingkungan production** di data center dan enterprise. Type 1 juga mendukung fitur enterprise seperti live migration, high availability, dan fault tolerance.
+
+### Perbandingan
+
+| Fitur | Type 2 (Hosted) | Type 1 (Bare-Metal) |
+|---|---|---|
+| Instalasi | Di atas OS | Langsung di hardware |
+| Performa | Lebih rendah | Lebih tinggi |
+| Contoh | VirtualBox, VMware Workstation | ESXi, Hyper-V |
+| Penggunaan | Development/testing | Production |
+
+## 13.2.4 Installing a VM on a Hypervisor
+
+![Installing a VM on a Hypervisor - 1](https://itexamanswers.net/wp-content/uploads/2020/04/Installing-a-VM-on-a-Hypervisor1.jpg)
+
+![Installing a VM on a Hypervisor - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Installing-a-VM-on-a-Hypervisor2.jpg)
+
+### Langkah umum:
+1. Pilih OS yang ingin diinstal
+2. Tentukan resource (CPU, RAM, storage)
+3. Konfigurasi jaringan (bridge, NAT, host-only)
+4. Install OS ke VM
+5. Install guest tools/drivers
+
+## 13.2.5 Advantages of Virtualization
+
+Virtualization menawarkan banyak kelebihan dibandingkan pendekatan dedicated server tradisional:
+
+| Kelebihan | Deskripsi |
+|---|---|
+| **Biaya lebih rendah** | Mengurangi kebutuhan hardware fisik, energi (listrik + cooling), ruang data center, dan biaya training IT staff |
+| **Prototyping mudah** | Developer dan engineer bisa membuat environment testing dalam hitungan menit tanpa harus membeli hardware baru |
+| **Provisioning cepat** | Server baru bisa di-deploy dalam waktu sangat singkat dibandingkan dedicated server yang butuh waktu berhari-hari atau berminggu-minggu untuk dibeli, diinstal, dan dikonfigurasi |
+| **Uptime meningkat** | Virtualization mendukung redundancy dan fault tolerance — jika satu physical host gagal, VM bisa di-migrate ke host lain (live migration) tanpa downtime |
+| **Disaster recovery** | VM bisa di-backup sebagai file, di-restore dengan cepat, dan di-replikasi ke lokasi lain untuk business continuity |
+| **Legacy support** | Aplikasi lama yang membutuhkan OS versi lama bisa tetap dijalankan di VM tanpa harus membeli hardware khusus |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 13: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-13-network-virtualization.html).

@@ -1,0 +1,123 @@
+---
+import type { Course, Language, LearningPath } from '../data/learning';
+
+interface Props { path: LearningPath; courses: Course[]; language?: Language; }
+
+const { path, courses, language = 'id' } = Astro.props;
+const isEnglish = language === 'en';
+const prefix = isEnglish ? '/en' : '';
+const totalHours = courses.reduce((total, course) => total + course.durationHours, 0);
+const copy = isEnglish ? {
+  path: 'Learning path', description: 'A recommended course sequence. Every course remains available independently.',
+  courses: 'Courses in this path', note: 'This path grows whenever a relevant new course is published.',
+  available: 'Available', planned: 'Coming soon', modules: 'modules', lessons: 'lessons', hours: 'hours', view: 'View course', catalog: 'Browse all courses',
+} : {
+  path: 'Learning path', description: 'Urutan course yang direkomendasikan. Setiap course tetap bisa dipelajari secara mandiri.',
+  courses: 'Course dalam alur ini', note: 'Alur ini akan terus bertambah ketika course baru yang relevan diterbitkan.',
+  available: 'Tersedia', planned: 'Segera hadir', modules: 'modul', lessons: 'lesson', hours: 'jam', view: 'Lihat course', catalog: 'Jelajahi semua course',
+};
+---
+
+<main class="path-detail">
+  <section class="path-hero">
+    <div class="page-shell hero-grid">
+      <div>
+        <span class="eyebrow">{copy.path} · {path.target[language]}</span>
+        <h1>{path.title[language]}</h1>
+        <p>{path.description[language] || copy.description}</p>
+        <div class="path-meta">{courses.length} course · ±{totalHours} {copy.hours}</div>
+        <a class="catalog-link" href={prefix + '/courses'}>{copy.catalog} →</a>
+      </div>
+      {path.cover && <img src={path.cover} alt="" width="960" height="540" />}
+    </div>
+  </section>
+
+  <section class="path-courses page-shell" aria-labelledby="path-courses-title">
+    <header>
+      <h2 id="path-courses-title">{copy.courses}</h2>
+      <p>{copy.note}</p>
+    </header>
+
+    <ol>
+      {courses.map((course, index) => {
+        const available = course.status === 'published';
+        return (
+          <li>
+            <span class="course-number">{String(index + 1).padStart(2, '0')}</span>
+            <article
+              data-path-course
+              data-course={course.slug}
+              data-total-lessons={course.lessonCount}
+              data-learning-href={course.learningHref?.[language]}
+            >
+              <img src={course.cover} alt="" width="960" height="540" loading="lazy" />
+              <div class="course-copy">
+                <div class="course-topline"><span>{course.category}</span><strong class:list={{ available }}>{available ? copy.available : copy.planned}</strong></div>
+                <h3>{language === 'en' ? course.titleEn : course.title}</h3>
+                <p>{course.description[language]}</p>
+                <div class="course-meta">{course.moduleCount} {copy.modules} · {course.lessonCount} {copy.lessons} · ±{course.durationHours} {copy.hours}</div>
+                <div class="course-progress" data-path-progress hidden><span><i data-path-progress-fill></i></span><b data-path-progress-label></b></div>
+                <a href={`${prefix}/courses/${course.slug}`} data-path-course-link>{copy.view} →</a>
+              </div>
+            </article>
+          </li>
+        );
+      })}
+    </ol>
+  </section>
+</main>
+
+<script>
+  import { getCourseProgress } from '../scripts/learning-store';
+
+  const renderPathProgress = () => {
+    document.querySelectorAll<HTMLElement>('[data-path-course]').forEach((card) => {
+      if (!card.dataset.learningHref) return;
+      const total = Number(card.dataset.totalLessons) || 0;
+      const progress = getCourseProgress(card.dataset.course ?? '', total);
+      if (!progress.completedLessons) return;
+      const container = card.querySelector<HTMLElement>('[data-path-progress]');
+      const fill = card.querySelector<HTMLElement>('[data-path-progress-fill]');
+      const label = card.querySelector<HTMLElement>('[data-path-progress-label]');
+      const link = card.querySelector<HTMLAnchorElement>('[data-path-course-link]');
+      if (container) container.hidden = false;
+      if (fill) fill.style.width = `${progress.percent}%`;
+      if (label) label.textContent = `${progress.completedLessons}/${total} lesson · ${progress.percent}%`;
+      if (link && progress.resumeHref) link.href = progress.resumeHref;
+    });
+  };
+  renderPathProgress();
+  window.addEventListener('phinisi-progress-updated', renderPathProgress);
+</script>
+
+<style>
+  .path-detail { background: var(--color-canvas); }
+  .path-hero { border-bottom: 1px solid var(--color-line); background: var(--color-section); }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); align-items: center; gap: clamp(2rem, 6vw, 5rem); padding-block: clamp(3.5rem, 7vw, 5.5rem); }
+  .eyebrow { color: var(--color-primary); font-size: .76rem; font-weight: 650; text-transform: uppercase; }
+  h1 { max-width: 760px; margin: .75rem 0 0; color: var(--color-navy); font-size: clamp(2.8rem, 6vw, 4.8rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.08; }
+  .path-hero p { max-width: 680px; margin: 1rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.7; }
+  .path-meta { margin-top: 1rem; color: var(--color-ink); font-size: .86rem; font-weight: 600; }
+  .catalog-link { display: inline-block; margin-top: 1.4rem; color: var(--color-primary); font-size: .86rem; font-weight: 650; text-decoration: none; }
+  .path-hero img { width: 100%; aspect-ratio: 16/9; border: 1px solid var(--color-line); border-radius: var(--radius-lg); object-fit: cover; }
+  .path-courses { padding-block: clamp(4rem, 8vw, 7rem); }
+  .path-courses > header { max-width: 680px; margin-bottom: 2rem; }
+  .path-courses h2 { margin: 0; color: var(--color-navy); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -.02em; }
+  .path-courses > header p { margin: .7rem 0 0; color: var(--color-muted); line-height: 1.65; }
+  ol { display: grid; max-width: 960px; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+  li { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 1rem; }
+  .course-number { padding-top: 1.1rem; color: var(--color-primary); font-family: var(--font-mono); font-size: .78rem; font-weight: 700; }
+  article { display: grid; grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr); overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: #fff; }
+  article > img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; }
+  .course-copy { padding: 1.35rem; }
+  .course-topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--color-primary); font-size: .7rem; font-weight: 650; text-transform: capitalize; }
+  .course-topline strong { color: var(--color-muted); }.course-topline strong.available { color: var(--color-success); }
+  h3 { margin: .55rem 0 0; color: var(--color-navy); font-size: 1.3rem; font-weight: 650; line-height: 1.3; }
+  .course-copy > p { margin: .6rem 0 0; color: var(--color-muted); font-size: .86rem; line-height: 1.6; }
+  .course-meta { margin-top: .9rem; color: var(--color-muted); font-size: .76rem; font-weight: 550; }
+  .course-copy > a { display: inline-block; margin-top: 1rem; color: var(--color-primary); font-size: .8rem; font-weight: 650; text-decoration: none; }
+  .course-progress { display: grid; gap: .35rem; margin-top: .8rem; }.course-progress[hidden] { display: none; }
+  .course-progress span { height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-phinisi-100); }.course-progress i { display: block; width: 0; height: 100%; background: var(--color-primary); }
+  .course-progress b { color: var(--color-muted); font-size: .7rem; font-weight: 550; }
+  @media (max-width: 760px) { .hero-grid, article { grid-template-columns: 1fr; } .path-hero img { max-width: 640px; } li { grid-template-columns: 1fr; }.course-number { padding: 0; } article > img { min-height: 0; aspect-ratio: 16/9; } }
+</style>

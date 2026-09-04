@@ -1,0 +1,173 @@
+---
+interface Props {
+  activityId: string;
+  courseSlug: string;
+  lessonId: string;
+  title: string;
+  description: string;
+  steps: string[];
+  scrambledOrder?: number[];
+  xp?: number;
+}
+
+const {
+  activityId,
+  courseSlug,
+  lessonId,
+  title,
+  description,
+  steps,
+  scrambledOrder = steps.map((_, index) => index).reverse(),
+  xp = 30,
+} = Astro.props;
+const initialOrder = scrambledOrder.length > 0
+  ? scrambledOrder
+  : steps.map((_, index) => index).reverse();
+const scrambledSteps = initialOrder.map((index) => ({ command: steps[index], correctIndex: index }));
+---
+
+<section class="command-order" data-command-order data-activity-id={activityId} data-course={courseSlug} data-lesson={lessonId} data-step-count={steps.length} data-xp={xp}>
+  <header>
+    <div><span>Susun command</span><h2>{title}</h2></div>
+    <strong>+{xp} XP</strong>
+  </header>
+  <p>{description}</p>
+  <div class="command-workspace">
+    <div>
+      <small>Potongan command</small>
+      <div class="command-bank" data-command-bank>
+        {scrambledSteps.map(({ command, correctIndex }) => (
+          <button type="button" data-command-index={correctIndex}><code>{command}</code></button>
+        ))}
+      </div>
+    </div>
+    <div>
+      <small>Urutan jawaban</small>
+      <ol class="answer-list" data-answer-list><li class="answer-placeholder" data-placeholder>Pilih command dari kotak di atas.</li></ol>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" data-check-order>Periksa urutan</button>
+    <button type="button" class="secondary" data-reset-order>Ulangi</button>
+  </div>
+  <p class="feedback" data-command-feedback hidden aria-live="polite"></p>
+</section>
+
+<script>
+  import { completeActivity } from '../scripts/learning-store';
+
+  document.querySelectorAll<HTMLElement>('[data-command-order]').forEach((root) => {
+    if (root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+    const bankButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-command-index]'));
+    const answerList = root.querySelector<HTMLOListElement>('[data-answer-list]');
+    const checkButton = root.querySelector<HTMLButtonElement>('[data-check-order]');
+    const resetButton = root.querySelector<HTMLButtonElement>('[data-reset-order]');
+    const feedback = root.querySelector<HTMLElement>('[data-command-feedback]');
+    const selected: number[] = [];
+
+    const renderAnswer = () => {
+      if (!answerList) return;
+      answerList.replaceChildren();
+      if (selected.length === 0) {
+        const placeholder = document.createElement('li');
+        placeholder.className = 'answer-placeholder';
+        placeholder.textContent = 'Pilih command dari kotak di atas.';
+        answerList.append(placeholder);
+        return;
+      }
+
+      selected.forEach((index, position) => {
+        const source = bankButtons.find((button) => Number(button.dataset.commandIndex) === index);
+        const item = document.createElement('li');
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.dataset.removePosition = String(position);
+        remove.innerHTML = `<span>${position + 1}</span><code>${source?.textContent?.trim() ?? ''}</code><b aria-hidden="true">×</b>`;
+        item.append(remove);
+        answerList.append(item);
+      });
+    };
+
+    bankButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const index = Number(button.dataset.commandIndex);
+        if (selected.includes(index)) return;
+        selected.push(index);
+        button.disabled = true;
+        if (feedback) feedback.hidden = true;
+        renderAnswer();
+      });
+    });
+
+    answerList?.addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-remove-position]');
+      if (!target) return;
+      const position = Number(target.dataset.removePosition);
+      const [removed] = selected.splice(position, 1);
+      const source = bankButtons.find((button) => Number(button.dataset.commandIndex) === removed);
+      if (source) source.disabled = false;
+      renderAnswer();
+    });
+
+    checkButton?.addEventListener('click', () => {
+      if (!feedback) return;
+      const stepCount = Number(root.dataset.stepCount);
+      const correct = selected.length === stepCount && selected.every((value, index) => value === index);
+      feedback.hidden = false;
+      feedback.className = `feedback ${correct ? 'is-correct' : 'is-incorrect'}`;
+
+      if (!correct) {
+        feedback.textContent = selected.length < stepCount
+          ? 'Belum lengkap. Gunakan seluruh potongan command sebelum memeriksa.'
+          : 'Urutannya belum tepat. Ingat: identitas dan domain perangkat disiapkan sebelum RSA key dan SSH diaktifkan.';
+        return;
+      }
+
+      const completion = completeActivity({
+        activityId: root.dataset.activityId ?? '',
+        courseSlug: root.dataset.course ?? '',
+        lessonId: root.dataset.lesson,
+        xp: Number(root.dataset.xp) || 30,
+      });
+      feedback.textContent = completion.firstCompletion
+        ? `Urutan benar. Kamu mendapatkan ${completion.awardedXp} XP.`
+        : 'Urutan benar. XP untuk aktivitas ini sudah pernah kamu dapatkan.';
+    });
+
+    resetButton?.addEventListener('click', () => {
+      selected.splice(0, selected.length);
+      bankButtons.forEach((button) => { button.disabled = false; });
+      if (feedback) feedback.hidden = true;
+      renderAnswer();
+    });
+  });
+</script>
+
+<style>
+  .command-order { margin: 2rem 0; border: 1px solid var(--color-phinisi-200); border-radius: 1.1rem; padding: clamp(1rem, 3vw, 1.35rem); background: #f8fbff; }
+  header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+  header div { display: grid; gap: 0.25rem; }
+  header span, .command-workspace small { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; }
+  header h2 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.15rem; font-weight: 600; }
+  header > strong { flex: 0 0 auto; color: var(--color-muted); font-size: 0.6rem; font-weight: 700; }
+  .command-order > p { margin: 0.7rem 0 0; color: var(--color-muted); font-size: 0.8rem; line-height: 1.55; }
+  .command-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1rem; }
+  .command-workspace > div { border: 1px solid var(--color-line); border-radius: 0.85rem; padding: 0.8rem; background: #fff; }
+  .command-bank { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.65rem; }
+  .command-bank button { border: 1px solid var(--color-phinisi-200); border-radius: 0.6rem; padding: 0.5rem 0.6rem; background: var(--color-phinisi-50); color: var(--color-navy); cursor: pointer; }
+  .command-bank button:disabled { opacity: 0.38; cursor: default; }
+  code { font-family: var(--font-mono); font-size: 0.7rem; }
+  .answer-list { display: grid; gap: 0.35rem; margin: 0.65rem 0 0; padding: 0; list-style: none; }
+  .answer-list button { display: grid; width: 100%; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; border: 1px solid var(--color-line); border-radius: 0.6rem; padding: 0.5rem; background: #fff; color: var(--color-ink); text-align: left; cursor: pointer; }
+  .answer-list button span { display: grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 0.6rem; font-weight: 900; }
+  .answer-list button b { color: var(--color-muted); font-size: 1rem; }
+  .answer-placeholder { color: var(--color-muted); font-size: 0.72rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.9rem; }
+  .actions button { border: 0; border-radius: 0.7rem; padding: 0.65rem 0.8rem; background: var(--color-primary); color: #fff; font-family: var(--font-heading); font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+  .actions button.secondary { border: 1px solid var(--color-phinisi-200); background: #fff; color: var(--color-primary); }
+  .feedback { margin: 0.9rem 0 0 !important; border-radius: 0.7rem; padding: 0.75rem; font-weight: 750; }
+  .feedback.is-correct { background: var(--color-success-soft); color: #14763c; }
+  .feedback.is-incorrect { background: var(--color-danger-soft); color: #a12b31; }
+  @media (max-width: 700px) { .command-workspace { grid-template-columns: 1fr; } }
+</style>

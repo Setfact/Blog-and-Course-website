@@ -14,7 +14,7 @@
     constructor() {
       super();
       const header = this.querySelector('.tabs-header');
-      const items = Array.from(this.querySelectorAll('custom-tab-item'));
+      const items = Array.from(this.querySelectorAll<HTMLElement>('custom-tab-item'));
       
       items.forEach((item, index) => {
         const label = item.getAttribute('data-label') || `Tab ${index + 1}`;

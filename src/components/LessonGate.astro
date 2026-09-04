@@ -1,0 +1,51 @@
+---
+interface Props {
+  courseSlug: string;
+  lessonId: string;
+  nextHref: string;
+  nextLabel: string;
+  isLast?: boolean;
+}
+
+const { courseSlug, lessonId, nextHref, nextLabel, isLast = false } = Astro.props;
+---
+
+<section class="lesson-gate" data-lesson-gate data-course={courseSlug} data-lesson={lessonId}>
+  <div>
+    <span data-gate-kicker>Belum selesai</span>
+    <strong data-gate-title>Selesaikan quiz lesson untuk memperbarui progress.</strong>
+  </div>
+  <a href={nextHref} data-next-link>{isLast ? 'Kembali ke roadmap' : `Lanjut: ${nextLabel}`} →</a>
+</section>
+
+<script>
+  import { getLearningState } from '../scripts/learning-store';
+
+  const renderGate = (root: HTMLElement) => {
+    const lessonKey = `${root.dataset.course}/${root.dataset.lesson}`;
+    const complete = getLearningState().completedLessons.includes(lessonKey);
+    root.classList.toggle('is-complete', complete);
+    const kicker = root.querySelector<HTMLElement>('[data-gate-kicker]');
+    const title = root.querySelector<HTMLElement>('[data-gate-title]');
+    if (kicker) kicker.textContent = complete ? 'Lesson selesai' : 'Belum selesai';
+    if (title) title.textContent = complete
+      ? 'Progress belajar sudah diperbarui.'
+      : 'Selesaikan quiz lesson untuk memperbarui progress.';
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(renderGate);
+  window.addEventListener('phinisi-progress-updated', () => {
+    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(renderGate);
+  });
+</script>
+
+<style>
+  .lesson-gate { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2.5rem; border: 1px solid #efd087; border-radius: 1.1rem; padding: 1rem; background: var(--color-gold-soft); }
+  .lesson-gate.is-complete { border-color: #9bd5ae; background: var(--color-success-soft); }
+  .lesson-gate > div { display: grid; gap: 0.18rem; }
+  .lesson-gate span { color: #7a5100; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; }
+  .lesson-gate.is-complete span { color: #14763c; }
+  .lesson-gate strong { color: var(--color-navy); font-size: 0.82rem; }
+  .lesson-gate a { flex: 0 0 auto; border-radius: 0.75rem; padding: 0.65rem 0.8rem; background: var(--color-primary); color: #fff; font-size: 0.72rem; font-weight: 900; text-decoration: none; }
+  @media (max-width: 620px) { .lesson-gate { align-items: stretch; flex-direction: column; } .lesson-gate a { text-align: center; } }
+</style>

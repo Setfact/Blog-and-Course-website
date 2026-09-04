@@ -1,0 +1,64 @@
+---
+title: "Module Practice and Quiz"
+language: id
+draft: false
+description: "| 5.1 | Mengkonfigurasi standard IPv4 ACL (numbered dan named) |"
+order: 35
+course: enterprise-network-ensa
+module: ensa-05-acls-for-ipv4-configuration
+durationMinutes: 6
+---
+
+# Module Practice and Quiz
+
+
+## 5.5.1 What did I learn in this module?
+
+| Bagian | Yang Dipelajari |
+|---|---|
+| 5.1 | Mengkonfigurasi standard IPv4 ACL (numbered dan named) |
+| 5.2 | Memodifikasi ACL dengan text editor dan sequence numbers |
+| 5.3 | Mengamankan VTY ports dengan standard ACL + `access-class` |
+| 5.4 | Mengkonfigurasi extended IPv4 ACL, `established` keyword, named extended ACL |
+
+## 5.5.2 Module Quiz – ACLs for IPv4 Configuration
+
+<Callout type="remember" title={"Quiz"}>
+Source menyediakan quiz interaktif untuk modul ini. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+# Ringkasan modul 5
+
+| Bagian | Isi utama |
+|---|---|
+| 5.0 | Pengenalan — dari teori ACL ke praktik konfigurasi |
+| 5.1 | Standard IPv4 ACL: syntax numbered/named, apply ke interface, contoh konfigurasi |
+| 5.2 | Modify ACL: text editor method vs sequence numbers method, statistics |
+| 5.3 | Secure VTY: `access-class` command, best practice `transport input ssh` |
+| 5.4 | Extended IPv4 ACL: syntax, protocol/port, `established` keyword, contoh konfigurasi |
+| 5.5 | Quiz dan praktik |
+
+---
+
+# Command Reference modul 5
+
+| Command | Fungsi |
+|---|---|
+| `access-list <n> {permit\|deny} ...` | Buat numbered ACL |
+| `ip access-list standard <name>` | Buat named standard ACL |
+| `ip access-list extended <name>` | Buat named extended ACL |
+| `ip access-group <n\|name> {in\|out}` | Apply ACL ke interface |
+| `access-class <n\|name> {in\|out}` | Apply ACL ke VTY lines |
+| `show access-lists` | Lihat ACL dan statistik |
+| `show running-config \| section access-list` | Lihat ACL di running config |
+| `clear access-list counters` | Reset statistik match |
+| `remark <text>` | Tambahkan komentar di ACL |
+| `transport input ssh` | Batasi VTY hanya SSH |
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 5: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html).

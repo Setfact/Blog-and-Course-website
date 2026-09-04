@@ -1,0 +1,111 @@
+---
+title: "Types of IPv4 ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas berbagai tipe IPv4 ACL dan di mana tempat yang tepat untuk menerapkannya."
+order: 28
+course: enterprise-network-ensa
+module: ensa-04-acl-concepts
+durationMinutes: 8
+---
+
+# Types of IPv4 ACLs
+
+
+Bagian ini membahas berbagai tipe IPv4 ACL dan di mana tempat yang tepat untuk menerapkannya.
+
+## 4.4.1 Standard and Extended ACLs
+
+### Standard ACL
+- hanya memfilter berdasarkan **source IPv4 address**
+- nomor rentang: **1–99** dan **1300–1999**
+- lebih sederhana tapi kurang spesifik
+- cocok untuk blocking akses dari host/network tertentu
+
+### Extended ACL
+- memfilter berdasarkan **source DAN/ATAU destination IPv4 address**
+- juga bisa memfilter berdasarkan **TCP/UDP port numbers** dan **protocol types**
+- nomor rentang: **100–199** dan **2000–2699**
+- lebih fleksibel dan spesifik
+- cocok untuk kontrol traffic yang lebih detail
+
+### Perbandingan
+
+| Fitur | Standard ACL | Extended ACL |
+|---|---|---|
+| Filter berdasarkan | Source IP saja | Source IP + Destination IP + Port + Protocol |
+| Nomor | 1–99, 1300–1999 | 100–199, 2000–2699 |
+| Ketegasan | Kurang spesifik | Sangat spesifik |
+| Penempatan | Dekat destination | Dekat source |
+| Contoh use case | Block akses dari satu network | Block HTTP dari satu network ke server tertentu |
+
+## 4.4.2 Numbered and Named ACLs
+
+### Numbered ACL
+- diidentifikasi oleh **nomor** (misal: access-list 10, access-list 100)
+- tidak bisa dihapus satu per satu — harus dihapus seluruhnya
+- lebih tua tapi masih dipakai
+
+### Named ACL
+- diidentifikasi oleh **nama** (misal: `ip access-list standard BLOCK_OFFICE`)
+- bisa **diedit baris per baris** tanpa menghapus seluruh ACL
+- lebih mudah dikelola dan di-troubleshoot
+- recommended untuk deployment modern
+
+### Contoh Named ACL
+
+```text
+Router(config)# ip access-list standard BLOCK_OFFICE
+Router(config-std-nacl)# deny 192.168.10.0 0.0.0.255
+Router(config-std-nacl)# permit any
+```
+
+### Perbandingan
+
+| Fitur | Numbered ACL | Named ACL |
+|---|---|---|
+| Identifikasi | Nomor | Nama |
+| Edit per baris | ❌ Tidak bisa | ✅ Bisa |
+| Hapus per entry | ❌ Tidak bisa | ✅ Bisa |
+| Kemudahan management | Lebih sulit | Lebih mudah |
+
+## 4.4.3 Where to Place ACLs
+
+Penempatan ACL sangat mempengaruhi performa dan efektivitas filtering.
+
+![Where to Place ACLs](https://itexamanswers.net/wp-content/uploads/2020/04/Where-to-Place-ACLs.jpg)
+
+### Prinsip umum penempatan
+
+| Tipe ACL | Penempatan Ideal | Alasan |
+|---|---|---|
+| **Standard ACL** | **Dekat destination** | Karena hanya bisa filter berdasarkan source IP, kalau didekat source terlalu broad |
+| **Extended ACL** | **Dekat source** | Karena sudah spesifik (source + destination + port), bisa ditolak lebih awal |
+
+### Kenapa extended ACL harus didekat source?
+Karena kalau extended ACL ditaruh di destination, packet sudah menempuh perjalanan jauh baru ditolak. Ini membuang bandwidth dan resource. Lebih baik ditolak sejak awal di source.
+
+## 4.4.4 Standard ACL Placement Example
+
+![Standard ACL Placement Example](https://itexamanswers.net/wp-content/uploads/2020/04/Standard-ACL-Placement-Example.jpg)
+
+Gambar di atas memperlihatkan contoh penempatan standard ACL. Karena standard hanya bisa filter source IP, ACL ditempatkan **di destination** supaya filtering lebih tepat sasaran.
+
+### Contoh skenario
+Kalau kamu mau melarang host `192.168.10.10` mengakses server di `192.168.30.100`, standard ACL ditempatkan di router yang langsung terhubung ke destination.
+
+## 4.4.5 Extended ACL Placement Example
+
+![Extended ACL Placement Example](https://itexamanswers.net/wp-content/uploads/2020/04/Extended-ACL-Placement-Example.jpg)
+
+Gambar di atas memperlihatkan contoh penempatan extended ACL. Karena extended sudah bisa filter berdasarkan source + destination + port, ACL ditempatkan **di source** supaya traffic yang tidak diinginkan ditolak sejak awal.
+
+### Contoh skenario
+Kalau kamu mau melarang host `192.168.10.10` mengakses web server di port 80 di `192.168.30.100`, extended ACL ditempatkan di router yang langsung terhubung ke source.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 4: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-4-acl-concepts.html).

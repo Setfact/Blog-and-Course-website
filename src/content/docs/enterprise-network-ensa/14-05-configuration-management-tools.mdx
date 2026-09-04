@@ -1,0 +1,198 @@
+---
+title: "Configuration Management Tools"
+language: id
+draft: false
+description: "Bagian ini membahas tools automation untuk mengelola konfigurasi network devices."
+order: 92
+course: enterprise-network-ensa
+module: ensa-14-network-automation
+durationMinutes: 11
+---
+
+# Configuration Management Tools
+
+
+Bagian ini membahas tools automation untuk mengelola konfigurasi network devices.
+
+## 14.5.1 Traditional vs. Network Automation
+
+![Traditional Network Configuration - 1](https://itexamanswers.net/wp-content/uploads/2020/04/Traditional-Network-Configuration1.jpg)
+
+![Traditional Network Configuration - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Traditional-Network-Configuration2.jpg)
+
+**Konfigurasi tradisional** dilakukan secara manual melalui CLI — memakan waktu, rawan error, dan tidak scalable untuk jaringan besar.
+
+![Network Automation](https://itexamanswers.net/wp-content/uploads/2020/04/Network-Automation.jpg)
+
+**Network automation** menggantikan konfigurasi manual dengan software-driven configuration. Tools seperti Ansible, Puppet, Chef, dan SaltStack memungkinkan kamu mengelola ribuan devices secara konsisten dan efisien.
+
+### Kelebihan Network Automation:
+- **Mengurangi repetitive tasks** — tidak perlu mengetik command yang sama berulang kali
+- **Konsistensi** — konfigurasi yang sama diterapkan ke semua devices
+- **Scalability** — bisa mengelola ribuan devices sekaligus
+- **Version control** — konfigurasi bisa di-version seperti kode
+
+## 14.5.2 Configuration Management Tools
+
+![Configuration Management Tools](https://itexamanswers.net/wp-content/uploads/2020/04/Configuration-Management-Tools.jpg)
+
+### Perbandingan Tools:
+
+| Fitur | Ansible | Chef | Puppet | SaltStack |
+|---|---|---|---|---|
+| **Bahasa** | Python + YAML | Ruby | Ruby | Python |
+| **Arsitektur** | Agentless (push) | Agent-based (pull) | Both | Both |
+| **Controller** | Any computer | Chef Master | Puppet Master | Salt Master |
+| **Config File** | Playbook | Cookbook/Recipe | Manifest | State file |
+| **Kelebihan** | Simpel, no agent | Scalable | Mature, large ecosystem | Fast, Python-based |
+
+### Ansible
+
+![Ansible Logo](https://itexamanswers.net/wp-content/cache/flying-press/35bae04d6e293e800eef69a5af8f6957.jpg)
+
+**Ansible** adalah configuration management tool yang **agentless** — tidak perlu install agent di target devices. Ansible menggunakan **SSH** untuk menghubungkan ke devices dan menjalankan tasks.
+
+**Playbook** Ansible ditulis dalam **YAML** dan berisi instruksi untuk mengkonfigurasi devices. Playbook mendefinisikan:
+- **Hosts** — devices mana yang akan dikonfigurasi
+- **Tasks** — operasi yang harus dilakukan
+- **Handlers** — operasi yang dijalankan sebagai response terhadap perubahan
+- **Roles** — organizational structure untuk playbooks
+
+### Chef
+
+**Chef** menggunakan arsitektur **agent-based (pull)** — agent diinstal di target devices dan periodically mengambil konfigurasi dari Chef Master.
+
+**Cookbook/Recipe** Chef ditulis dalam **Ruby** dan berisi instruksi konfigurasi. Chef menggunakan konsep **infrastructure as code** — seluruh infrastruktur didefinisikan sebagai kode.
+
+### Puppet
+
+**Puppet** mendukung kedua arsitektur (agent-based dan agentless). Puppet Master mengelola konfigurasi dan distribusi ke agents.
+
+**Manifest** Puppet ditulis dalam **Ruby** (Puppet DSL) dan menggunakan konsep **resources** dan **classes** untuk mendefinisikan state yang diinginkan dari sistem.
+
+### SaltStack
+
+**SaltStack** (Salt) menggunakan arsitektur **agent-based** dengan **Salt Master** dan **Salt Minions**. Salt ditulis dalam **Python** dan dikenal karena kecepatannya.
+
+**State files** Salt ditulis dalam YAML dan Python, menjadikannya sangat fleksibel untuk automasi kompleks.
+
+## 14.5.3 Intent-Based Networking (IBN)
+
+![Intent-Based Networking Overview](https://itexamanswers.net/wp-content/uploads/2020/04/Intent-Based-Networking-Overview.jpg)
+
+**Intent-Based Networking (IBN)** adalah konsep di mana administrator mendefinisikan **intent** (keinginan/niat) tingkat tinggi, dan sistem secara otomatis menerjemahkan intent tersebut menjadi konfigurasi jaringan.
+
+### Contoh intent:
+- "Semua user di departemen sales harus bisa mengakses aplikasi CRM"
+- "Traffic video harus diprioritaskan di atas traffic data"
+- "Akses ke server database hanya boleh dari application server"
+
+### Komponen IBN:
+1. **Translate** — menerjemahkan business intent menjadi konfigurasi jaringan
+2. **Activate** — menerapkan konfigurasi ke devices secara otomatis
+3. **Verify** — memverifikasi apakah jaringan beroperasi sesuai intent
+4. **Optimize** — mengoptimalkan kinerja jaringan secara berkelanjutan
+
+## 14.5.4 Overlay vs. Underlay Networks
+
+### Overlay Network
+
+![Example Overlay Network](https://itexamanswers.net/wp-content/uploads/2020/04/Example-Overlay-Network.jpg)
+
+**Overlay network** adalah logical network yang berjalan di atas physical network. Traffic overlay di-encapsulated dan dikirim melalui underlay network. Contoh: **VXLAN**, **VPN tunnels**, **VPLS**.
+
+### Underlay Network
+
+![Example Underlay Network](https://itexamanswers.net/wp-content/uploads/2020/04/Example-Underlay-Network.jpg)
+
+**Underlay network** adalah physical network infrastructure yang menjadi fondasi untuk overlay. Underlay menyediakan konektivitas dasar antar devices.
+
+### Perbandingan:
+
+| Aspek | Overlay | Underlay |
+|---|---|---|
+| Layer | Logical (virtual) | Physical |
+| Fungsi | Menyediakan logical connectivity | Menyediakan physical connectivity |
+| Contoh | VXLAN, VPN | Ethernet, MPLS |
+| Flexibility | Sangat fleksibel | Terbatas oleh hardware |
+
+## 14.5.5 Cisco DNA Center
+
+![Cisco DNA Continuous Implementation of Business Intent](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-DNA-Continuous-Implementation-of-Business-Intent.jpg)
+
+**Cisco DNA Center** adalah platform management yang mengimplementasikan intent-based networking untuk enterprise.
+
+![Cisco DNA Center](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-DNA-Center.jpg)
+
+### Fitur Cisco DNA Center:
+- **Automated Discovery** — otomatis menemukan semua perangkat jaringan
+- **Policy Management** — menerapkan kebijakan keamanan dan QoS secara terpusat
+- **Network Assurance** — memverifikasi apakah jaringan beroperasi sesuai intent
+- **Analytics** — menyediakan data dan insight tentang kinerja jaringan
+- **REST API** — memungkinkan integrasi dengan tools dan aplikasi lain
+
+---
+
+# Ringkasan modul 14
+
+| Bagian | Isi utama |
+|---|---|
+| 14.0 | Pengenalan — automation mengubah networking dari manual ke programmatic |
+| 14.1 | Automation Overview — definisi, manfaat, thinking devices |
+| 14.2 | Data Formats — JSON, YAML, XML + perbandingan |
+| 14.3 | APIs — konsep, tipe (open/internal/partner), web service types (SOAP/REST) |
+| 14.4 | RESTful APIs — HTTP methods, URI components, tools (Postman, Python, NETCONF) |
+| 14.5 | Configuration Management — traditional vs automation, Ansible/Chef/Puppet/SaltStack, IBN, overlay/underlay, Cisco DNA Center |
+
+---
+
+# Kata-kata kunci modul 14
+
+- **Automation** — proses self-driven yang mengurangi intervensi manusia
+- **JSON** — JavaScript Object Notation, lightweight data format
+- **YAML** — YAML Ain't Markup Language, minimalist, indentation-based
+- **XML** — eXtensible Markup Language, self-descriptive with tags
+- **API** — Application Programming Interface
+- **REST** — Representational State Transfer
+- **CRUD** — Create, Read, Update, Delete
+- **SOAP** — Simple Object Access Protocol
+- **Ansible** — agentless, Python + YAML
+- **Chef** — agent-based, Ruby
+- **Puppet** — both architectures, Ruby
+- **SaltStack** — agent-based, Python, fast
+- **IBN** — Intent-Based Networking
+- **Cisco DNA Center** — platform for intent-based networking
+- **Overlay** — logical network over physical
+- **Underlay** — physical network foundation
+- **NETCONF** — Network Configuration Protocol
+- **RESTCONF** — REST-based Network Configuration Protocol
+
+---
+
+# Progres CCNA ENSA v7 Documentation
+
+| Modul | Judul | Status |
+|---|---|---|
+| 1 | OSPFv2 Concepts | ✅ |
+| 2 | OSPFv2 Configuration | ✅ |
+| 3 | Network Security Concepts | ✅ |
+| 4 | ACL Concepts | ✅ |
+| 5 | ACLs for IPv4 Configuration | ✅ |
+| 6 | NAT for IPv4 | ✅ |
+| 7 | WAN Concepts | ✅ |
+| 8 | VPN and IPsec Concepts | ✅ |
+| 9 | QoS Concepts | ✅ |
+| 10 | Network Management | ✅ |
+| 11 | Network Design | ✅ |
+| 12 | Network Troubleshooting | ✅ |
+| 13 | Network Virtualization | ✅ |
+| 14 | Network Automation | ✅ |
+
+<Callout type="success" title={"Semua 14 modul CCNA ENSA v7 selesai!"}>
+Dokumentasi lengkap tersimpan di `/root/ObsidianVault/04-Belajar/Networking/`
+</Callout>
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 14: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-14-network-automation.html).

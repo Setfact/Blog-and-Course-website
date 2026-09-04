@@ -1,0 +1,130 @@
+---
+title: 'MQTT Publish dan Subscribe'
+language: id
+draft: false
+description: 'Pahami broker, topic, publisher, subscriber, dan QoS untuk komunikasi perangkat IoT.'
+order: 4
+course: iot-fundamentals
+module: iot-fundamentals-03-mqtt
+durationMinutes: 22
+---
+
+# MQTT Publish dan Subscribe
+
+**MQTT** adalah protokol messaging ringan dengan pola **publish/subscribe**. Pola ini cocok untuk perangkat IoT karena client tidak perlu saling terhubung secara langsung.
+
+## Tujuan misi
+
+Setelah materi ini, kamu dapat:
+
+- menjelaskan peran broker, publisher, subscriber, dan topic
+- merancang topic yang mudah dipahami
+- membedakan tiga level Quality of Service
+- menjalankan percobaan publish/subscribe sederhana
+
+## Komponen MQTT
+
+### Broker
+
+Broker menerima pesan dari publisher dan meneruskannya kepada subscriber yang berlangganan topic terkait.
+
+### Publisher
+
+Publisher mengirim pesan. Sebuah ESP32 dapat memublikasikan suhu setiap beberapa detik.
+
+### Subscriber
+
+Subscriber menerima pesan. Dashboard atau service otomatisasi dapat berlangganan data suhu.
+
+### Topic
+
+Topic adalah alamat logis pesan. Topic disusun bertingkat menggunakan `/`.
+
+```text
+phinisi/lab01/ruang-server/suhu
+phinisi/lab01/ruang-server/kelembapan
+phinisi/lab01/ruang-server/kipas/set
+```
+
+Gunakan nama yang konsisten dan mudah diprediksi. Hindari memasukkan password, token, atau data pribadi ke dalam topic.
+
+## Alur publish/subscribe
+
+```text
+ESP32 -- publish suhu --> MQTT Broker -- forward --> Dashboard
+ESP32 <-- perintah kipas -- MQTT Broker <-- publish -- Dashboard
+```
+
+Publisher dan subscriber hanya perlu mengetahui alamat broker serta nama topic. Keduanya tidak harus mengetahui alamat IP satu sama lain.
+
+## Quality of Service
+
+MQTT menyediakan tiga level QoS:
+
+| QoS | Makna sederhana | Trade-off |
+| --- | --- | --- |
+| 0 | dikirim paling banyak satu kali | paling ringan, pesan dapat hilang |
+| 1 | dikirim setidaknya satu kali | pesan mungkin diterima lebih dari sekali |
+| 2 | diterima tepat satu kali | pertukaran paket paling banyak |
+
+Pilih QoS berdasarkan kebutuhan. Telemetri yang dikirim sangat sering mungkin cukup menggunakan QoS 0, sedangkan perintah penting membutuhkan pertimbangan reliabilitas lebih tinggi.
+
+## Lab menggunakan MQTT client
+
+Jika Mosquitto client tersedia, buka dua terminal. Gunakan broker lab milikmu atau broker percobaan yang memang disediakan untuk testing.
+
+Terminal subscriber:
+
+```bash
+mosquitto_sub -h ALAMAT_BROKER -t "phinisi/lab01/suhu"
+```
+
+Terminal publisher:
+
+```bash
+mosquitto_pub -h ALAMAT_BROKER -t "phinisi/lab01/suhu" -m "28.5"
+```
+
+Jika koneksi berhasil, terminal subscriber akan menerima nilai `28.5`.
+
+<Callout type="danger" title="Broker publik bukan tempat data rahasia">
+Jangan mengirim credential, informasi pribadi, atau data production ke broker publik. Untuk sistem nyata, gunakan autentikasi, pembatasan akses topic, dan enkripsi TLS.
+</Callout>
+
+## Checklist troubleshooting
+
+Jika pesan tidak diterima, periksa:
+
+1. alamat dan port broker
+2. konektivitas IP serta DNS
+3. kesamaan nama topic
+4. username/password jika digunakan
+5. ACL topic pada broker
+6. QoS dan status koneksi client
+7. firewall antara client dan broker
+
+<PracticeCTA
+  title="Buktikan alur publish dan subscribe"
+  description="Buka dua terminal, kirim data sensor, lalu amati pesan yang diterima subscriber."
+  href="#tantangan-akhir-course"
+/>
+
+## Tantangan akhir course
+
+Rancang sistem monitoring suhu ruang server dengan ketentuan:
+
+- ESP32 mengirim suhu dan kelembapan
+- dashboard menerima telemetri
+- dashboard dapat mengirim perintah kipas
+- topic membedakan data sensor dan perintah
+- perangkat IoT ditempatkan pada VLAN terpisah
+
+Tuliskan minimal tiga topic dan jelaskan siapa publisher serta subscriber masing-masing.
+
+## Ringkasan
+
+MQTT memisahkan pengirim dan penerima melalui broker. Topic yang rapi, QoS yang tepat, autentikasi, TLS, dan segmentasi jaringan merupakan fondasi komunikasi IoT yang lebih aman dan mudah dikelola.
+
+## Referensi resmi
+
+- [MQTT.org — MQTT Standard for IoT Messaging](https://mqtt.org/)

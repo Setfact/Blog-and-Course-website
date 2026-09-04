@@ -1,0 +1,97 @@
+---
+title: "OSPF Packets"
+language: id
+draft: false
+description: "Bagian ini membahas packet yang dipakai OSPF untuk membentuk adjacency dan bertukar informasi routing."
+order: 3
+course: enterprise-network-ensa
+module: ensa-01-single-area-ospfv2-concepts
+durationMinutes: 7
+---
+
+# OSPF Packets
+
+
+Bagian ini membahas packet yang dipakai OSPF untuk membentuk adjacency dan bertukar informasi routing.
+
+## 1.2.1 Video – OSPF Packets
+
+Section video ini ada di halaman sumber.
+
+<Callout type="info" title={"Video"}>
+Link video aslinya belum tampil jelas di snapshot yang aku ambil, jadi untuk sementara aku tandai sebagai section video sumber.
+</Callout>
+
+
+## 1.2.2 Types of OSPF Packets
+
+OSPF memakai 5 packet type:
+
+| Type | Packet | Fungsi |
+|---|---|---|
+| **1** | **Hello** | Menemukan neighbor dan membangun adjacency |
+| **2** | **DBD** | Menyinkronkan ringkasan database |
+| **3** | **LSR** | Meminta detail link-state tertentu |
+| **4** | **LSU** | Mengirim update link-state |
+| **5** | **LSAck** | Mengakui penerimaan packet OSPF |
+
+### Kenapa packet-packet ini diperlukan?
+Karena OSPF itu bukan cuma ngirim route, tapi juga membangun hubungan bertahap:
+- pertama saling kenal
+- lalu saling cek database
+- lalu saling minta data yang kurang
+- lalu saling update
+
+Itulah kenapa OSPF punya beberapa packet berbeda.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/LSUs-Contain-LSAs.jpg)
+
+## 1.2.3 Link-State Updates
+
+**LSU (Link-State Update)** membawa satu atau lebih **LSA (Link-State Advertisement)**.
+
+Intinya:
+- **LSA** = isi informasi link-state
+- **LSU** = wadah packet yang membawa LSA
+
+Kalau dipikir sederhana, **LSA** itu datanya, sedangkan **LSU** itu paket pengantarnya.
+
+### Apa yang biasanya dibawa LSA?
+LSA bisa berisi informasi seperti:
+- network prefix
+- prefix length
+- cost
+- informasi link langsung yang dipelajari router
+
+## 1.2.4 Hello Packet
+
+**Hello packet** dipakai untuk:
+- menemukan neighbor
+- menjaga adjacency tetap hidup
+- memastikan dua router saling melihat satu sama lain
+
+### Informasi penting dalam Hello packet
+- **Router ID**
+- **Hello interval**
+- **Dead interval**
+- network mask / subnet info
+- area ID
+- list neighbor yang sudah dikenali
+
+### Nilai timer penting
+- Pada multiaccess network, **Hello interval** umumnya **10 seconds**
+- **Dead interval** umumnya **4x Hello interval**
+
+### Kenapa Hello packet krusial?
+Kalau Hello packet berhenti datang, router akan menganggap neighbor-nya mati setelah Dead Interval habis. Jadi Hello packet itu bukan cuma sapaan awal, tapi juga semacam “heartbeat” untuk memastikan tetangga masih aktif.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Hello-Packet-Content.jpg)
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 1: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-1-single-area-ospfv2-concepts.html).

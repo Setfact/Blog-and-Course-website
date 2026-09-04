@@ -1,0 +1,171 @@
+---
+title: "IPsec Framework"
+language: id
+draft: false
+description: "Bagian ini membahas IPsec secara detail — technologies, security association, protocols, dan services."
+order: 55
+course: enterprise-network-ensa
+module: ensa-08-vpn-and-ipsec-concepts
+durationMinutes: 8
+---
+
+# IPsec Framework
+
+
+Bagian ini membahas IPsec secara detail — technologies, security association, protocols, dan services.
+
+## 8.3.1 What is IPsec?
+
+IPsec adalah **framework keamanan** yang memastikan komunikasi IP yang aman melalui:
+- **autentikasi** — memverifikasi identitas pengirim
+- **enkripsi** — melindungi data dari intersepsi
+- **integrity** — memastikan data tidak diubah
+
+## 8.3.2 IPsec Technologies
+
+![IPsec Technologies](https://itexamanswers.net/wp-content/uploads/2020/04/IPsec-Technologies.jpg)
+
+### Dua mode operasi:
+| Mode | Kapan digunakan |
+|---|---|
+| **Transport Mode** | Host-to-host — hanya payload yang dienkripsi |
+| **Tunnel Mode** | Gateway-to-gateway — seluruh paket dienkripsi dan di encapsulate |
+
+### Dua protokol utama:
+| Protokol | Fungsi |
+|---|---|
+| **ESP** (Encapsulating Security Payload) | Enkripsi + autentikasi |
+| **AH** (Authentication Header) | Autentikasi saja (tanpa enkripsi) |
+
+<Callout type="remember" title={"ESP lebih umum digunakan"}>
+Karena ESP bisa melakukan **enkripsi DAN autentikasi**, sedangkan AH hanya autentikasi.
+</Callout>
+
+
+## 8.3.3 IPsec Security Association (SA)
+
+![IPsec Security Association Examples](https://itexamanswers.net/wp-content/uploads/2020/04/IPsec-Security-Association-Examples.jpg)
+
+### Apa itu SA?
+**Security Association (SA)** adalah seperangkat parameter keamanan yang disepakati oleh dua peer IPsec untuk komunikasi yang aman.
+
+### Parameter SA:
+- protokol keamanan (ESP atau AH)
+- algoritma enkripsi (AES, 3DES)
+- algoritma autentikasi (SHA, MD5)
+- kunci enkripsi
+- lifetime kunci
+- mode operasi (transport atau tunnel)
+
+## 8.3.4 IPsec Protocol Encapsulation
+
+![IPsec Protocol Encapsulation](https://itexamanswers.net/wp-content/uploads/2020/04/IPsec-Protocol-Encapsulation.jpg)
+
+### Proses encapsulation:
+1. Paket asli (passenger) disiapkan
+2. IPsec menambahkan header ESP/AH
+3. Paket dienkapsulasi dalam IP header baru
+4. Paket dikirim melalui tunnel
+
+## 8.3.5 IPsec Confidentiality
+
+IPsec memastikan **confidentiality** dengan mengenkripsi data sehingga tidak bisa dibaca oleh pihak yang tidak berwenang.
+
+![Confidentiality](https://itexamanswers.net/wp-content/uploads/2020/04/Confidentiality.jpg)
+
+### Algoritma enkripsi yang umum:
+| Algoritma | Tipe | Kekuatan |
+|---|---|---|
+| **DES** | Symmetric | Lemah (56-bit) |
+| **3DES** | Symmetric | Sedang (168-bit) |
+| **AES-128** | Symmetric | Kuat |
+| **AES-256** | Symmetric | Sangat Kuat |
+
+![Confidentiality - Proses](https://itexamanswers.net/wp-content/uploads/2020/04/Confidentiality-2.jpg)
+
+## 8.3.6 IPsec Integrity
+
+IPsec memastikan **integrity** — data tidak diubah selama transmisi.
+
+![Integrity](https://itexamanswers.net/wp-content/uploads/2020/04/Integrity.jpg)
+
+### Cara kerja:
+1. Pengirim menghitung **hash** dari paket menggunakan algoritma (SHA, MD5)
+2. Hash disertakan dalam paket
+3. Penerima menghitung ulang hash dan membandingkan
+4. Jika hash cocok → data utuh; jika tidak → data telah diubah
+
+![Integrity - Verifikasi](https://itexamanswers.net/wp-content/uploads/2020/04/Integrity-2.jpg)
+
+## 8.3.7 IPsec Authentication
+
+![Authentication](https://itexamanswers.net/wp-content/uploads/2020/04/Authentication.jpg)
+
+### Metode autentikasi IPsec:
+
+**1. Pre-Shared Keys (PSK)**
+- Kunci yang sama dibagikan ke kedua peer
+- Sederhana tapi kurang scalable
+
+![PSK Authentication](https://itexamanswers.net/wp-content/uploads/2020/04/PSK-Authentication.jpg)
+
+![PSK Authentication - Proses](https://itexamanswers.net/wp-content/uploads/2020/04/PSK-Authentication-2.jpg)
+
+**2. Digital Certificates**
+- Menggunakan PKI (Public Key Infrastructure)
+- Lebih scalable dan aman
+- Certificate dikeluarkan oleh Certificate Authority (CA)
+
+## 8.3.8 Secure Key Exchange with Diffie-Hellman
+
+![Secure Key Exchange with Diffie-Hellman](https://itexamanswers.net/wp-content/uploads/2020/04/Secure-Key-Exchange-with-Diffie-Hellman.jpg)
+
+### Apa itu Diffie-Hellman?
+Algoritma yang memungkinkan dua peer untuk **membuat shared secret** melalui channel yang tidak aman, **tanpa pernah mengirim kunci itu sendiri**.
+
+### Cara kerja:
+1. Kedua peer menghasilkan key pair (public dan private)
+2. Public key dikirim ke peer lain
+3. Setiap peer menggabungkan public key sendiri dengan public key lawan
+4. Hasilnya: **shared secret yang sama** tanpa pernah mengirimnya
+
+### Group DH yang umum:
+| Group | Kekuatan |
+|---|---|
+| Group 2 | 1024-bit |
+| Group 5 | 1536-bit |
+| Group 14 | 2048-bit |
+| Group 24 | 2048-bit (ECP) |
+
+---
+
+# Ringkasan modul 8
+
+| Bagian | Isi utama |
+|---|---|
+| 8.0 | Pengenalan — VPN dan IPsec untuk keamanan konektivitas |
+| 8.1 | VPN Technology — definisi, manfaat, site-to-site vs remote-access, enterprise vs SP VPN |
+| 8.2 | Types of VPNs — remote-access (SSL/IPsec), site-to-site IPsec, GRE over IPsec, DMVPN, VTI, MPLS VPN |
+| 8.3 | IPsec Framework — technologies, SA, encapsulation, confidentiality, integrity, authentication, Diffie-Hellman |
+
+---
+
+# Kata-kata kunci modul 8
+
+- **VPN** — Virtual Private Network
+- **IPsec** — Internet Protocol Security
+- **GRE** — Generic Routing Encapsulation
+- **DMVPN** — Dynamic Multipoint VPN
+- **VTI** — Virtual Tunnel Interface
+- **ESP** — Encapsulating Security Payload
+- **AH** — Authentication Header
+- **SA** — Security Association
+- **IKE** — Internet Key Exchange
+- **DH** — Diffie-Hellman
+- **PSK** — Pre-Shared Key
+- **mGRE** — Multipoint GRE
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 8: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-8-vpn-and-ipsec-concepts.html).

@@ -1,0 +1,181 @@
+---
+title: "QoS Implementation"
+language: id
+draft: false
+description: "Bagian ini membahas langkah-langkah implementasi QoS di perangkat jaringan."
+order: 61
+course: enterprise-network-ensa
+module: ensa-09-qos-concepts
+durationMinutes: 9
+---
+
+# QoS Implementation
+
+
+Bagian ini membahas langkah-langkah implementasi QoS di perangkat jaringan.
+
+## 9.5.1 QoS Implementation Measures
+
+![QoS Sequence](https://itexamanswers.net/wp-content/uploads/2020/04/QoS-Sequence.jpg)
+
+### Urutan implementasi:
+1. **Classification & Marking** (Ingress/Egress) — identifikasi dan tag traffic
+2. **Congestion Avoidance** (Egress) — proaktif drop paket sebelum queue overflow
+3. **Congestion Management** (Egress) — queue dan schedule paket
+
+## 9.5.2 Classification and Marking
+
+### Layer 2 Marking: CoS (Class of Service)
+
+![Ethernet Class of Service CoS Values](https://itexamanswers.net/wp-content/uploads/2020/04/Ethernet-Class-of-Service-CoS-Values.jpg)
+
+**CoS** menggunakan 3 bit di **802.1p** header (Layer 2). Nilai 0-7.
+
+### Layer 3 Marking: DSCP (Differentiated Services Code Point)
+
+![IPv4 and IPv6 Packet Headers](https://itexamanswers.net/wp-content/uploads/2020/04/IPv4-and-IPv6-Packet-Headers.jpg)
+
+![Type of Service and Traffic Class Field](https://itexamanswers.net/wp-content/uploads/2020/04/Type-of-Service-and-Traffic-Class-Field.jpg)
+
+**DSCP** menggunakan 6 bit di field ToS (IPv4) atau Traffic Class (IPv6). Nilai 0-63.
+
+### DSCP Categories
+
+![Assured Forwarding Values](https://itexamanswers.net/wp-content/uploads/2020/04/Assured-Forwarding-Values.jpg)
+
+| Kategori | DSCP Value | Keterangan |
+|---|---|---|
+| **BE** (Best-Effort) | 0 | Default, tanpa QoS |
+| **EF** (Expedited Forwarding) | 46 (101110) | Untuk **voice** — prioritas tertinggi |
+| **AF1x** (Assured Forwarding 1) | 10, 12, 14 | Class 1, drop preference rendah/med/tinggi |
+| **AF2x** | 18, 20, 22 | Class 2 |
+| **AF3x** | 26, 28, 30 | Class 3 |
+| **AF4x** | 34, 36, 38 | Class 4 |
+| **CS6** | 48 | Network control |
+| **CS7** | 56 | Network control |
+
+### Contoh: AF32
+- **AF** = Assured Forwarding
+- **3** = Class 3
+- **2** = medium drop preference
+
+### Mapping CoS ke DSCP
+
+![Layer 2 CoS and Layer 3 ToS](https://itexamanswers.net/wp-content/uploads/2020/04/Layer-2-CoS-and-Layer-3-ToS.jpg)
+
+![Mapping CoS to Class Selectors in DSCP](https://itexamanswers.net/wp-content/uploads/2020/04/Mapping-CoS-to-Class-Selectors-in-DSCP.jpg)
+
+## 9.5.3 Trust Boundary
+
+![Various Trust Boundaries](https://itexamanswers.net/wp-content/uploads/2020/04/Various-Trust-Boundaries.jpg)
+
+### Apa itu Trust Boundary?
+Trust boundary adalah titik di mana traffic mulai ditandai (marked). Traffic harus ditandai **sedekat mungkin dengan source**.
+
+### Perangkat yang bisa marking:
+| Perangkat | Layer | Contoh |
+|---|---|---|
+| IP Phone | Layer 3 | Cisco IP Phone menandai voice traffic dengan DSCP EF |
+| Wireless AP | Layer 2/3 | AP menandai traffic dari wireless client |
+| Switch | Layer 2 | Switch menandai dengan CoS |
+| Router | Layer 3 | Router menandai dengan DSCP |
+
+<Callout type="remember" title={"Best practice"}>
+Marking harus dilakukan di trust boundary, bukan di tengah jaringan. Ini mengurangi overhead dan memastikan konsistensi.
+</Callout>
+
+
+## 9.5.4 Congestion Avoidance
+
+![Congestion Avoidance Mechanisms](https://itexamanswers.net/wp-content/uploads/2020/04/Congestion-Avoidance-Mechanisms.jpg)
+
+### Tail Drop
+- Paket dibuang jika queue sudah penuh (tail)
+- Sederhana tapi bisa menyebabkan **TCP global synchronization** — semua TCP flow menurunkan kecepatan bersamaan
+
+### WRED (Weighted Random Early Detection)
+- **Proaktif** — mulai drop paket secara random sebelum queue penuh
+- Berdasarkan DSCP marking — paket dengan marking lebih rendah di-drop lebih dulu
+- Mencegah TCP global synchronization
+- Hanya efektif untuk **TCP traffic**
+
+## 9.5.5 Congestion Management
+
+Congestion management adalah proses **queue dan schedule** paket saat congestion terjadi. Algoritma yang digunakan: FIFO, WFQ, CBWFQ, LLQ (sudah dibahas di section 9.3).
+
+## 9.5.6 Traffic Shaping vs. Traffic Policing
+
+### Traffic Shaping
+
+![Shaping Traffic Example](https://itexamanswers.net/wp-content/uploads/2020/04/Shaping-Traffic-Example.jpg)
+
+**Traffic Shaping** — menahan (buffer) paket yang melebihi rate lalu mengirimkannya nanti.
+
+### Cara kerja:
+- Paket yang melebihi rate dimasukkan ke buffer
+- Buffer dikirimkan secara bertahap
+- **Smooths output** — traffic menjadi lebih konsisten
+
+### Kapan dipakai?
+- Saat interface downstream memiliki bandwidth lebih rendah
+- Untuk memastikan traffic tidak melebihi committed rate
+
+### Traffic Policing
+
+![Policing Traffic Example](https://itexamanswers.net/wp-content/uploads/2020/04/Policing-Traffic-Example.jpg)
+
+**Traffic Policing** — **drop atau remark** paket yang melebihi rate (tidak ada buffering).
+
+### Cara kerja:
+- Paket yang melebihi rate langsung di-drop atau di-remark
+- **Tidak ada buffering** — tidak ada delay tambahan
+
+### Kapan dipakai?
+- Oleh ISP untuk membatasi bandwidth pelanggan
+- Untuk menegakkan SLA (Service Level Agreement)
+
+### Perbandingan
+
+| Fitur | Traffic Shaping | Traffic Policing |
+|---|---|---|
+| Buffering | ✅ Ada | ❌ Tidak ada |
+| Delay | Tambahan (dari buffer) | Minimal |
+| Packet Loss | Rendah (buffered) | Tinggi (dropped) |
+| Penggunaan | Enterprise edge | ISP/Provider |
+| Tujuan | Smooth traffic | Enforce rate limit |
+
+---
+
+# Ringkasan modul 9
+
+| Bagian | Isi utama |
+|---|---|
+| 9.0 | Pengenalan — QoS untuk mengelola traffic |
+| 9.1 | Why QoS — congestion, dampak tanpa QoS |
+| 9.2 | Network Transmission Quality — delay, jitter, packet loss, requirement voice/video |
+| 9.3 | Queuing Algorithms — FIFO, WFQ, CBWFQ, LLQ |
+| 9.4 | QoS Models — Best-Effort, IntServ (RSVP), DiffServ (DSCP) |
+| 9.5 | QoS Implementation — classification, marking (CoS/DSCP), trust boundary, WRED, shaping/policing |
+
+---
+
+# Kata-kata kunci modul 9
+
+- **QoS** — Quality of Service
+- **DSCP** — Differentiated Services Code Point
+- **CoS** — Class of Service (802.1p)
+- **EF** — Expedited Forwarding
+- **AF** — Assured Forwarding
+- **LLQ** — Low Latency Queuing
+- **CBWFQ** — Class-Based Weighted Fair Queuing
+- **WFQ** — Weighted Fair Queuing
+- **WRED** — Weighted Random Early Detection
+- **IntServ** — Integrated Services
+- **DiffServ** — Differentiated Services
+- **RSVP** — Resource Reservation Protocol
+- **ToS** — Type of Service
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 9: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-9-qos-concepts.html).

@@ -1,0 +1,80 @@
+---
+title: "Troubleshooting Tools"
+language: id
+draft: false
+description: "Bagian ini membahas software dan hardware tools untuk troubleshooting."
+order: 78
+course: enterprise-network-ensa
+module: ensa-12-network-troubleshooting
+durationMinutes: 6
+---
+
+# Troubleshooting Tools
+
+
+Bagian ini membahas software dan hardware tools untuk troubleshooting.
+
+## 12.3.1 Software Tools
+
+### Network Management Systems (NMS)
+
+![Cisco Prime Network Analysis Module](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-Prime-Network-Analysis-Module.jpg)
+
+NMS memungkinkan:
+- Monitoring real-time
+- Configuration management
+- Fault management
+
+### Knowledge Bases
+- Dokumentasi vendor (Cisco Tools & Resources)
+- Internet searches
+- Internal knowledge bases
+
+### Protocol Analyzers
+
+![Protocol Analyzers](https://itexamanswers.net/wp-content/uploads/2020/04/Protocol-Analyzers.jpg)
+
+**Wireshark** adalah protocol analyzer paling populer. Bisa:
+- decode dan inspect packet flow di semua layer
+- filter traffic
+- analyze performance issues
+
+### Syslog Servers
+Konfigurasi syslog di router:
+```text
+Router(config)# logging host 209.165.200.225
+Router(config)# logging trap informational
+```
+
+## 12.3.2 Hardware Tools
+
+### Digital Multimeter
+
+![Digital Multimeters](https://itexamanswers.net/wp-content/uploads/2020/04/Digital-Multimeters.jpg)
+
+Mengukur voltage, current, resistance. Berguna untuk memverifikasi power supply dan kabel.
+
+### Cable Testers
+
+![Cable Testers](https://itexamanswers.net/wp-content/uploads/2020/04/Cable-Testers.jpg)
+
+Mengecek opens, shorts, crossed pairs. Bisa termasuk **TDR (Time Domain Reflectometer)** untuk menentukan panjang kabel dan lokasi fault.
+
+### Cable Analyzers
+
+![Cable Analyzers](https://itexamanswers.net/wp-content/uploads/2020/04/Cable-Analyzers.jpg)
+
+Memverifikasi performa kabel terhadap standar (Cat5e, Cat6, dll).
+
+### Portable Network Analyzers
+
+![Portable Network Analyzers](https://itexamanswers.net/wp-content/uploads/2020/04/Portable-Network-Analyzers.jpg)
+
+Test switched networks, VLANs, dan traffic patterns secara portabel.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 12: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-12-network-troubleshooting.html).

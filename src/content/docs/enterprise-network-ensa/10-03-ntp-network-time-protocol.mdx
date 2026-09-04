@@ -1,0 +1,77 @@
+---
+title: "NTP (Network Time Protocol)"
+language: id
+draft: false
+description: "Bagian ini membahas NTP — protokol untuk menyinkronkan clock antar perangkat."
+order: 65
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 6
+---
+
+# NTP (Network Time Protocol)
+
+
+Bagian ini membahas **NTP** — protokol untuk menyinkronkan clock antar perangkat.
+
+## 10.3.1 NTP Overview
+
+![NTP Operation](https://itexamanswers.net/wp-content/uploads/2020/04/NTP-Operation.jpg)
+
+### Kenapa NTP penting?
+- timestamp yang akurat **wajib** untuk log, troubleshooting, dan event correlation
+- tanpa sinkronisasi waktu, log dari berbagai perangkat tidak bisa dibandingkan
+- **UDP port 123**
+
+### Stratum Hierarchy
+
+| Stratum | Deskripsi |
+|---|---|
+| **Stratum 0** | Sumber waktu otoritatif (atomic clock, GPS) |
+| **Stratum 1** | Server waktu primer, langsung terhubung ke Stratum 0 |
+| **Stratum 2** | Client yang sinkron dengan Stratum 1 |
+| **dst** | Stratum lebih rendah, max hop count 15 |
+
+<Callout type="remember" title={"Semakin rendah stratum, semakin akurat"}>
+Stratum 1 lebih akurat dari Stratum 2, dst. Idealnya, router harus sinkron dengan Stratum 1 atau 2.
+</Callout>
+
+
+## 10.3.2 Configure and Verify NTP
+
+![Configure and Verify NTP](https://itexamanswers.net/wp-content/uploads/2020/04/Configure-and-Verify-NTP.jpg)
+
+### Konfigurasi NTP client
+
+```text
+Router(config)# ntp server 209.165.200.225
+```
+
+Perintah ini membuat router menjadi **NTP client** yang sinkron dengan server `209.165.200.225`.
+
+### Verifikasi
+
+```text
+Router# show clock detail
+```
+
+Menampilkan waktu saat ini dan sumber waktu.
+
+```text
+Router# show ntp associations
+```
+
+Menampilkan asosiasi NTP — server mana yang terhubung dan stratum-nya.
+
+```text
+Router# show ntp status
+```
+
+Menampilkan status sinkronisasi NTP.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

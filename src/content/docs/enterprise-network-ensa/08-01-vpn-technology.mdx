@@ -1,0 +1,79 @@
+---
+title: "VPN Technology"
+language: id
+draft: false
+description: "Bagian ini membahas konsep dasar VPN: apa itu, manfaatnya, dan tipe-tipe utama."
+order: 53
+course: enterprise-network-ensa
+module: ensa-08-vpn-and-ipsec-concepts
+durationMinutes: 6
+---
+
+# VPN Technology
+
+
+Bagian ini membahas konsep dasar VPN: apa itu, manfaatnya, dan tipe-tipe utama.
+
+## 8.1.1 Virtual Private Networks (VPNs)
+
+![Virtual Private Networks](https://itexamanswers.net/wp-content/uploads/2020/04/Virtual-Private-Networks.jpg)
+
+### Apa itu VPN?
+VPN membuat **koneksi jaringan pribadi yang terenkripsi** melalui jaringan publik (internet). Traffic tetap confidential meski transport-nya publik.
+
+### Komponen VPN:
+- **VPN Gateway** — perangkat yang mengelola VPN (firewall/router seperti Cisco ASA)
+- **SOHO Router** — untuk pengguna rumahan/kantor kecil
+- **VPN Client Software** — aplikasi di sisi user (misal: Cisco AnyConnect)
+
+## 8.1.2 VPN Benefits
+
+| Manfaat | Deskripsi |
+|---|---|
+| **Cost Savings** | Memanfaatkan jaringan publik yang murah dan bandwidth tinggi |
+| **Security** | Enkripsi dan autentikasi tingkat tinggi melindungi data |
+| **Scalability** | Mudah menambah user/site baru melalui internet |
+| **Compatibility** | Bekerja di berbagai WAN links (broadband, dll) |
+
+## 8.1.3 Site-to-Site vs. Remote-Access VPNs
+
+### Site-to-Site VPN
+
+![Site-to-Site VPN](https://itexamanswers.net/wp-content/uploads/2020/04/site-to-site-VPN.jpg)
+
+- Menghubungkan **seluruh jaringan** (misal: branch office ke kantor pusat)
+- VPN gateway menangani enkripsi/dekripsi
+- Host internal **tidak menyadari** adanya VPN
+
+### Remote-Access VPN
+
+![Remote-Access VPN](https://itexamanswers.net/wp-content/uploads/2020/04/remote-access-VPN.jpg)
+
+- Menghubungkan **individual user** (misal: remote worker) ke jaringan enterprise
+- User menginisiasi koneksi
+- Bisa **clientless** (browser) atau **client-based** (software)
+
+### Perbandingan
+
+| Fitur | Site-to-Site | Remote-Access |
+|---|---|---|
+| Skala | Jaringan ke jaringan | User ke jaringan |
+| Inisiasi | Always-on | User-initiated |
+| Transparansi | Host tidak tahu | User harus connect dulu |
+| Komponen | VPN gateway | VPN gateway + client |
+
+## 8.1.4 Enterprise vs. Service Provider VPNs
+
+![Enterprise and Service Provider VPNs](https://itexamanswers.net/wp-content/uploads/2020/04/Enterprise-and-Service-Provider-VPNs.jpg)
+
+| Tipe | Dikelola oleh | Contoh |
+|---|---|---|
+| **Enterprise VPN** | Organisasi sendiri | IPsec site-to-site, SSL remote-access |
+| **Service Provider VPN** | Provider | MPLS VPN, Frame Relay (legacy) |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 8: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-8-vpn-and-ipsec-concepts.html).

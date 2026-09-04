@@ -1,76 +1,682 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import CourseCard from '../components/ui/CourseCard.astro';
+import { PhinisiBentoGrid } from '../components/ui/PhinisiBentoGrid';
+import { categoryLabels, isRecentlyPublished, isRecentlyUpdated, loadCourses, type CourseCategory } from '../data/learning';
+
+const courses = await loadCourses();
+const latestCourses = courses.filter((course) => course.status === 'published').slice(0, 3);
+
+const areaCopy: Record<CourseCategory, { title: string; description: string; image: string; alt: string; imageWidth: number; imageHeight: number; accent: 'primary' | 'sky' | 'gold' | 'success' }> = {
+  networking: {
+    title: 'Networking',
+    description: 'Pelajari fundamental jaringan, routing, switching, network security, wireless, dan teknologi multi-vendor.',
+    image: '/assets/switch%20island.png',
+    alt: 'Switch jaringan di sebuah pulau kecil',
+    imageWidth: 1536,
+    imageHeight: 1024,
+    accent: 'primary',
+  },
+  linux: {
+    title: 'Linux & System Administration',
+    description: 'Kuasai Linux, server, user management, service, monitoring, keamanan, dan pengelolaan infrastruktur.',
+    image: '/assets/Server%20Island.png',
+    alt: 'Server dan pusat data di sebuah pulau kecil',
+    imageWidth: 1254,
+    imageHeight: 1254,
+    accent: 'sky',
+  },
+  automation: {
+    title: 'Automation & NetDevOps',
+    description: 'Bangun otomatisasi menggunakan Python, API, Git, workflow, dan berbagai tools NetDevOps.',
+    image: '/assets/python%20island.png',
+    alt: 'Logo Python dan perangkat otomatisasi di sebuah pulau kecil',
+    imageWidth: 1536,
+    imageHeight: 1024,
+    accent: 'gold',
+  },
+  iot: {
+    title: 'Internet of Things',
+    description: 'Pelajari sensor, mikrokontroler, protokol komunikasi, MQTT, integrasi platform, dan sistem IoT.',
+    image: '/assets/Wi-Fi%20Lighthouse.png',
+    alt: 'Mercusuar Wi-Fi di sebuah pulau kecil',
+    imageWidth: 1254,
+    imageHeight: 1254,
+    accent: 'success',
+  },
+};
+
+const areas = (Object.keys(areaCopy) as CourseCategory[]).map((category) => {
+  const areaCourses = courses.filter((course) => course.category === category);
+  const representative = areaCourses.find((course) => course.status === 'published') ?? areaCourses[0];
+  return { category, courses: areaCourses, representative, ...areaCopy[category] };
+});
+
+const learningProcess = [
+  {
+    number: '01',
+    title: 'Pahami konsep',
+    description: 'Pelajari fundamental melalui materi yang terstruktur, relevan, dan mudah dipahami.',
+    image: '/assets/milestone-concept.png',
+  },
+  {
+    number: '02',
+    title: 'Terapkan langsung',
+    description: 'Praktikkan command, konfigurasi, troubleshooting, dan workflow menggunakan tools industri.',
+    image: '/assets/milestone-practice.png',
+  },
+  {
+    number: '03',
+    title: 'Bangun project',
+    description: 'Selesaikan studi kasus dan project nyata yang dapat dikembangkan menjadi portofolio.',
+    image: '/assets/milestone-project.png',
+  },
+  {
+    number: '04',
+    title: 'Validasi kemampuan',
+    description: 'Ukur kemampuan melalui quiz, challenge, evaluasi, dan penyelesaian project.',
+    image: '/assets/milestone-validation.png',
+  },
+];
+
+
+
+const levelLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' } as const;
 ---
 
-<BaseLayout title="Home">
-	<!-- Hero Section -->
-	<section class="max-w-[1200px] mx-auto px-4 md:px-12 py-16 md:py-24">
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-			<!-- Left: Network Diagram Illustration -->
-			<div class="order-2 lg:order-1 relative w-full md:h-[450px]">
-				<img alt="Network Learning Journey" class="w-full h-full object-contain object-center rounded-lg shadow-sm" src="/hero.png">
-			</div>
-			<!-- Right: Content -->
-			<div class="order-1 lg:order-2 flex flex-col items-start space-y-6">
-				<h1 class="font-['Hanken_Grotesk'] text-[28px] md:text-[36px] font-bold leading-[1.2] md:tracking-[-0.02em] text-slate-900">
-					Belajar Networking & Linux<br>Tanpa Bikin Pusing
-				</h1>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-lg">
-					Tingkatkan skill IT kamu! Pelajari Network Engineering, Linux Server, dan Otomatisasi Jaringan lewat panduan praktis dan studi kasus dunia nyata.
-				</p>
-				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
-					<a href="/courses" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#003f87] text-white px-6 py-3 rounded text-center hover:bg-blue-800 transition-colors">
-						Semua Kursus
-					</a>
-					<a href="/learning-path" class="font-['JetBrains_Mono'] text-[12px] font-semibold tracking-[0.05em] uppercase bg-[#62d6ed] text-[#001f25] px-6 py-3 rounded text-center hover:bg-[#4bcce6] transition-colors">
-						Semua Alur Belajar
-					</a>
-				</div>
-			</div>
-		</div>
-	</section>
+<BaseLayout
+  title="Phinisi Learn"
+  description="Pelajari Networking, System Administration, Automation, dan IoT melalui roadmap terstruktur dan praktik industri."
+  preloadImage="/assets/hero-network-ocean.webp"
+>
+  <section class="hero-adventure" aria-labelledby="hero-title">
+    <div class="hero-world" aria-hidden="true">
+      <img
+        class="hero-ocean"
+        src="/assets/hero-network-ocean.webp"
+        alt=""
+        width="1672"
+        height="941"
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+        aria-hidden="true"
+      />
+      <div class="hero-readability"></div>
+      <div class="ship-wrap">
+        <img class="hero-ship" src="/assets/hero-phinisi-network.png" alt="" width="1448" height="1086" loading="eager" decoding="async" aria-hidden="true" />
+      </div>
+    </div>
 
-	<!-- Value Proposition Section -->
-	<section class="max-w-[1200px] mx-auto px-4 md:px-12 py-16 text-center">
-		<div class="mb-12 flex flex-col items-center">
-			<h2 class="font-['Hanken_Grotesk'] text-[36px] font-bold leading-[1.2] tracking-[-0.02em] text-slate-900 mb-2">Nggak Cuma Teori. Kita Praktik Langsung.</h2>
-			<svg class="mb-4 text-[#003f87]" fill="none" height="12" viewBox="0 0 200 12" width="200" xmlns="http://www.w3.org/2000/svg">
-				<path d="M2 9.5C45 -1.5 155 -1.5 198 9.5" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
-			</svg>
-			<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600 max-w-2xl">Modul disusun khusus agar kamu paham alur kerja di lapangan (Production), bukan cuma buat lulus sertifikasi.</p>
-		</div>
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-			<!-- Visual & Topologi -->
-			<div class="flex flex-col items-center space-y-4">
-				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
-					<polyline points="16 18 22 12 16 6"></polyline>
-					<polyline points="8 6 2 12 8 18"></polyline>
-				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Visual & Topologi Jelas</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Lupakan modul teks yang bikin ngantuk. Kami pakai diagram topologi dan animasi biar konsep jaringan yang rumit jadi lebih gampang dicerna.</p>
-			</div>
-			<!-- Studi Kasus Lapangan -->
-			<div class="flex flex-col items-center space-y-4">
-				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
-					<rect height="4" rx="1" ry="1" width="16" x="4" y="4"></rect>
-					<rect height="10" rx="1" ry="1" width="16" x="4" y="10"></rect>
-				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Studi Kasus Lapangan</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Belajar dari real-world scenarios. Kamu akan tahu cara nge-config router, deploy server, dan setup firewall seperti di production environment.</p>
-			</div>
-			<!-- Learning paths -->
-			<div class="flex flex-col items-center space-y-4">
-				<svg class="text-slate-600 mb-2" fill="none" height="48" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
-					<line x1="8" x2="21" y1="6" y2="6"></line>
-					<line x1="8" x2="21" y1="12" y2="12"></line>
-					<line x1="8" x2="21" y1="18" y2="18"></line>
-					<line x1="3" x2="3.01" y1="6" y2="6"></line>
-					<line x1="3" x2="3.01" y1="12" y2="12"></line>
-					<line x1="3" x2="3.01" y1="18" y2="18"></line>
-				</svg>
-				<h3 class="font-['Hanken_Grotesk'] text-[20px] font-semibold leading-[1.4] text-slate-900">Learning Path Terstruktur</h3>
-				<p class="font-['Inter'] text-[16px] leading-[1.6] text-slate-600">Nggak perlu bingung mulai dari mana. Kami susun materi dari fundamental sampai expert biar belajarmu lebih terarah dan anti-nyasar.</p>
-			</div>
-		</div>
-	</section>
+    <div class="page-shell hero-layout">
+      <div class="hero-copy">
+        <p class="hero-kicker">PLATFORM BELAJAR TEKNOLOGI BERBASIS INDUSTRI</p>
+        <h1 id="hero-title"><span>Jelajahi Teknologi.</span><span>Bangun Keahlian</span><span> Kelas Industri.</span></h1>
+        <p class="hero-description">Pelajari Networking, Linux & System Administration, Automation, dan IoT melalui learning path, lab, serta proyek nyata dari fundamental hingga praktik industri.</p>
+
+        <ul class="hero-fields" aria-label="Bidang pembelajaran utama">
+          <li>Networking</li>
+          <li>Linux & System Administration</li>
+          <li>Automation</li>
+          <li>Internet of Things</li>
+        </ul>
+
+        <div class="hero-actions">
+          <Button href="/courses" size="lg" class="hero-primary">Mulai Petualangan Belajar</Button>
+          <a class="hero-secondary-link" href="/learning-path">Jelajahi Learning Path <span aria-hidden="true">→</span></a>
+        </div>
+
+        <p class="hero-support">Mulai dari fundamental. Bangun proyek nyata. Siap menghadapi dunia industri.</p>
+      </div>
+      <div class="hero-visual-space" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="home-section fields-section" aria-labelledby="fields-title">
+    <img class="section-buoy" src="/assets/network-buoy.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
+    <div class="page-shell home-shell">
+      <header class="home-heading centered" data-reveal>
+        <p class="section-kicker">PILIH ARAH PERJALANANMU</p>
+        <h2 id="fields-title">Jelajahi Kepulauan Teknologi</h2>
+        <p>Pilih bidang yang ingin kamu kuasai. Mulai dari fundamental, lanjutkan melalui praktik, dan bangun keahlian yang relevan dengan kebutuhan industri.</p>
+      </header>
+      <div class="fields-grid">
+        {areas.map((area, index) => (
+          <article class:list={['field-card', `accent-${area.accent}`]} data-reveal style={`--reveal-delay:${index * 70}ms`}>
+            <div class="field-card__media">
+              <img src={area.image} alt={area.alt} width={area.imageWidth} height={area.imageHeight} loading="lazy" decoding="async" />
+            </div>
+            <div class="field-card__body">
+              <h3>{area.title}</h3>
+              <p>{area.description}</p>
+              <a class="field-card__link" href={`/courses?category=${area.category}`}>
+                Jelajahi Bidang <b aria-hidden="true">→</b>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section paths-section" aria-labelledby="paths-title">
+    <img class="paths-network" src="/assets/network-path.svg" alt="" width="1920" height="1080" loading="lazy" decoding="async" aria-hidden="true" />
+    <!-- Kapal Phinisi Network (kanan atas) -->
+    <img class="paths-ship" src="/assets/hero-phinisi-network.png" alt="" width="1448" height="1086" loading="lazy" decoding="async" aria-hidden="true" />
+    <div class="page-shell home-shell">
+      <header class="home-heading heading-row" data-reveal>
+        <div>
+          <p class="section-kicker">MULAI BELAJAR</p>
+          <h2 id="paths-title">Learning Path Pilihan untuk Memulai</h2>
+          <p>Ikuti materi yang disusun secara bertahap, dari pemahaman fundamental hingga praktik dan penyelesaian project.</p>
+        </div>
+        <a class="section-link" href="/courses">Lihat Semua Course <span aria-hidden="true">→</span></a>
+      </header>
+      <div class="latest-grid">
+        {latestCourses.map((course, index) => (
+          <CourseCard
+            href={`/courses/${course.slug}`}
+            title={course.title}
+            description={course.description.id}
+            lessons={course.moduleCount}
+            countLabel="modul"
+            duration={`±${course.durationHours} jam`}
+            category={categoryLabels[course.category].id}
+            level={levelLabels[course.level]}
+            status={isRecentlyUpdated(course) ? 'Diperbarui' : isRecentlyPublished(course) ? 'Baru' : 'Tersedia'}
+            ctaLabel="Mulai Learning Path"
+            image={course.cover}
+            courseSlug={course.slug}
+            totalLessons={course.lessonCount}
+            learningHref={course.learningHref?.id}
+            accent={areaCopy[course.category].accent}
+            class="home-course-card"
+            style={`--reveal-delay:${index * 80}ms`}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section journey-section" aria-labelledby="journey-title">
+    <div class="page-shell home-shell">
+      <header class="home-heading centered" data-reveal>
+        <p class="section-kicker">DARI TEORI MENJADI KEMAMPUAN</p>
+        <h2 id="journey-title">Belajar sampai benar-benar bisa praktik</h2>
+        <p>Setiap perjalanan belajar menggabungkan pemahaman konsep, praktik langsung, project, dan validasi kemampuan.</p>
+      </header>
+      <div class="learning-process">
+        <ol class="process-steps" aria-label="Empat tahap proses belajar">
+          {learningProcess.map((step, index) => (
+            <li class="process-step" style={`--reveal-delay:${120 + index * 90}ms`} data-reveal>
+              <div class="process-index" aria-label={`Tahap ${step.number}`}>
+                <span class="step-number" aria-hidden="true">{step.number}</span>
+                <span class="process-node" aria-hidden="true"></span>
+              </div>
+              <div class="process-icon-box" aria-hidden="true">
+                <img src={step.image} alt="" width="120" height="120" loading="lazy" decoding="async" class="milestone-img" />
+              </div>
+              <div class="process-copy">
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <div class="dark-ocean-wrap">
+  <section class="industry-section" aria-labelledby="industry-title">
+    <!-- Treasure chest kanan bawah -->
+    <img class="industry-treasure" src="/assets/treasure-chest.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
+    <div class="page-shell home-shell">
+      <header class="home-heading centered" style="margin-bottom: 3.5rem;" data-reveal>
+        <p class="section-kicker on-dark">KESIAPAN INDUSTRI</p>
+        <h2 id="industry-title" style="color: #fff;">Bangun Skill yang Relevan untuk Dunia Industri</h2>
+        <p style="color: #c6def2; max-width: 720px; margin-inline: auto;">Phinisi Learn membantu kamu berkembang melalui materi bertahap, praktik langsung, studi kasus, dan project yang mendekati kebutuhan teknologi di dunia nyata.</p>
+      </header>
+      <div data-reveal style="position: relative; z-index: 2;">
+        <PhinisiBentoGrid client:visible />
+      </div>
+    </div>
+  </section>
+
+  <section class="closing-section" aria-labelledby="closing-title">
+    <!-- Kapal Phinisi kiri bawah -->
+    <img class="closing-ship" src="/assets/phinisi-ship.png" alt="" width="1024" height="1536" loading="lazy" decoding="async" aria-hidden="true" />
+    <!-- Pulau router kanan atas -->
+    <img class="closing-island" src="/assets/router-island.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
+    <!-- Light arc -->
+    <div class="closing-wave" aria-hidden="true"></div>
+    <div class="page-shell home-shell closing-content" data-reveal>
+      <p class="section-kicker on-dark">MULAI PERJALANANMU</p>
+      <h2 id="closing-title">Siap Memulai Perjalanan Teknologimu?</h2>
+      <p>Pilih bidang yang ingin kamu kuasai dan mulai bangun kemampuan melalui learning path Phinisi Learn.</p>
+      <div class="closing-actions">
+        <Button href="/courses" size="lg" class="closing-primary">Mulai Belajar Sekarang</Button>
+        <a class="closing-secondary" href="/learning-path">Lihat Semua Learning Path <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <script>
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion && 'IntersectionObserver' in window) {
+      document.documentElement.classList.add('reveal-enabled');
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.14, rootMargin: '0px 0px -48px' });
+      document.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
+    }
+  </script>
 </BaseLayout>
+
+<style>
+  .hero-adventure { position: relative; min-height: max(720px, calc(90svh - 72px)); overflow: hidden; isolation: isolate; border-bottom: 1px solid rgba(103, 232, 249, .45); background: #087ac6; }
+  .hero-world { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; }
+  .hero-world > img, .ship-wrap { position: absolute; }
+  .hero-ocean { z-index: 1; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+  .hero-readability { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, rgba(3, 25, 64, .97) 0%, rgba(4, 39, 91, .94) 31%, rgba(4, 62, 122, .73) 48%, rgba(4, 87, 151, .2) 70%, rgba(4, 87, 151, 0) 100%), linear-gradient(180deg, rgba(1, 22, 53, .04) 45%, rgba(1, 25, 65, .34) 100%); }
+  .network-path { z-index: 3; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .72; animation: path-breathe 6s ease-in-out infinite; }
+  .island { z-index: 4; filter: drop-shadow(0 18px 24px rgba(3, 33, 75, .22)); }
+  .island-router { top: 13%; left: 53%; width: clamp(130px, 13vw, 195px); animation: island-float 8s ease-in-out infinite; }
+  .island-server { top: 9%; right: 13%; width: clamp(125px, 12vw, 185px); animation: island-float 10s ease-in-out -3s infinite reverse; }
+  .island-wifi { top: 35%; right: 1.5%; width: clamp(120px, 11vw, 170px); animation: island-float 9s ease-in-out -5s infinite; }
+  .network-buoy { z-index: 5; top: 53%; left: 55%; width: clamp(86px, 8vw, 125px); filter: drop-shadow(0 16px 22px rgba(3, 33, 75, .24)); animation: buoy-float 5.5s ease-in-out infinite; }
+  .ship-wrap { z-index: 6; top: 43%; left: 64%; width: clamp(280px, 29vw, 440px); filter: drop-shadow(0 26px 28px rgba(3, 33, 75, .28)); animation: ship-bob 4.8s ease-in-out infinite; }
+  .hero-ship { display: block; width: 100%; height: auto; }
+  .data-packet { z-index: 7; top: 18%; left: 52%; width: clamp(48px, 5vw, 74px); filter: drop-shadow(0 0 14px rgba(34, 211, 238, .78)); offset-path: path('M 24 250 C 145 76 332 18 490 105 C 650 195 635 356 474 425 C 294 501 94 405 24 250'); offset-rotate: auto; animation: packet-journey 12s linear infinite; }
+  .foreground-waves { z-index: 8; right: -4%; bottom: -22%; width: 108%; min-width: 1180px; height: auto; filter: drop-shadow(0 -10px 25px rgba(14, 116, 182, .12)); animation: wave-drift 11s ease-in-out infinite alternate; }
+  .hero-layout { position: relative; z-index: 10; display: grid; min-height: max(720px, calc(90svh - 72px)); grid-template-columns: minmax(0, .96fr) minmax(350px, 1.04fr); align-items: center; gap: clamp(2rem, 6vw, 5rem); padding-block: clamp(4.5rem, 8vh, 6.5rem); }
+  .hero-copy { max-width: 620px; padding-bottom: 1.5rem; }
+  .hero-kicker { display: flex; align-items: center; gap: .65rem; margin: 0 0 1.25rem; color: #a9efff; font-size: .7rem; font-weight: 700; letter-spacing: .105em; line-height: 1.35; }
+  .hero-kicker > span { width: 24px; height: 2px; flex: 0 0 auto; border-radius: 999px; background: #facc15; box-shadow: 0 0 14px rgba(250, 204, 21, .52); }
+  .hero-copy h1 { max-width: 660px; margin: 0; color: #fff; font-size: clamp(3rem, 5.15vw, 4.75rem); font-weight: 700; letter-spacing: -.052em; line-height: 1.02; text-wrap: balance; text-shadow: 0 3px 24px rgba(1, 20, 51, .22); }
+  .hero-copy h1 span { color: #78e9ff; }
+  .hero-description { max-width: 595px; margin: 1.4rem 0 0; color: #d8eeff; font-size: clamp(.98rem, 1.35vw, 1.08rem); line-height: 1.72; }
+  .hero-fields { display: flex; flex-wrap: wrap; gap: .55rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  .hero-fields li { border: 1px solid rgba(186, 238, 255, .3); border-radius: 999px; padding: .45rem .72rem; background: rgba(4, 43, 94, .38); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); color: #ecfaff; font-size: .72rem; font-weight: 600; line-height: 1; backdrop-filter: blur(8px); }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-top: 1.85rem; }
+  :global(.hero-primary.ph-button) { border-radius: .7rem; background: #facc15; box-shadow: 0 4px 0 #c68a08, 0 14px 26px rgba(4, 29, 69, .24); color: #082852; }
+  :global(.hero-primary.ph-button:hover) { transform: translateY(-3px); background: #ffe36a; box-shadow: 0 6px 0 #c68a08, 0 18px 30px rgba(4, 29, 69, .3); }
+  .hero-secondary-link { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: .55rem; border: 1px solid rgba(210, 243, 255, .55); border-radius: .7rem; padding: .9rem 1.2rem; background: rgba(3, 33, 78, .3); color: #fff; font-size: .9rem; font-weight: 600; text-decoration: none; backdrop-filter: blur(8px); transition: transform .18s ease, background .18s ease, border-color .18s ease; }
+  .hero-secondary-link span { color: #7beaff; font-size: 1.05rem; transition: transform .18s ease; }
+  .hero-secondary-link:hover { transform: translateY(-3px); border-color: #b8f3ff; background: rgba(3, 33, 78, .54); }
+  .hero-secondary-link:hover span { transform: translateX(4px); }
+  .hero-support { display: flex; align-items: center; gap: .65rem; margin: 1.35rem 0 0; color: #b9d9ee; font-size: .76rem; font-weight: 500; line-height: 1.5; }
+  .hero-support span { width: 7px; height: 7px; flex: 0 0 auto; border: 2px solid #77edb1; border-radius: 50%; box-shadow: 0 0 0 4px rgba(74, 222, 128, .12); }
+  .hero-visual-space { min-height: 1px; }
+  @keyframes ship-bob { 0%, 100% { transform: translateY(0) rotate(-.6deg); } 50% { transform: translateY(-12px) rotate(.8deg); } }
+  @keyframes island-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes buoy-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-9px) rotate(1.5deg); } }
+  @keyframes path-breathe { 0%, 100% { opacity: .62; } 50% { opacity: .88; } }
+  @keyframes packet-journey { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+  @keyframes wave-drift { from { transform: translateX(-1.2%) scaleX(1.02); } to { transform: translateX(1.2%) scaleX(1.04); } }
+  .section { padding-block: clamp(4.5rem, 8vw, 6.5rem); }
+  .latest { background: #fff; }.areas { border-block: 1px solid var(--color-line); background: #f7faff; }
+  .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 2rem; }
+  .section-heading h2 { margin: 0; color: var(--color-navy); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
+  .section-heading p { max-width: 680px; margin: .65rem 0 0; color: var(--color-muted); line-height: 1.65; }
+  .section-heading > a { flex: none; color: var(--color-primary); font-size: .84rem; font-weight: 650; text-decoration: none; }
+  .latest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  .area-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+  .compact-heading { justify-content: flex-start; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; border-block: 1px solid var(--color-line); padding: 0; list-style: none; }
+  .steps li { display: grid; grid-template-columns: auto 1fr; gap: 1rem; padding: 1.6rem; }.steps li + li { border-left: 1px solid var(--color-line); }
+  .steps li > span { color: var(--color-phinisi-300); font-size: 1.4rem; font-weight: 700; }.steps h3 { margin: 0; color: var(--color-navy); font-size: 1.05rem; font-weight: 650; }
+  .steps p { margin: .4rem 0 0; color: var(--color-muted); font-size: .86rem; line-height: 1.6; }
+  .closing { padding-block: clamp(3rem, 6vw, 5rem); }.closing-inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-radius: var(--radius-xl); padding: clamp(1.7rem, 4vw, 3rem); background: var(--color-navy); color: #fff; }
+  .closing h2 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; }.closing p { margin: .5rem 0 0; color: #b9cee9; }
+  @media (max-width: 980px) {
+    .hero-adventure, .hero-layout { min-height: 880px; }
+    .hero-layout { grid-template-columns: 1fr; align-items: start; padding-top: 4.5rem; padding-bottom: 27rem; }
+    .hero-copy { max-width: 740px; padding-bottom: 0; }
+    .hero-readability { background: linear-gradient(180deg, rgba(3, 25, 64, .98) 0%, rgba(4, 42, 94, .92) 43%, rgba(4, 73, 138, .44) 64%, rgba(4, 96, 161, .08) 100%); }
+    .island-router { top: auto; bottom: 14%; left: 8%; }
+    .island-server { top: auto; right: 8%; bottom: 19%; }
+    .island-wifi { top: auto; right: 28%; bottom: 5%; }
+    .network-buoy { top: auto; bottom: 25%; left: 44%; }
+    .ship-wrap { top: auto; bottom: 1%; left: 50%; width: clamp(270px, 43vw, 400px); translate: -50% 0; }
+    .data-packet { top: auto; bottom: 34%; left: 15%; }
+    .foreground-waves { bottom: -15%; }
+    .latest-grid, .area-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    .hero-adventure, .hero-layout { min-height: 0; }
+    .hero-layout { padding-top: 3.5rem; padding-bottom: 22rem; }
+    .hero-ocean { object-position: 34% center; }
+    .hero-copy h1 { font-size: clamp(2.6rem, 11.8vw, 3.8rem); letter-spacing: -.045em; }
+    .hero-description { font-size: .96rem; line-height: 1.66; }
+    .network-path, .island-wifi, .network-buoy, .data-packet { display: none; }
+    .island-router { bottom: 10%; left: -1rem; width: 135px; }
+    .island-server { right: -.8rem; bottom: 16%; width: 132px; }
+    .ship-wrap { bottom: -1.5rem; width: 260px; }
+    .foreground-waves { right: -28%; bottom: -5.5rem; width: 150%; min-width: 780px; }
+    .section-heading, .closing-inner { align-items: flex-start; flex-direction: column; }
+    .steps { grid-template-columns: 1fr; }
+    .steps li + li { border-top: 1px solid var(--color-line); border-left: 0; }
+  }
+  @media (max-width: 560px) {
+    .hero-kicker { max-width: 310px; }
+    .hero-fields { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); }
+    .hero-actions { align-items: stretch; flex-direction: column; }
+    :global(.hero-actions .ph-button), .hero-secondary-link { width: 100%; }
+    .hero-support { align-items: flex-start; }
+    .latest-grid, .area-grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .network-path, .island, .network-buoy, .ship-wrap, .data-packet, .foreground-waves { animation: none !important; }
+    .data-packet { offset-distance: 12%; }
+    :global(.hero-primary.ph-button), .hero-secondary-link, .hero-secondary-link span { transition: none; }
+    :global(.hero-primary.ph-button:hover), .hero-secondary-link:hover { transform: none; }
+  }
+
+  /* Homepage v2: a quieter cinematic hero and one continuous learning journey. */
+  .home-shell { width: min(calc(100% - 3rem), 1240px); }
+  .hero-adventure { height: clamp(720px, calc(100svh - 72px), 840px); min-height: 720px; max-height: 840px; }
+  .hero-readability { background: linear-gradient(90deg, rgba(3, 25, 64, .92) 0%, rgba(4, 39, 91, .8) 27%, rgba(4, 62, 122, .38) 43%, rgba(4, 87, 151, 0) 62%), linear-gradient(180deg, rgba(1, 22, 53, .02) 56%, rgba(1, 25, 65, .24) 100%); }
+  .network-path { top: 8%; right: -6%; bottom: auto; left: auto; width: 82%; height: 78%; object-fit: contain; object-position: center right; opacity: .35; animation-duration: 8s; }
+  .ship-wrap { top: auto; right: -1.5%; bottom: 1%; left: auto; width: clamp(420px, 42vw, 620px); }
+  .data-packet { top: 19%; left: 55%; width: clamp(48px, 4.2vw, 58px); offset-path: path('M 18 210 C 122 62 282 14 415 88 C 548 162 538 302 402 360 C 250 424 77 343 18 210'); }
+  .foreground-waves { right: -2%; bottom: -28%; width: 104%; min-width: 1120px; }
+  .hero-layout { width: min(calc(100% - 3rem), 1240px); height: 100%; min-height: 0; grid-template-columns: minmax(0, 570px) minmax(300px, 1fr); gap: clamp(2rem, 5vw, 4.5rem); padding-block: clamp(3.5rem, 7vh, 5.5rem); }
+  .hero-copy { max-width: 570px; padding-bottom: 0; }
+  .hero-copy h1 { max-width: 570px; font-size: clamp(48px, 5vw, 72px); letter-spacing: -.048em; line-height: 1.015; }
+  .hero-copy h1 span { display: block; color: #fff; }
+  .hero-copy h1 span:last-child { color: #78e9ff; }
+  .hero-description { max-width: 570px; }
+  .hero-fields { gap: .65rem; }
+  .hero-fields li { padding: .52rem .78rem; font-size: .78rem; }
+
+  /* overflow-x:clip mencegah horizontal scroll tapi asset bisa melampaui batas vertikal */
+  .home-section { position: relative; overflow-x: clip; overflow-y: visible; padding-block: clamp(5.5rem, 7.5vw, 7rem); }
+  .home-heading { position: relative; z-index: 2; }
+  .home-heading.centered { max-width: 790px; margin-inline: auto; text-align: center; }
+  .section-kicker { margin: 0 0 .8rem; color: #1266d6; font-size: .72rem; font-weight: 750; letter-spacing: .11em; line-height: 1.35; }
+  .section-kicker.on-dark { color: #78e9ff; }
+  .home-heading h2, .industry-heading h2, .closing-content h2 { margin: 0; font-size: clamp(2.35rem, 4.3vw, 4rem); font-weight: 680; letter-spacing: -.042em; line-height: 1.08; text-wrap: balance; }
+  .home-heading h2 { color: var(--color-navy); }
+  .home-heading > p:last-child, .home-heading > div > p:last-child { max-width: 720px; margin: 1rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.72; }
+  .home-heading.centered > p:last-child { margin-inline: auto; }
+  .heading-row { display: flex; align-items: end; justify-content: space-between; gap: 3rem; }
+  .heading-row > div { max-width: 790px; }
+  .section-link { display: inline-flex; flex: 0 0 auto; align-items: center; gap: .6rem; border-bottom: 1px solid rgba(20, 91, 215, .3); padding: .65rem 0; color: var(--color-primary); font-size: .88rem; font-weight: 700; text-decoration: none; }
+  .section-link span { transition: transform 180ms ease; }
+  .section-link:hover span { transform: translateX(4px); }
+
+  .fields-section { overflow: visible; background: radial-gradient(circle at center, rgba(14, 116, 180, .12) 1px, transparent 1.5px) 0 0 / 34px 34px, linear-gradient(160deg, #d0edff 0%, #e8f7ff 45%, #fdf6e3 100%); border-top: 3px solid rgba(34, 211, 238, .35); }
+  .section-buoy { position: absolute; z-index: 3; top: -66px; right: max(3vw, calc((100vw - 1240px) / 2)); width: 126px; height: auto; filter: drop-shadow(0 16px 22px rgba(8, 42, 91, .2)); animation: buoy-float 6s ease-in-out infinite; }
+  .fields-grid { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: stretch; margin-top: 3.25rem; }
+  .field-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #ffffff;
+    border: 1px solid rgba(40, 201, 232, 0.3);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(8, 42, 81, 0.065);
+    transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+  }
+  .field-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(40, 201, 232, 0.62);
+    box-shadow: 0 16px 34px rgba(8, 42, 81, 0.1);
+  }
+  .field-card:focus-within {
+    outline: 3px solid rgba(34, 211, 238, .72);
+    outline-offset: 4px;
+  }
+  .field-card__media {
+    position: relative;
+    display: grid;
+    width: 100%;
+    height: 178px;
+    place-items: center;
+    overflow: hidden;
+    padding: 14px 22px 16px;
+    background: radial-gradient(circle at 50% 52%, rgba(196, 239, 255, .62) 0%, rgba(239, 250, 255, .36) 48%, rgba(255, 255, 255, 0) 76%);
+  }
+  .field-card__media::after {
+    position: absolute;
+    right: 20px;
+    bottom: 0;
+    left: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(60, 181, 220, .08), rgba(60, 181, 220, .28) 70%, rgba(60, 181, 220, .08));
+    content: '';
+  }
+  .field-card__media::before {
+    position: absolute;
+    z-index: 2;
+    right: 16px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    border: 3px solid #fff5d9;
+    border-radius: 50%;
+    background: #f4b740;
+    box-shadow: 0 0 0 3px rgba(244, 183, 64, .12);
+    content: '';
+  }
+  .field-card__media img {
+    display: block;
+    width: min(72%, 172px);
+    height: 148px;
+    object-fit: contain;
+    object-position: center;
+    filter: drop-shadow(0 12px 18px rgba(15, 72, 113, .12));
+    transition: transform 260ms ease, filter 260ms ease;
+  }
+  .field-card:hover .field-card__media img {
+    transform: translateY(-3px) scale(1.02);
+    filter: drop-shadow(0 15px 22px rgba(15, 72, 113, .16));
+  }
+  .field-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 26px 24px 22px;
+  }
+  .field-card__body h3 {
+    min-height: 2.7em;
+    margin: 0 0 9px;
+    color: #061d3f;
+    font-size: clamp(1.02rem, 1.2vw, 1.14rem);
+    font-weight: 700;
+    letter-spacing: -.018em;
+    line-height: 1.32;
+  }
+  .field-card__body p {
+    margin: 0 0 24px;
+    color: #374e6c;
+    font-size: .84rem;
+    line-height: 1.58;
+  }
+  .field-card__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    margin-top: auto;
+    color: var(--color-primary);
+    font-size: .79rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .field-card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+  .field-card__link b {
+    font-size: 1rem;
+    transition: transform 180ms ease;
+  }
+  .field-card:hover .field-card__link b {
+    transform: translateX(3px);
+  }
+
+  .paths-section { background: linear-gradient(160deg, #061d3f 0%, #0a3268 55%, #0a5095 100%); border-top: 3px solid rgba(34, 211, 238, .3); }
+  .paths-section .home-shell { position: relative; z-index: 2; }
+  .paths-section .home-heading h2 { color: #fff; }
+  .paths-section .home-heading > div > p:last-child { color: #a8d4f5; }
+  .paths-section .section-kicker { color: #67e8f9; }
+  .paths-section .section-link { border-color: rgba(103, 232, 249, .35); color: #67e8f9; }
+  .paths-network { position: absolute; z-index: 1; top: -12%; right: -9%; width: min(920px, 72vw); height: auto; opacity: .07; pointer-events: none; transform: rotate(-7deg); }
+  /* Kapal Phinisi Network kanan atas section paths */
+  .paths-ship { position: absolute; z-index: 2; right: max(0rem, calc((100vw - 1240px) / 2 - 1.5rem)); top: 1.5rem; width: clamp(180px, 20vw, 280px); height: auto; opacity: 1; filter: drop-shadow(0 20px 32px rgba(2, 14, 40, .55)) saturate(1.05); animation: ship-sway 6s ease-in-out infinite; pointer-events: none; }
+  .latest-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+
+  .journey-section { position: relative; overflow: hidden; border-top: 1px solid rgba(34, 146, 205, .12); background-color: #f8fbff; background-image: radial-gradient(circle, rgba(22, 94, 150, .075) 1px, transparent 1px); background-position: 0 0; background-size: 28px 28px; }
+  .journey-section::after { position: absolute; right: -6%; bottom: -78px; left: -6%; height: 116px; border-top: 2px solid rgba(34, 211, 238, .16); border-radius: 50% 50% 0 0; content: ''; pointer-events: none; }
+  .learning-process { position: relative; z-index: 1; width: min(100%, 1120px); margin: clamp(3.25rem, 6vw, 4.75rem) auto 0; }
+  .process-steps { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+  .process-steps::before { position: absolute; z-index: 0; top: 2.55rem; right: 12.5%; left: 12.5%; height: 2px; background: linear-gradient(90deg, rgba(34, 211, 238, .46), #22b8d6 50%, rgba(34, 211, 238, .46)); content: ''; }
+  .process-step { position: relative; z-index: 1; min-width: 0; padding: 0 clamp(.85rem, 1.8vw, 1.4rem); text-align: center; }
+  .process-index { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; }
+  .step-number { display: inline-flex; min-width: 2rem; align-items: center; justify-content: center; margin-bottom: .75rem; border-radius: 999px; padding: .18rem .42rem; background: #f8fbff; color: #a36a05; font-family: var(--font-mono); font-size: .68rem; font-weight: 700; letter-spacing: .06em; line-height: 1.35; }
+  .process-node { display: block; width: 18px; height: 18px; border: 3px solid #1ba8ce; border-radius: 50%; background: #f8fbff; box-shadow: 0 0 0 5px rgba(34, 211, 238, .1); transition: border-color 240ms ease, background-color 240ms ease, box-shadow 240ms ease; }
+  .process-icon-box { display: grid; width: 76px; height: 76px; place-items: center; margin: 1.25rem auto 1rem; border-radius: 20px; background: radial-gradient(circle at center, #ffffff 30%, #e0f2fe 100%); border: 1.5px solid rgba(56, 189, 248, .35); box-shadow: 0 10px 24px rgba(14, 116, 180, .14); transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease; }
+  .milestone-img { display: block; width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(8, 42, 91, .2)); transition: transform 240ms ease; }
+  .process-copy h3 { margin: 0; color: var(--color-navy); font-size: clamp(1.03rem, 1.4vw, 1.16rem); font-weight: 700; letter-spacing: -.018em; line-height: 1.35; }
+  .process-copy p { max-width: 245px; margin: .65rem auto 0; color: #526984; font-size: .83rem; line-height: 1.62; }
+  .process-step:hover .process-node { border-color: #0891b2; background: #22d3ee; box-shadow: 0 0 0 6px rgba(34, 211, 238, .14); }
+  .process-step:hover .process-icon-box { transform: translateY(-4px); border-color: rgba(14, 165, 233, .65); box-shadow: 0 14px 32px rgba(14, 116, 180, .25); }
+  .process-step:hover .milestone-img { transform: scale(1.1); }
+
+  /* Shared wrapper — satu background untuk industry + closing, zero seam */
+  .dark-ocean-wrap { background: radial-gradient(ellipse at 80% 15%, rgba(99, 210, 255, .2) 0%, transparent 38%), radial-gradient(ellipse at 12% 85%, rgba(56, 96, 210, .25) 0%, transparent 38%), linear-gradient(170deg, #04122b 0%, #082d68 38%, #0a4a9c 70%, #064a7a 100%); }
+
+  .industry-section { position: relative; overflow: visible; padding-block: clamp(5.75rem, 8vw, 7.5rem); background: none; color: #fff; }
+  /* arc pseudo-elements dihapus — digantikan oleh wrapper background */
+  .industry-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, .9fr) minmax(440px, 1.1fr); align-items: center; gap: clamp(4rem, 8vw, 7rem); }
+  .industry-heading { max-width: 570px; }
+  .industry-heading h2 { color: #fff; }
+  .industry-heading > p:last-child { margin: 1.1rem 0 0; color: #c6def2; font-size: 1rem; line-height: 1.72; }
+  .industry-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; border-block: 1px solid rgba(158, 226, 255, .2); padding: 0; list-style: none; }
+  .industry-values li { min-height: 155px; padding: 1.5rem 1.25rem; }
+  .industry-values li:nth-child(even) { border-left: 1px solid rgba(158, 226, 255, .2); }
+  .industry-values li:nth-child(n+3) { border-top: 1px solid rgba(158, 226, 255, .2); }
+  .industry-values span { color: #f4c85d; font-family: var(--font-mono); font-size: .72rem; font-weight: 700; }
+  .industry-values p { margin: .7rem 0 0; color: #edf8ff; font-size: .94rem; font-weight: 560; line-height: 1.55; }
+  /* Treasure chest — pojok kanan atas, jelas dan animasi bob */
+  .industry-treasure { position: absolute; z-index: 3; top: 1.5rem; right: max(-1rem, calc((100vw - 1240px) / 2 - 2rem)); width: clamp(140px, 15vw, 210px); height: auto; opacity: 1; filter: drop-shadow(0 12px 28px rgba(250, 180, 40, .35)) drop-shadow(0 4px 12px rgba(1, 16, 42, .5)); animation: treasure-bob 4s ease-in-out infinite; }
+
+  .closing-section { position: relative; overflow-x: clip; overflow-y: visible; padding-block: clamp(5rem, 7vw, 7rem); background: none; color: #fff; text-align: center; }
+  /* dot pattern dihapus agar tidak ada perbedaan visual dengan industry section */
+  .closing-wave { position: absolute; right: -5%; bottom: -100px; left: -5%; height: 200px; border: 1.5px solid rgba(190, 245, 255, .18); border-radius: 50% 50% 0 0; transform: rotate(-1.5deg); pointer-events: none; }
+  /* Kapal Phinisi — porsi besar, separuh tubuh muncul dari bawah kiri */
+  /* Kapal — naik lebih tinggi agar badan kapal kelihatan penuh */
+  .closing-ship { position: absolute; z-index: 2; bottom: -6%; left: max(-1rem, calc((100vw - 1240px) / 2 - 1rem)); width: clamp(210px, 23vw, 330px); height: auto; opacity: 1; filter: drop-shadow(0 28px 40px rgba(2, 14, 40, .55)) saturate(1.1); animation: ship-sway 6s ease-in-out infinite; }
+  /* Pulau router — turun & masuk ke dalam agar tidak terpotong kanan */
+  .closing-island { position: absolute; z-index: 1; top: 0%; right: max(0rem, calc((100vw - 1240px) / 2 - 1rem)); width: clamp(160px, 18vw, 260px); height: auto; opacity: .9; filter: drop-shadow(0 20px 30px rgba(2, 14, 40, .4)); animation: island-float 8s ease-in-out infinite; }
+  @keyframes ship-sway { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
+  @keyframes treasure-bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+  .closing-content { position: relative; z-index: 2; max-width: 850px; }
+  .closing-content h2 { color: #fff; }
+  .closing-content > p:not(.section-kicker) { max-width: 680px; margin: 1rem auto 0; color: #dff8ff; font-size: 1rem; line-height: 1.72; }
+  .closing-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .85rem; margin-top: 2rem; }
+  :global(.closing-primary.ph-button) { border-radius: .7rem; background: #facc15; box-shadow: 0 4px 0 #c68a08, 0 16px 30px rgba(5, 42, 85, .22); color: #082852; }
+  :global(.closing-primary.ph-button:hover) { transform: translateY(-3px); background: #ffe36a; }
+  .closing-secondary { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: .55rem; border: 1px solid rgba(231, 251, 255, .62); border-radius: .7rem; padding: .9rem 1.25rem; background: rgba(5, 57, 108, .24); color: #fff; font-size: .9rem; font-weight: 650; text-decoration: none; transition: transform 180ms ease, background 180ms ease; }
+  .closing-secondary:hover { transform: translateY(-3px); background: rgba(5, 57, 108, .42); }
+
+  :global(.reveal-enabled) [data-reveal] { opacity: 0; translate: 0 24px; transition: opacity 600ms ease var(--reveal-delay, 0ms), translate 600ms ease var(--reveal-delay, 0ms); }
+  :global(.reveal-enabled) [data-reveal].is-visible { opacity: 1; translate: 0 0; }
+  @keyframes industry-packet-float { 0%, 100% { transform: translate(0, 0) rotate(-5deg); } 50% { transform: translate(-28px, 20px) rotate(7deg); } }
+
+  @media (max-width: 1080px) {
+    .fields-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .latest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .industry-layout { grid-template-columns: 1fr; gap: 3.5rem; }
+    .industry-heading { max-width: 760px; }
+  }
+  @media (max-width: 980px) {
+    .hero-adventure { height: 850px; min-height: 850px; max-height: 850px; }
+    .hero-layout { height: 100%; min-height: 0; grid-template-columns: 1fr; padding-top: 4.25rem; padding-bottom: 24rem; }
+    .hero-copy { max-width: 670px; }
+    .hero-readability { background: linear-gradient(180deg, rgba(3, 25, 64, .97) 0%, rgba(4, 42, 94, .88) 43%, rgba(4, 73, 138, .32) 67%, rgba(4, 96, 161, .02) 100%); }
+    .network-path { top: auto; right: -18%; bottom: 0; width: 105%; height: 52%; }
+    .ship-wrap { right: 6%; bottom: -1rem; left: auto; width: clamp(350px, 54vw, 470px); translate: 0; }
+    .data-packet { top: auto; right: auto; bottom: 36%; left: 15%; }
+    .foreground-waves { bottom: -24%; }
+    .process-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 3.25rem; }
+    .process-steps::before { display: none; }
+    .process-step:nth-child(odd)::before { position: absolute; z-index: 0; top: 2.55rem; left: 50%; width: 100%; height: 2px; background: linear-gradient(90deg, #22b8d6, rgba(34, 211, 238, .46)); content: ''; }
+    .process-copy p { max-width: 300px; }
+  }
+  @media (max-width: 767px) {
+    .learning-process { margin-top: 2.75rem; }
+    .process-steps { display: block; }
+    .process-steps::before { position: absolute; z-index: 0; top: .85rem; bottom: .75rem; left: 15px; display: block; width: 2px; border-radius: 999px; background: linear-gradient(180deg, #22b8d6 0%, #22d3ee 78%, rgba(34, 211, 238, .2) 100%); content: ''; }
+    .process-step { display: grid; grid-template-columns: 32px 62px minmax(0, 1fr); align-items: center; column-gap: .9rem; padding: 0; text-align: left; }
+    .process-step + .process-step { margin-top: clamp(2rem, 9vw, 2.5rem); }
+    .process-step:nth-child(odd)::before { display: none; }
+    .process-index { grid-column: 1; }
+    .step-number { margin-bottom: .55rem; padding-inline: .25rem; }
+    .process-node { width: 16px; height: 16px; border-width: 3px; background: #f8fbff; }
+    .process-icon-box { grid-column: 2; width: 62px; height: 62px; margin: 0; }
+    .milestone-img { width: 50px; height: 50px; }
+    .process-copy { grid-column: 3; }
+    .process-copy h3 { font-size: 1.05rem; }
+    .process-copy p { max-width: none; margin: .48rem 0 0; font-size: .82rem; line-height: 1.58; }
+  }
+  @media (max-width: 640px) {
+    .fields-grid { grid-template-columns: 1fr; gap: 16px; margin-top: 2.25rem; }
+  }
+  @media (max-width: 720px) {
+    .home-shell, .hero-layout { width: min(calc(100% - 2rem), 1240px); }
+    .home-section { padding-block: 4.5rem; }
+    .hero-adventure { height: auto; min-height: 0; max-height: none; }
+    .hero-layout { height: auto; padding-top: 3.5rem; padding-bottom: 19rem; }
+    .hero-copy h1 { font-size: clamp(1.9rem, 9.8vw, 2.4rem); }
+    .hero-copy h1 span { white-space: nowrap; }
+    .hero-description { font-size: .96rem; }
+    .hero-fields { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); }
+    .hero-fields li { font-size: .72rem; }
+    .network-path, .data-packet { display: none; }
+    .ship-wrap { right: 50%; bottom: -1.5rem; width: min(330px, 86vw); translate: 50% 0; }
+    .foreground-waves { right: -28%; bottom: -5.4rem; width: 150%; min-width: 760px; }
+    .section-buoy { top: -47px; right: 1rem; width: 92px; }
+    .home-heading.centered { text-align: left; }
+    .home-heading h2, .industry-heading h2, .closing-content h2 { font-size: clamp(2.1rem, 9vw, 3rem); }
+    .home-heading.centered > p:last-child { margin-inline: 0; }
+    .heading-row { align-items: flex-start; flex-direction: column; gap: 1rem; }
+    .latest-grid { grid-template-columns: 1fr; gap: 1rem; margin-top: 2.25rem; }
+    .industry-values { grid-template-columns: 1fr; }
+    .industry-values li { min-height: 0; padding: 1.25rem .25rem; }
+    .industry-values li:nth-child(even) { border-left: 0; }
+    .industry-values li + li { border-top: 1px solid rgba(158, 226, 255, .2); }
+    .paths-network { top: 2%; right: -38%; width: 150%; opacity: .075; }
+    .industry-treasure { right: -58px; bottom: -52px; width: 170px; opacity: .22; }
+    .closing-ship { bottom: -24%; left: -1rem; width: min(200px, 46vw); opacity: .85; }
+    .closing-island { display: none; }
+    .closing-treasure { display: none; }
+    .closing-content { text-align: left; }
+    .closing-content > p:not(.section-kicker) { margin-inline: 0; }
+    .closing-actions { align-items: stretch; flex-direction: column; }
+    :global(.closing-actions .ph-button), .closing-secondary { width: 100%; }
+  }
+  @media (max-width: 560px) {
+    .hero-actions { align-items: stretch; flex-direction: column; }
+    :global(.hero-actions .ph-button), .hero-secondary-link { width: 100%; }
+    .hero-support { align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .section-buoy { animation: none !important; }
+    .field-card, .field-card__media img, .field-card__link b, .section-link span, .closing-secondary, .process-node, .process-icon-box { transition: none !important; }
+    .field-card:hover, .field-card:hover .field-card__media img, .field-card:hover .field-card__link b, .section-link:hover span, .closing-secondary:hover, .process-step:hover .process-icon-box { transform: none !important; }
+    :global(.reveal-enabled) [data-reveal] { opacity: 1; translate: 0; transition: none; }
+  }
+</style>

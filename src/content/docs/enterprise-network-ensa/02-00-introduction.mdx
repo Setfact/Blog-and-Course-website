@@ -1,0 +1,48 @@
+---
+title: "Introduction"
+language: id
+draft: false
+description: "Modul ini membahas cara mengonfigurasi, memodifikasi, dan memverifikasi single-area OSPFv2 pada Cisco router."
+order: 6
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 6
+---
+
+# Introduction
+
+
+Modul ini membahas cara **mengonfigurasi, memodifikasi, dan memverifikasi single-area OSPFv2** pada Cisco router.
+
+Kalau Modul 1 fokus ke konsep dasar OSPF, Modul 2 ini fokus ke **praktik konfigurasi**. Di sini kamu bakal lihat bagaimana OSPF diaktifkan di router, bagaimana router ID dipilih, bagaimana network di-advertise ke OSPF, bagaimana DR/BDR dipengaruhi di jaringan multiaccess, lalu bagaimana route default diumumkan ke domain OSPF.
+
+## 2.0.1 Why should I take this module?
+
+Kamu perlu belajar modul ini karena OSPF itu bukan cuma soal ngerti teori. Di lapangan, kamu harus bisa:
+- mengaktifkan OSPF di router
+- menentukan **router ID** yang stabil
+- memilih cara konfigurasi OSPF yang paling cocok
+- menghindari OSPF packet yang tidak perlu di interface yang tidak butuh adjacency
+- memodifikasi perilaku OSPF supaya jalur dan konvergensinya sesuai kebutuhan jaringan
+- mengumumkan default route ke semua router di domain OSPF
+- memverifikasi hasil konfigurasi dengan `show` commands
+
+Jadi modul ini penting banget buat transisi dari **paham konsep** ke **bisa konfigurasi beneran**.
+
+## 2.0.2 What will I learn to do in this module?
+
+Di modul ini, kamu akan belajar untuk:
+- mengonfigurasi **OSPF router ID**
+- mengaktifkan **single-area OSPFv2** di jaringan **point-to-point**
+- mengatur OSPF di jaringan **multiaccess**
+- memengaruhi **DR/BDR election** dengan interface priority
+- memodifikasi **OSPF cost** dan **timers**
+- mengumumkan **default route** ke OSPF
+- memverifikasi operasi OSPF dengan command seperti `show ip ospf neighbor` dan `show ip route`
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

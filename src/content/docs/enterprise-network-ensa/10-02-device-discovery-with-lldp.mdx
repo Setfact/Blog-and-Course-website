@@ -1,0 +1,82 @@
+---
+title: "Device Discovery with LLDP"
+language: id
+draft: false
+description: "Bagian ini membahas Link Layer Discovery Protocol (LLDP) — protokol vendor-neutral yang setara dengan CDP."
+order: 64
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 6
+---
+
+# Device Discovery with LLDP
+
+
+Bagian ini membahas **Link Layer Discovery Protocol (LLDP)** — protokol vendor-neutral yang setara dengan CDP.
+
+## 10.2.1 LLDP Overview
+
+![LLDP Overview](https://itexamanswers.net/wp-content/uploads/2020/04/LLDP-Overview.jpg)
+
+### Kenapa LLDP dibutuhkan?
+Karena CDP hanya bisa menemukan perangkat Cisco. Di jaringan heterogen (Cisco + HP + Juniper, dll), LLDP bisa menemukan semua vendor.
+
+### Standar: IEEE 802.1AB
+
+## 10.2.2 Discover Devices by Using LLDP
+
+### Perintah dasar
+
+![Discover Devices by Using LLDP](https://itexamanswers.net/wp-content/uploads/2020/04/Discover-Devices-by-Using-LLDP.jpg)
+
+```text
+Router# show lldp
+```
+
+```text
+Router# show lldp neighbors
+```
+
+```text
+Router# show lldp neighbors detail
+```
+
+![Discover Devices by Using LLDP - Detail](https://itexamanswers.net/wp-content/uploads/2020/04/Discover-Devices-by-Using-LLDP2.jpg)
+
+## 10.2.3 Configure LLDP
+
+### Mengaktifkan/menonaktifkan LLDP secara global
+
+```text
+Router(config)# lldp run        ! Aktifkan LLDP
+Router(config)# no lldp run     ! Nonaktifkan LLDP
+```
+
+### Mengaktifkan/menonaktifkan LLDP per interface
+
+```text
+Router(config-if)# lldp transmit     ! Aktifkan pengiriman LLDP
+Router(config-if)# lldp receive      ! Aktifkan penerimaan LLDP
+```
+
+<Callout type="remember" title={"Perbedaan dengan CDP"}>
+Di LLDP, transmit dan receive harus dikonfigurasi **terpisah**. Di CDP, satu command (`cdp enable`) langsung aktifkan keduanya.
+</Callout>
+
+
+### Perbandingan CDP vs LLDP
+
+| Fitur | CDP | LLDP |
+|---|---|---|
+| Standar | Cisco proprietary | IEEE 802.1AB (vendor-neutral) |
+| Layer | Layer 2 | Layer 2 |
+| Informasi | Lebih lengkap | Lebih terbatas |
+| Perangkat | Hanya Cisco | Semua vendor |
+| Konfigurasi per interface | `cdp enable` | `lldp transmit` + `lldp receive` |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

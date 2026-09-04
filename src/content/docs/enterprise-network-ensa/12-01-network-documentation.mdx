@@ -1,0 +1,111 @@
+---
+title: "Network Documentation"
+language: id
+draft: false
+description: "Bagian ini membahas dokumentasi jaringan — fondasi dari troubleshooting yang efektif."
+order: 76
+course: enterprise-network-ensa
+module: ensa-12-network-troubleshooting
+durationMinutes: 6
+---
+
+# Network Documentation
+
+
+Bagian ini membahas dokumentasi jaringan — fondasi dari troubleshooting yang efektif.
+
+## 12.1.1 Network Topology Diagrams
+
+### Physical Topology
+
+![Physical Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Physical-Topology-1.jpg)
+
+Physical topology menunjukkan:
+- Lokasi perangkat
+- Interface connections
+- Tipe kabel
+
+### Logical Topology (IPv4)
+
+![Logical IPv4 Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Logical-IPv4-Topology.jpg)
+
+Logical topology menunjukkan:
+- Koneksi logis
+- IP addresses
+- Routing protocols
+- VLANs
+
+### Logical Topology (IPv6)
+
+![Logical IPv6 Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Logical-IPv6-Topology.jpg)
+
+## 12.1.2 Network Device Documentation
+
+![Router Device Documentation](https://itexamanswers.net/wp-content/uploads/2020/04/Router-Device-Documentation.jpg)
+
+![LAN Switch Device Documentation](https://itexamanswers.net/wp-content/uploads/2020/04/LAN-Switch-Device-Documentation.jpg)
+
+Dokumentasi perangkat berisi:
+- Hardware details (model, serial number, interfaces)
+- Software versions (IOS version)
+- Configuration details
+- Maintenance history
+
+## 12.1.3 End System Documentation
+
+![End-system Documentation Files](https://itexamanswers.net/wp-content/uploads/2020/04/End-system-Documentation-Files.jpg)
+
+End system documentation mencakup:
+- PC/server specifications
+- IP configuration
+- Installed software
+- Maintenance history
+
+## 12.1.4 Establish a Network Baseline
+
+**Baseline** adalah gambaran kinerja normal jaringan. Tanpa baseline, kamu tidak bisa membedakan "normal" dari "abnormal".
+
+### 3 Langkah establishing baseline:
+
+![Identify Devices and Ports of Interest](https://itexamanswers.net/wp-content/uploads/2020/04/Identify-Devices-and-Ports-of-Interest.jpg)
+
+**Step 1:** Tentukan data yang ingin dikumpulkan
+- Interface utilization
+- CPU utilization
+- Error rates
+- Bandwidth usage
+
+**Step 2:** Identifikasi devices dan ports of interest
+- Server kritis
+- Router interfaces utama
+- User PCs penting
+
+![Determine the Baseline Duration](https://itexamanswers.net/wp-content/uploads/2020/04/Determine-the-Baseline-Duration.jpg)
+
+**Step 3:** Tentukan durasi pengumpulan
+- Minimum **7 hari**
+- Idealnya **2-6 minggu**
+- Hindari periode dengan traffic pattern unik (liburan, event khusus)
+
+### Command untuk data collection
+
+| Command | Fungsi |
+|---|---|
+| `show version` | Uptime, software/hardware versions |
+| `show ip/ipv6 interface brief` | Status interface dan IP addresses |
+| `show ip/ipv6 route` | Routing table |
+| `show cdp neighbors detail` | Neighbor Cisco yang terhubung |
+| `show running-config` | Konfigurasi saat ini |
+| `show tech-support` | Info komprehensif untuk support |
+
+<Callout type="remember" title={"Manual collection tidak scalable"}>
+Untuk jaringan besar, gunakan **NMS (Network Management System)** untuk pengumpulan data otomatis.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 12: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-12-network-troubleshooting.html).

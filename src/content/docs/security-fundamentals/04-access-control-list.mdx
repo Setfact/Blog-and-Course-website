@@ -1,0 +1,96 @@
+---
+title: 'Access Control List IPv4'
+language: id
+draft: false
+description: 'Terjemahkan kebutuhan traffic menjadi ACE, pilih jenis ACL, lalu tentukan interface dan arah penerapannya.'
+order: 5
+course: security-fundamentals
+module: security-fundamentals-04-acl
+durationMinutes: 26
+---
+
+# Access Control List IPv4
+
+ACL memeriksa paket dari atas ke bawah dan berhenti pada **ACE pertama yang cocok**. Jika tidak ada ACE yang cocok, implicit `deny any` di bagian akhir menolak paket.
+
+## Standard dan extended ACL
+
+| Jenis | Field utama | Pedoman penempatan |
+| --- | --- | --- |
+| Standard IPv4 ACL | alamat sumber | dekat tujuan |
+| Extended IPv4 ACL | sumber, tujuan, protokol, dan port | dekat sumber |
+
+Pedoman tersebut bukan aturan mutlak. Pilih lokasi berdasarkan topologi, jalur paket, dampak pada traffic lain, dan kemampuan operasional tim.
+
+## Mulai dari kebutuhan
+
+Skenario: subnet siswa `192.168.10.0/24` hanya boleh mengakses HTTPS pada server `172.16.10.10`. Traffic siswa memasuki router melalui `G0/0`.
+
+```text
+ip access-list extended SISWA_HTTPS
+ 10 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.10 eq 443
+ 90 deny ip any any log
+exit
+
+interface GigabitEthernet0/0
+ ip access-group SISWA_HTTPS in
+```
+
+Extended ACL dapat ditempatkan dekat sumber karena mampu memeriksa tujuan dan port. Wildcard `0.0.0.255` mewakili subnet `/24`.
+
+<Callout type="remember">
+ACL yang sudah dibuat belum aktif sampai diterapkan pada interface dan arah yang benar menggunakan `ip access-group NAMA in|out`.
+</Callout>
+
+## Verifikasi sebelum menyatakan selesai
+
+```text
+show access-lists SISWA_HTTPS
+show ip interface GigabitEthernet0/0
+```
+
+Uji traffic yang memang dirancang oleh ACL. Jika rule dibuat untuk HTTPS, jangan hanya membuktikannya menggunakan ping. Pastikan traffic permit dan deny sama-sama diuji, kemudian cocokkan hasilnya dengan hit counter.
+
+## Referensi ACL mendalam
+
+Perpustakaan ACL Phinisi Learn membahas wildcard mask, standard ACL, extended ACL, VTY, serta troubleshooting secara lebih rinci.
+
+<PracticeCTA
+  title="Buka perpustakaan ACL"
+  description="Gunakan materi lengkap ini ketika membutuhkan contoh konfigurasi dan troubleshooting tambahan."
+  href="/docs/acl"
+  label="Pelajari ACL lebih dalam"
+/>
+
+<LessonQuiz
+  activityId="security-lesson-4-quiz"
+  courseSlug="security-fundamentals"
+  lessonId="04-access-control-list"
+  questions={[
+    {
+      question: 'Mengapa extended ACL umumnya ditempatkan dekat sumber traffic?',
+      options: ['Karena hanya memeriksa alamat sumber', 'Agar traffic yang tidak diizinkan dapat dibuang lebih awal berdasarkan sumber, tujuan, protokol, dan port', 'Karena hanya dapat dipasang outbound', 'Agar implicit deny tidak bekerja'],
+      correctIndex: 1,
+      explanation: 'Extended ACL dapat membuat keputusan spesifik sehingga traffic yang tidak diizinkan dihentikan dekat sumber.',
+    },
+    {
+      question: 'Apa yang terjadi ketika paket tidak cocok dengan seluruh ACE?',
+      options: ['Paket otomatis diizinkan', 'Router mengulang pemeriksaan', 'Paket terkena implicit deny', 'Paket dikirim ke default gateway lain'],
+      correctIndex: 2,
+      explanation: 'Setiap ACL memiliki implicit deny di bagian akhir sehingga traffic yang tidak cocok akan ditolak.',
+    },
+    {
+      question: 'Command apa yang menerapkan ACL bernama SISWA_HTTPS pada interface arah inbound?',
+      options: ['access-class SISWA_HTTPS in', 'ip access-group SISWA_HTTPS in', 'ip access-list SISWA_HTTPS inbound', 'permit SISWA_HTTPS interface'],
+      correctIndex: 1,
+      explanation: 'Interface ACL diterapkan menggunakan ip access-group diikuti nama atau nomor ACL serta arah in atau out.',
+    },
+  ]}
+  passingScore={67}
+  xp={30}
+/>
+
+## Referensi resmi
+
+- [Cisco — Configure IP Access Lists](https://www.cisco.com/c/en/us/support/docs/security/ios-firewall/23602-confaccesslists.html)
+- [Cisco — Troubleshoot Common IP ACL Issues](https://www.cisco.com/c/en/us/support/docs/security/ios-firewall/212082-troubleshoot-common-ip-access-list-issu.html)

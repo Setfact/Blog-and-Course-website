@@ -1,0 +1,111 @@
+---
+interface Props {
+  activityId: string;
+  courseSlug: string;
+  lessonId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  xp?: number;
+}
+
+const {
+  activityId,
+  courseSlug,
+  lessonId,
+  question,
+  options,
+  correctIndex,
+  explanation,
+  xp = 20,
+} = Astro.props;
+---
+
+<section
+  class="knowledge-check"
+  data-knowledge-check
+  data-activity-id={activityId}
+  data-course={courseSlug}
+  data-lesson={lessonId}
+  data-correct-index={correctIndex}
+  data-xp={xp}
+>
+  <header><span>Knowledge check</span><strong>+{xp} XP</strong></header>
+  <form>
+    <fieldset>
+      <legend>{question}</legend>
+      <div class="option-list">
+        {options.map((option, index) => (
+          <label>
+            <input type="radio" name={activityId} value={index} />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+    <button type="submit">Periksa jawaban</button>
+  </form>
+  <p class="feedback" data-feedback hidden aria-live="polite"><span data-result></span> {explanation}</p>
+</section>
+
+<script>
+  import { completeActivity } from '../scripts/learning-store';
+
+  document.querySelectorAll<HTMLElement>('[data-knowledge-check]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('form');
+    const feedback = root.querySelector<HTMLElement>('[data-feedback]');
+    const result = root.querySelector<HTMLElement>('[data-result]');
+    if (!form || !feedback || !result || form.dataset.ready === 'true') return;
+    form.dataset.ready = 'true';
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const selected = form.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+      if (!selected) {
+        feedback.hidden = false;
+        feedback.className = 'feedback is-warning';
+        result.textContent = 'Pilih satu jawaban dahulu.';
+        return;
+      }
+
+      const isCorrect = Number(selected.value) === Number(root.dataset.correctIndex);
+      feedback.hidden = false;
+      feedback.className = `feedback ${isCorrect ? 'is-correct' : 'is-incorrect'}`;
+
+      if (!isCorrect) {
+        result.textContent = 'Belum tepat. Coba lihat kembali konsep utamanya.';
+        return;
+      }
+
+      const completion = completeActivity({
+        activityId: root.dataset.activityId ?? '',
+        courseSlug: root.dataset.course ?? '',
+        lessonId: root.dataset.lesson,
+        xp: Number(root.dataset.xp) || 20,
+        completesLesson: true,
+      });
+      result.textContent = completion.firstCompletion
+        ? `Benar! Kamu mendapatkan ${completion.awardedXp} XP.`
+        : 'Benar! XP untuk aktivitas ini sudah pernah kamu dapatkan.';
+    });
+  });
+</script>
+
+<style>
+  .knowledge-check { margin: 2rem 0; border: 1px solid var(--color-phinisi-200); border-radius: 1.1rem; padding: clamp(1rem, 3vw, 1.35rem); background: var(--color-section); }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  header span { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; }
+  header strong { color: var(--color-muted); font-size: 0.6rem; font-weight: 700; }
+  fieldset { margin: 0; border: 0; padding: 0; }
+  legend { margin-bottom: 1rem; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.12rem; font-weight: 600; line-height: 1.45; }
+  .option-list { display: grid; gap: 0.55rem; }
+  label { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 0.65rem; border: 1px solid var(--color-line); border-radius: 0.8rem; padding: 0.75rem; background: #fff; color: var(--color-ink); cursor: pointer; }
+  label:has(input:checked) { border-color: var(--color-primary); background: var(--color-phinisi-50); }
+  input { margin-top: 0.22rem; accent-color: var(--color-primary); }
+  form > button { margin-top: 1rem; border: 0; border-radius: 0.75rem; padding: 0.72rem 0.9rem; background: var(--color-primary); box-shadow: var(--shadow-button); color: #fff; font-family: var(--font-heading); font-size: 0.76rem; font-weight: 600; cursor: pointer; }
+  .feedback { margin: 1rem 0 0; border-radius: 0.75rem; padding: 0.8rem; font-size: 0.78rem; font-weight: 650; line-height: 1.55; }
+  .feedback.is-correct { background: var(--color-success-soft); color: #14763c; }
+  .feedback.is-incorrect { background: var(--color-danger-soft); color: #a12b31; }
+  .feedback.is-warning { background: var(--color-gold-soft); color: #7a5100; }
+</style>

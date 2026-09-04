@@ -1,0 +1,71 @@
+---
+title: "Module Practice and Quiz"
+language: id
+draft: false
+description: "| 6.1 | Konsep NAT: alamat private RFC 1918, terminologi (inside local/global, outside local/global) |"
+order: 44
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 7
+---
+
+# Module Practice and Quiz
+
+
+## 6.8.1 What did I learn in this module?
+
+| Bagian | Yang Dipelajari |
+|---|---|
+| 6.1 | Konsep NAT: alamat private RFC 1918, terminologi (inside local/global, outside local/global) |
+| 6.2 | Tipe NAT: static (one-to-one), dynamic (pool), PAT (one-to-many via port) |
+| 6.3 | Kelebihan dan kekurangan NAT |
+| 6.4 | Konfigurasi, analisis, dan verifikasi Static NAT |
+| 6.5 | Konfigurasi, analisis, dan verifikasi Dynamic NAT |
+| 6.6 | Konfigurasi, analisis, dan verifikasi PAT (NAT Overload) |
+| 6.7 | NAT64 untuk transisi IPv6 ↔ IPv4 |
+
+## 6.8.2 Module Quiz – NAT for IPv4
+
+<Callout type="remember" title={"Quiz"}>
+Source menyediakan quiz interaktif untuk modul ini. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+# Ringkasan modul 6
+
+| Bagian | Isi utama |
+|---|---|
+| 6.0 | Pengenalan — kenapa NAT penting |
+| 6.1 | NAT Characteristics: private address space (RFC 1918), konsep NAT, cara kerja, terminologi |
+| 6.2 | Types of NAT: static (one-to-one), dynamic (pool), PAT (port-based, NAT overload) |
+| 6.3 | Kelebihan: hemat alamat, fleksibel. Kekurangan: performa, troubleshooting sulit |
+| 6.4 | Static NAT: skenario, konfigurasi, analisis, verifikasi |
+| 6.5 | Dynamic NAT: skenario, konfigurasi (pool + ACL), analisis, verifikasi |
+| 6.6 | PAT: konfigurasi (interface overload / pool overload), analisis, verifikasi |
+| 6.7 | NAT64: transisi IPv6 ↔ IPv4 |
+| 6.8 | Quiz dan praktik |
+
+---
+
+# Command Reference modul 6
+
+| Command | Fungsi |
+|---|---|
+| `ip nat inside source static <local> <global>` | Buat static NAT mapping |
+| `ip nat pool <name> <start> <end> netmask <mask>` | Buat NAT pool |
+| `ip nat inside source list <acl> pool <pool>` | Dynamic NAT: bind ACL ke pool |
+| `ip nat inside source list <acl> interface <if> overload` | PAT: gunakan alamat interface |
+| `ip nat inside source list <acl> pool <pool> overload` | PAT: gunakan pool |
+| `ip nat inside` | Tandai interface sebagai inside |
+| `ip nat outside` | Tandai interface sebagai outside |
+| `show ip nat translations` | Lihat NAT table |
+| `show ip nat statistics` | Lihat statistik NAT |
+| `clear ip nat translation *` | Hapus semua dynamic entries |
+| `clear ip nat statistics` | Reset statistik |
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

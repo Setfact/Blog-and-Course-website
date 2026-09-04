@@ -1,0 +1,102 @@
+---
+title: 'Konfigurasi Standard IPv4 ACL'
+language: id
+draft: false
+description: 'Buat standard ACL numbered dan named, lalu pasang pada interface Cisco IOS.'
+order: 3
+---
+
+# Konfigurasi Standard IPv4 ACL
+
+Standard IPv4 ACL menyaring paket hanya berdasarkan **alamat sumber**. Pada skenario ini, subnet `192.168.10.0/24` boleh menuju jaringan server, sedangkan sumber lain ditolak.
+
+## Topologi skenario
+
+<TopologyDiagram
+  title="Standard ACL ditempatkan dekat jaringan tujuan"
+  caption="ACL 10 dipasang outbound pada interface yang menuju server."
+  leftLabel="LAN Siswa"
+  leftMeta="192.168.10.0/24"
+  centerLabel="Router R1"
+  centerMeta="G0/1 · ACL 10 out"
+  rightLabel="Jaringan Server"
+  rightMeta="172.16.10.0/24"
+/>
+
+## Opsi 1: numbered ACL
+
+Buat rule yang mengizinkan subnet siswa:
+
+<CommandBlock command="access-list 10 permit 192.168.10.0 0.0.0.255" prompt="R1(config)#" />
+
+Lalu terapkan pada interface menuju jaringan server:
+
+```text
+interface GigabitEthernet0/1
+ description KE_JARINGAN_SERVER
+ ip access-group 10 out
+```
+
+Karena ada implicit deny di akhir, sumber selain `192.168.10.0/24` akan ditolak pada jalur tersebut.
+
+<Callout type="remember">
+Membuat ACL belum membuatnya aktif. ACL baru memengaruhi traffic setelah dipasang dengan `ip access-group NAMA in|out` pada interface yang benar.
+</Callout>
+
+## Opsi 2: named ACL
+
+Named ACL lebih mudah dibaca dan diedit karena setiap rule memiliki sequence number.
+
+```text
+ip access-list standard SISWA_KE_SERVER
+ 10 permit 192.168.10.0 0.0.0.255
+ 90 deny any log
+exit
+
+interface GigabitEthernet0/1
+ ip access-group SISWA_KE_SERVER out
+```
+
+`deny any log` tidak wajib untuk menolak traffic karena implicit deny sudah ada. Rule eksplisit itu berguna ketika kamu ingin melihat kejadian penolakan di log—gunakan dengan bijak agar perangkat tidak dibanjiri pesan.
+
+## Mengubah rule tanpa membuat ulang ACL
+
+Masuk ke mode named ACL, lalu sisipkan sequence baru:
+
+```text
+ip access-list standard SISWA_KE_SERVER
+ 15 permit host 192.168.20.50
+ no 90
+ 90 deny any log
+```
+
+Cisco IOS memproses sequence `10`, `15`, lalu `90`. Periksa urutannya setelah perubahan.
+
+<CommandBlock command="show access-lists SISWA_KE_SERVER" prompt="R1#" title="Verifikasi ACL" />
+
+<Callout type="mistake">
+Hindari menghapus ACL yang sedang dipakai sebelum memahami dampaknya. Pada sebagian perubahan, lebih aman membuat ACL baru, memverifikasinya, lalu mengganti penerapan pada interface dalam maintenance window.
+</Callout>
+
+<PracticeCTA
+  title="Konfigurasi standard ACL dari nol"
+  description="Ikuti skenario lab, lalu buktikan rule dengan ping dari dua sumber berbeda."
+  href="#latihan"
+/>
+
+## Latihan
+
+Tambahkan satu PC admin `192.168.20.50` yang juga boleh menuju server. Lakukan langkah berikut:
+
+1. sisipkan ACE sebelum rule deny
+2. tampilkan isi ACL
+3. uji dari PC siswa, PC admin, dan satu PC lain
+4. cocokkan hasil uji dengan hit counter
+
+Perintah pemeriksaan awal:
+
+```text
+show ip interface GigabitEthernet0/1
+show access-lists SISWA_KE_SERVER
+show running-config | section access-list
+```

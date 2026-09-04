@@ -1,0 +1,154 @@
+---
+title: "Modify Single-Area OSPFv2"
+language: id
+draft: false
+description: "Cost = reference bandwidth / interface bandwidth"
+order: 10
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 7
+---
+
+# Modify Single-Area OSPFv2
+
+
+## 2.4.1 OSPF Cost
+
+```text
+Cost = reference bandwidth / interface bandwidth
+```
+
+![Default Cisco OSPF Costs](https://itexamanswers.net/wp-content/uploads/2020/04/Default-Cisco-OSPF-Costs.jpg)
+![OSPF Accumulates Costs](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Accumulates-Costs.jpg)
+
+## 2.4.2 Reference Bandwidth
+
+Default reference bandwidth = **100,000,000 bps** (100 Mbps). Masalahnya GigabitEthernet dan 10GbE juga dapat cost 1.
+
+### Cek cost default
+```text
+R1# show ip ospf interface gigabitethernet0/0/0
+Process ID 10, Router ID 1.1.1.1, Network Type POINT_TO_POINT, Cost: 1
+```
+
+### Ubah reference bandwidth
+```text
+R1(config)# router ospf 10
+R1(config-router)# auto-cost reference-bandwidth 10000
+% OSPF: Reference bandwidth is changed.
+```
+
+**Penting:** konsisten di semua router OSPF!
+
+## 2.4.3 Manual OSPF Cost
+
+![Manually Set OSPF Cost Value](https://itexamanswers.net/wp-content/uploads/2020/04/Manually-Set-OSPF-Cost-Value.jpg)
+
+```text
+R1(config)# interface g0/0/1
+R1(config-if)# ip ospf cost 30
+R1(config-if)# interface lo0
+R1(config-if)# ip ospf cost 10
+R1(config-if)# end
+```
+
+### Cek routing table sebelum perubahan
+```text
+R1# show ip route ospf | begin 10
+O        10.1.1.8/30 [110/20] via 10.1.1.13, 00:54:50, GigabitEthernet0/0/1
+                     [110/20] via 10.1.1.6, 00:55:14, GigabitEthernet0/0/0
+```
+Dua jalur equal-cost.
+
+### Cek routing table sesudah perubahan
+```text
+R1# show ip route ospf | begin 10
+O        10.1.1.8/30 [110/20] via 10.1.1.6, 01:18:25, GigabitEthernet0/0/0
+O        10.10.2.0/24 [110/20] via 10.1.1.6, 00:04:31, GigabitEthernet0/0/0
+O        10.10.3.0/24 [110/30] via 10.1.1.6, 00:03:21, GigabitEthernet0/0/0
+```
+Hanya satu jalur — jalur via g0/0/1 sekarang cost lebih tinggi (30).
+
+### Shutdown link untuk verifikasi failover
+```text
+R1(config)# interface g0/0/0
+R1(config-if)# shutdown
+```
+```text
+*Jun  7 03:41:34.866: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from FULL to DOWN
+```
+```text
+R1(config-if)# end
+R1# show ip route ospf | begin 10
+```
+```text
+O        10.1.1.8/30 [110/30] via 10.1.1.13, 00:00:03, GigabitEthernet0/0/1
+```
+OSPF failover ke jalur alternatif.
+
+## 2.4.4 Hello and Dead Intervals
+
+![Hello Packet Intervals](https://itexamanswers.net/wp-content/uploads/2020/04/Hello-Packet-Intervals.jpg)
+
+Default: Hello = **10 detik**, Dead = **40 detik**.
+
+```text
+Router(config-if)# ip ospf hello-interval seconds
+Router(config-if)# ip ospf dead-interval seconds
+```
+
+### Ubah timer di R1
+```text
+R1(config)# interface g0/0/0
+R1(config-if)# ip ospf hello-interval 5
+R1(config-if)# ip ospf dead-interval 20
+```
+```text
+*Jun  7 04:56:07.571: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from FULL to DOWN, Neighbor Down: Dead timer expired
+```
+Adjacency turun karena R2 masih pakai timer default!
+
+### Set timer sama di R2
+```text
+R2(config)# interface g0/0/0
+R2(config-if)# ip ospf hello-interval 5
+```
+```text
+*Jun  7 15:08:30.211: %OSPF-5-ADJCHG: Process 10, Nbr 1.1.1.1 from LOADING to FULL, Loading Done
+```
+```text
+R2# show ip ospf interface g0/0/0 | include Timer
+```
+```text
+Timer intervals configured, Hello 5, Dead 20, Wait 20, Retransmit 5
+```
+Adjacency terbentuk kembali setelah timer cocok.
+
+### R3 harus match juga
+```text
+R3#show ip ospf neighbor
+```
+```text
+(belum ada neighbor — timer belum match)
+```
+```text
+R3(config)#interface g0/0/0
+R3(config-if)#ip ospf hello-interval 5
+R3(config-if)#interface g0/0/1
+R3(config-if)#ip ospf hello-interval 5
+```
+```text
+R3#show ip ospf neighbor
+```
+```text
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+2.2.2.2           0   FULL/  -        00:00:18    10.1.1.9        GigabitEthernet0/0/1
+1.1.1.1           0   FULL/  -        00:00:17    10.1.1.5        GigabitEthernet0/0/0
+```
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

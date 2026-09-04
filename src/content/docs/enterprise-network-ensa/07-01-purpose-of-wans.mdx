@@ -1,0 +1,141 @@
+---
+title: "Purpose of WANs"
+language: id
+draft: false
+description: "Bagian ini membahas mengapa WAN dibutuhkan, perbedaannya dengan LAN, dan berbagai topologi yang tersedia."
+order: 46
+course: enterprise-network-ensa
+module: ensa-07-wan-concepts
+durationMinutes: 7
+---
+
+# Purpose of WANs
+
+
+Bagian ini membahas mengapa WAN dibutuhkan, perbedaannya dengan LAN, dan berbagai topologi yang tersedia.
+
+## 7.1.1 LANs and WANs
+
+Perbedaan mendasar antara LAN dan WAN:
+
+![LANs and WANs](https://itexamanswers.net/wp-content/uploads/2020/04/LANs-and-WANs.jpg)
+
+| Fitur | LAN | WAN |
+|---|---|---|
+| **Geografi** | Area kecil (rumah, kantor, kampus) | Area besar (kota, negara, benua) |
+| **Tujuan** | Menghubungkan perangkat lokal | Menghubungkan user, jaringan, dan site yang berjauhan |
+| **Kepemilikan** | Dimiliki organisasi/pengguna | Dimiliki/dikelola ISP, telco, provider |
+| **Biaya** | Tanpa biaya berlangganan | Disediakan dengan biaya |
+| **Bandwidth** | Kecepatan tinggi (Ethernet, Wi-Fi) | Variabel (rendah sampai tinggi) |
+
+## 7.1.2 Private and Public WANs
+
+| Tipe | Deskripsi |
+|---|---|
+| **Private WAN** | Koneksi dedicated untuk satu pelanggan — bandwidth konsisten, jaminan layanan, keamanan |
+| **Public WAN** | Koneksi via internet — bandwidth variabel, tidak ada jaminan keamanan |
+
+## 7.1.3 WAN Topologies
+
+WAN topologies adalah **desain logis** bagaimana site-site dihubungkan.
+
+### Point-to-Point
+
+![Point-to-Point Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Point-to-Point-Topology.jpg)
+
+- Koneksi dedicated langsung antara dua endpoint
+- Sederhana, kualitas tinggi
+- Mahal kalau banyak site
+
+### Hub-and-Spoke
+
+![Hub-and-Spoke Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Hub-and-Spoke-Topology.jpg)
+
+- Satu router hub menghubungkan semua site spoke
+- Biaya lebih rendah
+- **Single point of failure** — kalau hub mati, semua terputus
+
+### Dual-Homed
+
+![Dual-homed Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Dual-homed-Topology.jpg)
+
+- Dua router hub untuk **redundancy**
+- Lebih mahal dan kompleks
+- Load balancing dan backup
+
+### Fully Meshed
+
+![Fully Meshed Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Fully-Meshed-Topology.jpg)
+
+- Semua site terhubung langsung satu sama lain
+- **Paling toleran terhadap gangguan** (fault-tolerant)
+- Paling mahal
+
+### Partially Meshed
+
+![Partially Meshed Topology](https://itexamanswers.net/wp-content/uploads/2020/04/Partially-Meshed-Topology.jpg)
+
+- Beberapa site terhubung langsung, yang lain melewati intermediary
+- Keseimbangan antara biaya dan redundancy
+
+### Perbandingan Topologi
+
+| Topologi | Biaya | Redundancy | Kompleksitas |
+|---|---|---|---|
+| Point-to-Point | Mahal | Rendah | Rendah |
+| Hub-and-Spoke | Rendah | Rendah (SPoF) | Rendah |
+| Dual-Homed | Sedang | Sedang | Sedang |
+| Fully Meshed | Sangat Mahal | Sangat Tinggi | Tinggi |
+| Partially Meshed | Sedang | Sedang | Sedang |
+
+## 7.1.4 Carrier Connections
+
+### Single-Carrier
+
+![Single Carrier WAN Connection](https://itexamanswers.net/wp-content/uploads/2020/04/Single-Carrier-WAN-Connection.jpg)
+
+- Hanya satu service provider
+- Lebih murah tapi **single point of failure**
+
+### Dual-Carrier
+
+![Dual Carrier WAN Connection](https://itexamanswers.net/wp-content/uploads/2020/04/Dual-Carrier-WAN-Connection.jpg)
+
+- Dua provider berbeda
+- **Redundancy, load balancing, availability lebih tinggi**
+
+## 7.1.5 Evolving Networks
+
+Contoh evolusi jaringan dari kecil ke global (kasus SPAN Engineering):
+
+### Small Network
+
+![Small Network](https://itexamanswers.net/wp-content/uploads/2020/04/Small-Network.jpg)
+
+- Satu LAN, broadband DSL untuk internet
+
+### Campus Network
+
+![Campus Network](https://itexamanswers.net/wp-content/uploads/2020/04/Campus-Network.jpg)
+
+- Multiple LANs (CAN), dedicated servers, IT in-house
+
+### Branch Network
+
+![Branch Network](https://itexamanswers.net/wp-content/uploads/2020/04/Branch-Network.jpg)
+
+- Site antar kota via MAN/WAN
+- Remote site via private line atau internet
+
+### Distributed/Global Network
+
+![Distributed Network](https://itexamanswers.net/wp-content/uploads/2020/04/Distributed-Network.jpg)
+
+- Global workforce, teleworking, VPNs, cloud collaboration
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 7: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-7-wan-concepts.html).

@@ -1,0 +1,294 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import LearningStatus from '../components/LearningStatus.astro';
+import LessonGate from '../components/LessonGate.astro';
+import { getPathsForCourse, type Course } from '../data/learning';
+
+interface Props {
+  entry: CollectionEntry<'lessons'>;
+  course: Course;
+  courseEntries: CollectionEntry<'lessons'>[];
+}
+
+const { entry, course, courseEntries } = Astro.props;
+const category = entry.id.split('/')[0];
+const moduleOrder = new Map(course.modules.map((module) => [module.slug, module.order]));
+const sortedEntries = [...courseEntries].sort((a, b) => {
+  const aModule = a.data.module ? moduleOrder.get(a.data.module) ?? 999 : -1;
+  const bModule = b.data.module ? moduleOrder.get(b.data.module) ?? 999 : -1;
+  return aModule - bModule || (a.data.order ?? 999) - (b.data.order ?? 999);
+});
+const isOverviewEntry = (item: CollectionEntry<'lessons'>) => item.id === category || item.id === `${category}/index`;
+const overview = sortedEntries.find(isOverviewEntry);
+const lessons = sortedEntries.filter(item => !isOverviewEntry(item));
+const moduleGroups = course.modules
+  .map((module) => ({ module, lessons: lessons.filter((lesson) => lesson.data.module === module.slug) }))
+  .filter((group) => group.lessons.length > 0);
+const sequence = overview ? [overview, ...lessons] : lessons;
+const currentSequenceIndex = sequence.findIndex(item => item.id === entry.id);
+const previousEntry = currentSequenceIndex > 0 ? sequence[currentSequenceIndex - 1] : undefined;
+const nextEntry = currentSequenceIndex >= 0 && currentSequenceIndex < sequence.length - 1 ? sequence[currentSequenceIndex + 1] : undefined;
+const currentLessonIndex = lessons.findIndex(item => item.id === entry.id);
+const isOverview = isOverviewEntry(entry);
+const currentLessonSlug = isOverview ? '' : entry.id.replace(`${category}/`, '');
+const relatedPath = (await getPathsForCourse(course.slug))[0];
+const readingMinutes = Math.max(3, Math.ceil((entry.body?.trim().split(/\s+/).length ?? 0) / 210));
+
+const playerHref = (item: CollectionEntry<'lessons'>) => {
+  if (isOverviewEntry(item)) return `/learn/${course.slug}`;
+  return `/learn/${course.slug}/${item.id.replace(`${category}/`, '')}`;
+};
+
+const docsHref = isOverview ? `/docs/${category}` : `/docs/${category}/${currentLessonSlug}`;
+const nextGateHref = nextEntry
+  ? playerHref(nextEntry)
+  : relatedPath
+    ? `/learning-path/${relatedPath.slug}`
+    : `/courses/${course.slug}`;
+const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail course';
+---
+
+<BaseLayout title={`${entry.data.title} · ${course.title}`} description={entry.data.description ?? course.description.id}>
+  <div class="player-progress" aria-hidden="true"><span data-reading-progress></span></div>
+
+  <div
+    class="learning-player"
+    data-learning-player
+    data-course={course.slug}
+    data-current-lesson={currentLessonSlug || undefined}
+    data-current-href={Astro.url.pathname}
+  >
+    <aside class="course-sidebar">
+      <a class="back-course" href={`/courses/${course.slug}`}>← Detail course</a>
+      <img src={course.cover} alt="" width="960" height="540" />
+      <div class="course-sidebar-heading">
+        <small>Learning Player</small>
+        <strong>{course.title}</strong>
+      </div>
+
+      <nav aria-label="Daftar lesson course">
+        {overview && (
+          <a href={playerHref(overview)} class:list={['overview-link', { active: isOverview }]} aria-current={isOverview ? 'page' : undefined}>
+            <span>00</span><strong>Overview course</strong>
+          </a>
+        )}
+        {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => (
+          <section class="module-group">
+            <div class="module-heading"><span>Modul {moduleIndex + 1}</span><strong>{module.title.id}</strong></div>
+            {moduleLessons.map((lesson) => {
+              const index = lessons.findIndex((item) => item.id === lesson.id);
+              const lessonSlug = lesson.id.replace(`${category}/`, '');
+              const active = lesson.id === entry.id;
+              return (
+                <a href={playerHref(lesson)} class:list={['lesson-link', { active }]} aria-current={active ? 'page' : undefined} data-player-lesson data-lesson-key={`${course.slug}/${lessonSlug}`}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <span><small>Lesson {index + 1}</small><strong>{lesson.data.title}</strong></span>
+                  <b data-lesson-state aria-label="Status lesson"></b>
+                </a>
+              );
+            })}
+          </section>
+        ))}
+      </nav>
+      <LearningStatus courseSlug={course.slug} totalLessons={lessons.length} />
+    </aside>
+
+    <main class="player-main">
+      <details class="mobile-course-nav">
+        <summary>Daftar lesson <span>{isOverview ? 'Overview' : `${currentLessonIndex + 1}/${lessons.length}`}</span></summary>
+        <nav>
+          {overview && <a href={playerHref(overview)} aria-current={isOverview ? 'page' : undefined}>Overview course</a>}
+          {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => (
+            <section><strong>Modul {moduleIndex + 1} · {module.title.id}</strong>{moduleLessons.map((lesson) => {
+              const index = lessons.findIndex((item) => item.id === lesson.id);
+              return <a href={playerHref(lesson)} aria-current={lesson.id === entry.id ? 'page' : undefined}>Lesson {index + 1} · {lesson.data.title}</a>;
+            })}</section>
+          ))}
+        </nav>
+      </details>
+
+      <div class="mobile-learning-status"><LearningStatus courseSlug={course.slug} totalLessons={lessons.length} /></div>
+
+      <header class="lesson-header">
+        <div class="lesson-meta">
+          <span>{isOverview ? 'Course overview' : `Lesson ${currentLessonIndex + 1} dari ${lessons.length}`}</span>
+          <span>{readingMinutes} menit baca</span>
+        </div>
+        <h1>{entry.data.title}</h1>
+        {entry.data.description && <p>{entry.data.description}</p>}
+        <div class="lesson-resources">
+          <a href={docsHref}>Buka dokumentasi</a>
+          {relatedPath && <a href={'/learning-path/' + relatedPath.slug}>Lihat roadmap</a>}
+        </div>
+      </header>
+
+      <article class="lesson-content" data-player-article>
+        <slot />
+      </article>
+
+      {!isOverview && (
+        <LessonGate
+          courseSlug={course.slug}
+          lessonId={currentLessonSlug}
+          nextHref={nextGateHref}
+          nextLabel={nextGateLabel}
+          isLast={!nextEntry}
+        />
+      )}
+
+      <nav class="player-pagination" aria-label="Navigasi lesson">
+        {previousEntry ? <a href={playerHref(previousEntry)}>← <span><small>Sebelumnya</small><strong>{previousEntry.data.title}</strong></span></a> : <span></span>}
+        {nextEntry ? <a class="next" href={playerHref(nextEntry)}><span><small>Berikutnya</small><strong>{nextEntry.data.title}</strong></span> →</a> : <span></span>}
+      </nav>
+    </main>
+
+  </div>
+</BaseLayout>
+
+<script>
+  import { getLearningState, setLastVisitedLesson } from '../scripts/learning-store';
+
+  const initialisePlayer = () => {
+    const root = document.querySelector<HTMLElement>('[data-learning-player]');
+    if (!root) return;
+    const courseSlug = root.dataset.course ?? '';
+    const currentLesson = root.dataset.currentLesson;
+    const currentHref = root.dataset.currentHref;
+    if (courseSlug && currentLesson && currentHref) setLastVisitedLesson(courseSlug, currentHref);
+
+    const updateLessonStates = () => {
+      const state = getLearningState();
+      root.querySelectorAll<HTMLElement>('[data-player-lesson]').forEach((link) => {
+        const complete = state.completedLessons.includes(link.dataset.lessonKey ?? '');
+        link.classList.toggle('complete', complete);
+        const label = link.querySelector<HTMLElement>('[data-lesson-state]');
+        if (label) label.textContent = complete ? '✓' : '';
+      });
+    };
+
+    updateLessonStates();
+    window.addEventListener('phinisi-progress-updated', updateLessonStates);
+
+    const article = root.querySelector<HTMLElement>('[data-player-article]');
+    const progress = document.querySelector<HTMLElement>('[data-reading-progress]');
+    const updateReadingProgress = () => {
+      if (!article || !progress) return;
+      const articleTop = window.scrollY + article.getBoundingClientRect().top;
+      const readableDistance = Math.max(article.offsetHeight - window.innerHeight * 0.55, 1);
+      const value = Math.min(100, Math.max(0, ((window.scrollY - articleTop + 150) / readableDistance) * 100));
+      progress.style.width = `${value}%`;
+    };
+    updateReadingProgress();
+    window.addEventListener('scroll', updateReadingProgress, { passive: true });
+    window.addEventListener('resize', updateReadingProgress);
+
+    root.querySelectorAll<HTMLElement>('.lesson-content pre.astro-code').forEach((pre) => {
+      if (pre.querySelector('[data-auto-copy]')) return;
+      const code = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'lesson-code-copy';
+      button.dataset.autoCopy = 'true';
+      button.textContent = 'Salin';
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code.trim());
+          button.textContent = 'Tersalin!';
+        } catch {
+          button.textContent = 'Gagal';
+        }
+        window.setTimeout(() => { button.textContent = 'Salin'; }, 1500);
+      });
+      pre.append(button);
+    });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialisePlayer, { once: true });
+  else initialisePlayer();
+</script>
+
+<style>
+  .player-progress { position: fixed; z-index: 70; top: 74px; left: 0; width: 100%; height: 3px; background: var(--color-phinisi-100); pointer-events: none; }
+  .player-progress span { display: block; width: 0; height: 100%; background: var(--color-primary); }
+  .learning-player { display: grid; width: min(100% - 2rem, 1100px); grid-template-columns: 245px minmax(0, 760px); justify-content: center; align-items: start; gap: clamp(2rem, 5vw, 4rem); margin-inline: auto; }
+  .course-sidebar { position: sticky; top: 96px; max-height: calc(100vh - 116px); overflow-y: auto; padding-block: 2rem; }
+  .back-course { display: inline-flex; margin-bottom: 0.8rem; color: var(--color-primary); font-size: 0.68rem; font-weight: 850; text-decoration: none; }
+  .course-sidebar > img { display: block; width: 100%; aspect-ratio: 16 / 7; border: 1px solid var(--color-line); border-radius: var(--radius-DEFAULT); object-fit: cover; }
+  .course-sidebar-heading { display: grid; gap: 0.2rem; padding: 0.9rem 0.3rem; }
+  .course-sidebar-heading small { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.58rem; font-weight: 850; text-transform: uppercase; }
+  .course-sidebar-heading strong { color: var(--color-navy); font-family: var(--font-heading); font-size: 0.92rem; font-weight: 600; }
+  .course-sidebar nav { display: grid; gap: 0.3rem; }
+  .module-group { display: grid; gap: .2rem; margin-top: .55rem; }
+  .module-heading { display: grid; gap: .12rem; padding: .55rem .65rem .3rem; }
+  .module-heading span { color: var(--color-primary); font-size: .58rem; font-weight: 650; text-transform: uppercase; }
+  .module-heading strong { color: var(--color-navy); font-size: .7rem; font-weight: 650; line-height: 1.35; }
+  .course-sidebar nav a { display: grid; align-items: center; border: 1px solid transparent; border-radius: var(--radius-DEFAULT); color: var(--color-muted); text-decoration: none; }
+  .overview-link { grid-template-columns: auto 1fr; gap: 0.6rem; padding: 0.65rem; }
+  .overview-link > span, .lesson-link > span:first-child { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 0.55rem; background: var(--color-phinisi-50); color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 900; }
+  .lesson-link { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.58rem; padding: 0.62rem; }
+  .lesson-link > span:nth-child(2) { display: grid; min-width: 0; gap: 0.12rem; }
+  .lesson-link small { font-family: var(--font-mono); font-size: 0.54rem; font-weight: 800; text-transform: uppercase; }
+  .lesson-link strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: inherit; font-size: 0.7rem; line-height: 1.35; }
+  .lesson-link b { min-width: 0.8rem; color: var(--color-success); font-size: 0.7rem; text-align: center; }
+  .course-sidebar nav a:hover, .course-sidebar nav a.active { border-color: var(--color-phinisi-200); background: var(--color-phinisi-50); color: var(--color-navy); }
+  .course-sidebar nav a.active > span:first-child { background: var(--color-primary); color: #fff; }
+  .lesson-link.complete b { color: var(--color-success); }
+  .lesson-link.complete > span:first-child { background: var(--color-success-soft); color: var(--color-success); }
+
+  .course-sidebar :global(.learning-status) { margin-bottom: 0; }
+  .player-main { min-width: 0; padding: 3rem 0 5rem; }
+  .lesson-header { margin-bottom: 2.25rem; border-bottom: 1px solid var(--color-line); padding-bottom: 1.75rem; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.85rem; margin-bottom: 0.8rem; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.04em; text-transform: uppercase; }
+  .lesson-header h1 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+  .lesson-header p { max-width: 720px; margin: 0.9rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.65; }
+  .lesson-resources { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 1rem; }
+  .lesson-resources a { color: var(--color-primary); font-size: 0.7rem; font-weight: 850; text-decoration: none; }
+  .lesson-content { color: var(--color-ink); font-size: 1rem; line-height: 1.78; }
+  .lesson-content :global(> h1:first-child) { display: none; }
+  .lesson-content :global(h2), .lesson-content :global(h3), .lesson-content :global(h4) { color: var(--color-navy); font-family: var(--font-heading); font-weight: 600; letter-spacing: -0.015em; scroll-margin-top: 105px; }
+  .lesson-content :global(h2) { margin: 3rem 0 1rem; border-top: 1px solid var(--color-line); padding-top: 2rem; font-size: 1.7rem; line-height: 1.2; }
+  .lesson-content :global(h3) { margin: 2rem 0 0.75rem; font-size: 1.28rem; }
+  .lesson-content :global(p) { margin: 0.95rem 0; color: var(--color-muted); }
+  .lesson-content :global(strong) { color: var(--color-ink); font-weight: 850; }
+  .lesson-content :global(a:not(.practice-button)) { color: var(--color-primary); font-weight: 750; text-underline-offset: 3px; }
+  .lesson-content :global(ul), .lesson-content :global(ol) { margin: 1rem 0; padding-left: 1.4rem; color: var(--color-muted); }
+  .lesson-content :global(li) { margin: 0.42rem 0; padding-left: 0.25rem; }
+  .lesson-content :global(li::marker) { color: var(--color-primary); font-weight: 800; }
+  .lesson-content :global(code:not(pre code)) { border: 1px solid var(--color-phinisi-200); border-radius: 0.42rem; padding: 0.12rem 0.35rem; background: var(--color-phinisi-50); color: #0e4ca9; font-family: var(--font-mono); font-size: 0.86em; }
+  .lesson-content :global(table) { display: table; width: 100%; margin: 1.5rem 0; overflow: hidden; border: 1px solid var(--color-line); border-collapse: separate; border-spacing: 0; border-radius: 1rem; font-size: 0.88rem; }
+  .lesson-content :global(th) { padding: 0.75rem; background: var(--color-navy); color: #fff; text-align: left; }
+  .lesson-content :global(td) { border-top: 1px solid var(--color-line); padding: 0.75rem; color: var(--color-muted); vertical-align: top; }
+  .lesson-content :global(tr:nth-child(even) td) { background: var(--color-phinisi-50); }
+  .lesson-content :global(pre.astro-code) { position: relative; padding-top: 3.4rem !important; }
+  .lesson-content :global(.lesson-code-copy) { position: absolute; z-index: 2; top: 0.72rem; right: 0.72rem; border: 1px solid rgba(143, 199, 255, 0.25); border-radius: 0.55rem; padding: 0.38rem 0.55rem; background: rgba(255,255,255,0.08); color: #d9ebff; font-size: 0.68rem; font-weight: 850; cursor: pointer; }
+  .player-pagination { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin-top: 2rem; border-top: 1px solid var(--color-line); padding-top: 2rem; }
+  .player-pagination a { display: flex; min-height: 82px; align-items: center; gap: 0.6rem; border: 1px solid var(--color-line); border-radius: var(--radius-DEFAULT); padding: 0.85rem; background: #fff; color: var(--color-primary); text-decoration: none; }
+  .player-pagination a.next { justify-content: flex-end; text-align: right; }
+  .player-pagination a span { display: grid; gap: 0.2rem; }
+  .player-pagination small { font-family: var(--font-mono); font-size: 0.56rem; font-weight: 850; text-transform: uppercase; }
+  .player-pagination strong { color: var(--color-navy); font-size: 0.76rem; line-height: 1.35; }
+
+  .mobile-course-nav, .mobile-learning-status { display: none; }
+
+  @media (max-width: 820px) {
+    .player-progress { top: 68px; }
+    .learning-player { display: block; width: min(100% - 2rem, 820px); }
+    .course-sidebar { display: none; }
+    .mobile-learning-status { display: block; }
+    .player-main { padding-top: 1.4rem; }
+    .mobile-course-nav { display: block; margin-bottom: 1rem; border: 1px solid var(--color-line); border-radius: 0.9rem; background: #fff; }
+    .mobile-course-nav summary { display: flex; justify-content: space-between; gap: 1rem; padding: 0.8rem; color: var(--color-navy); font-size: 0.76rem; font-weight: 800; cursor: pointer; }
+    .mobile-course-nav nav { display: grid; gap: 0.25rem; border-top: 1px solid var(--color-line); padding: 0.6rem; }
+    .mobile-course-nav a { border-radius: 0.6rem; padding: 0.55rem; color: var(--color-muted); font-size: 0.7rem; text-decoration: none; }
+    .mobile-course-nav a[aria-current='page'] { background: var(--color-phinisi-50); color: var(--color-primary); font-weight: 850; }
+  }
+  @media (max-width: 620px) {
+    .lesson-header h1 { font-size: 2.2rem; }
+    .lesson-content { font-size: 0.95rem; }
+    .lesson-content :global(h2) { font-size: 1.45rem; }
+    .lesson-content :global(table) { display: block; overflow-x: auto; }
+    .player-pagination { grid-template-columns: 1fr; }
+    .player-pagination > span:empty { display: none; }
+  }
+</style>

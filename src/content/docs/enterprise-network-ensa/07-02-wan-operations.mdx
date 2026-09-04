@@ -1,0 +1,106 @@
+---
+title: "WAN Operations"
+language: id
+draft: false
+description: "Bagian ini membahas standar, perangkat, dan metode komunikasi di WAN."
+order: 47
+course: enterprise-network-ensa
+module: ensa-07-wan-concepts
+durationMinutes: 7
+---
+
+# WAN Operations
+
+
+Bagian ini membahas standar, perangkat, dan metode komunikasi di WAN.
+
+## 7.2.1 WAN Standards
+
+Standar WAN ditetapkan oleh badan-badan seperti **TIA/EIA**, **ISO**, dan **IEEE**. Standar ini mendefinisikan aspek physical dan data link dari WAN.
+
+## 7.2.2 WANs in the OSI Model
+
+![WANs in the OSI Model](https://itexamanswers.net/wp-content/uploads/2020/04/WANs-in-the-OSI-Model.jpg)
+
+WAN berfokus pada dua layer OSI:
+- **Layer 1 (Physical):** Spesifikasi electrical/mechanical untuk transmisi bit — contoh: SDH, SONET, DWDM
+- **Layer 2 (Data Link):** Framing dan encapsulation — contoh: Ethernet WAN, MPLS, PPP, HDLC, Frame Relay, ATM
+
+## 7.2.3 Common WAN Terminology
+
+![Common WAN Terminology](https://itexamanswers.net/wp-content/uploads/2020/04/Common-WAN-Terminology.jpg)
+
+| Istilah | Deskripsi |
+|---|---|
+| **DTE** (Data Terminal Equipment) | Perangkat pelanggan yang menghubungkan LAN ke WAN (biasanya router) |
+| **DCE** (Data Communications Equipment) | Perangkat yang menyediakan interface ke WAN cloud (biasanya modem) |
+| **CPE** (Customer Premises Equipment) | Semua perangkat milik/sewa pelanggan di edge (DTE + DCE) |
+| **Demarcation Point** | Batas fisik antara perangkat pelanggan dan provider |
+| **Local Loop** (Last Mile) | Kabel dari CPE ke Central Office (CO) provider |
+
+## 7.2.4 WAN Devices
+
+![WAN Devices](https://itexamanswers.net/wp-content/uploads/2020/04/WAN-Devices.jpg)
+
+| Perangkat | Fungsi |
+|---|---|
+| **Voiceband Modem** | Legacy dial-up |
+| **DSL/Cable Modem** | Broadband modem untuk koneksi digital kecepatan tinggi |
+| **CSU/DSU** | Untuk leased line digital; mengkonversi format sinyal |
+| **Optical Converter** | Menghubungkan fiber ke media copper |
+| **Router WAN** | Mengarahkan traffic di backbone provider |
+
+## 7.2.5 Serial Communication
+
+![Serial Communication](https://itexamanswers.net/wp-content/uploads/2020/04/Serial-Communication.gif)
+
+**Serial communication** mengirim bit secara berurutan melalui satu channel. Ini metode yang dominan di WAN karena:
+- lebih praktis untuk jarak jauh
+- tidak punya masalah sinkronisasi seperti paralel
+- biaya kabel lebih rendah
+
+## 7.2.6 Circuit-Switched Communication
+
+![Circuit-Switched Communication](https://itexamanswers.net/wp-content/uploads/2020/04/Circuit-Switched-Communication.gif)
+
+**Circuit-switched** membuat **sirkuit dedicated end-to-end** sebelum komunikasi dimulai.
+
+### Contoh: PSTN, ISDN
+
+### Kelebihan:
+- jaminan bandwidth
+
+### Kekurangan:
+- **tidak efisien untuk data** karena kapasitas tetap meski tidak ada data yang dikirim
+
+## 7.2.7 Packet-Switched Communications
+
+![Packet-Switched Communications](https://itexamanswers.net/wp-content/uploads/2020/04/Packet-Switched-Communications.gif)
+
+**Packet-switched** memecah data menjadi paket yang dirute melalui **jaringan shared**.
+
+### Contoh: Ethernet WAN, MPLS
+
+### Kelebihan:
+- **lebih efisien dan fleksibel**
+- bandwidth digunakan saat dibutuhkan
+- biaya lebih rendah
+
+## 7.2.8 SDH, SONET, and DWDM
+
+![SDH, SONET, and DWDM](https://itexamanswers.net/wp-content/uploads/2020/04/SDH-SONET-and-DWDM.jpg)
+
+| Teknologi | Deskripsi |
+|---|---|
+| **SDH** (Synchronous Digital Hierarchy) | Standar global untuk transport data fiber-optic |
+| **SONET** (Synchronous Optical Networking) | Standar Amerika Utara (ekuivalen SDH) |
+| **DWDM** (Dense Wavelength Division Multiplexing) | Multiplexing >80 channel data (wavelength) di satu fiber, masing-masing 10 Gbps |
+
+DWDM secara dramatis meningkatkan kapasitas fiber tanpa perlu menambah kabel baru.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 7: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-7-wan-concepts.html).

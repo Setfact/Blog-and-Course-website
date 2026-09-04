@@ -1,0 +1,83 @@
+---
+interface Props { courseSlug: string; totalLessons: number; }
+const { courseSlug, totalLessons } = Astro.props;
+---
+
+<aside class="learning-status" data-learning-status data-course={courseSlug} data-total-lessons={totalLessons} aria-label="Progress belajar lokal">
+  <div class="status-heading">
+    <strong><span data-completed-lessons>0</span>/{totalLessons} lesson</strong>
+    <span data-progress-percent>0%</span>
+  </div>
+  <div class="progress-track" aria-hidden="true"><span data-progress-fill></span></div>
+  <details class="activity-summary">
+    <summary>Aktivitas belajar</summary>
+    <div class="status-meta">
+      <span><strong data-xp>0</strong> XP</span>
+      <span><strong data-streak>0</strong> hari streak</span>
+      <span><strong data-badges>0</strong> badge</span>
+    </div>
+    <ul class="badge-list" data-badge-list hidden aria-label="Badge yang diperoleh"></ul>
+  </details>
+</aside>
+
+<script>
+  import { getLearningState } from '../scripts/learning-store';
+
+  const badgeLabels: Record<string, string> = {
+    'langkah-pertama': 'Langkah Pertama',
+    'security-starter': 'Security Starter',
+    'security-guardian': 'Security Guardian',
+    'streak-3': 'Konsisten 3 Hari',
+  };
+
+  const renderLearningStatus = (root: HTMLElement) => {
+    const state = getLearningState();
+    const courseSlug = root.dataset.course ?? '';
+    const totalLessons = Number(root.dataset.totalLessons) || 0;
+    const completed = state.completedLessons.filter((lesson) => lesson.startsWith(courseSlug + '/')).length;
+    const percent = totalLessons > 0 ? Math.min(100, Math.round((completed / totalLessons) * 100)) : 0;
+
+    const completedElement = root.querySelector<HTMLElement>('[data-completed-lessons]');
+    const percentElement = root.querySelector<HTMLElement>('[data-progress-percent]');
+    const fillElement = root.querySelector<HTMLElement>('[data-progress-fill]');
+    const xpElement = root.querySelector<HTMLElement>('[data-xp]');
+    const streakElement = root.querySelector<HTMLElement>('[data-streak]');
+    const badgeElement = root.querySelector<HTMLElement>('[data-badges]');
+    const badgeList = root.querySelector<HTMLUListElement>('[data-badge-list]');
+
+    if (completedElement) completedElement.textContent = String(completed);
+    if (percentElement) percentElement.textContent = percent + '%';
+    if (fillElement) fillElement.style.width = percent + '%';
+    if (xpElement) xpElement.textContent = String(state.xp);
+    if (streakElement) streakElement.textContent = String(state.streak);
+    if (badgeElement) badgeElement.textContent = String(state.badges.length);
+    if (badgeList) {
+      badgeList.replaceChildren(...state.badges.map((badge) => {
+        const item = document.createElement('li');
+        item.textContent = badgeLabels[badge] ?? badge;
+        return item;
+      }));
+      badgeList.hidden = state.badges.length === 0;
+    }
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-learning-status]').forEach(renderLearningStatus);
+  window.addEventListener('phinisi-progress-updated', () => {
+    document.querySelectorAll<HTMLElement>('[data-learning-status]').forEach(renderLearningStatus);
+  });
+</script>
+
+<style>
+  .learning-status { margin: 1.25rem 0; border: 1px solid var(--color-line); border-radius: var(--radius-DEFAULT); padding: 0.85rem; background: #fff; }
+  .status-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--color-navy); font-size: 0.72rem; }
+  .status-heading > span { color: var(--color-primary); font-weight: 900; }
+  .progress-track { height: 0.45rem; overflow: hidden; margin-top: 0.55rem; border-radius: 999px; background: var(--color-phinisi-100); }
+  .progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-primary); transition: width 180ms ease; }
+  .activity-summary { margin-top: 0.55rem; border-top: 1px solid var(--color-line); padding-top: 0.5rem; }
+  .activity-summary summary { color: var(--color-muted); font-size: 0.61rem; font-weight: 750; cursor: pointer; }
+  .status-meta { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; margin-top: 0.55rem; color: var(--color-muted); font-size: 0.6rem; }
+  .status-meta strong { color: var(--color-ink); }
+  .badge-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.65rem 0 0; padding: 0; list-style: none; }
+  .badge-list[hidden] { display: none; }
+  .badge-list li { border-radius: 999px; padding: 0.25rem 0.48rem; background: var(--color-gold-soft); color: #7a5100; font-size: 0.58rem; font-weight: 850; }
+</style>

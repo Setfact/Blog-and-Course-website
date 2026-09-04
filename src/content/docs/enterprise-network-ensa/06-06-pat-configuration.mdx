@@ -1,0 +1,101 @@
+---
+title: "PAT Configuration"
+language: id
+draft: false
+description: "Bagian ini membahas konfigurasi PAT — tipe NAT yang paling banyak digunakan."
+order: 42
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 7
+---
+
+# PAT Configuration
+
+
+Bagian ini membahas konfigurasi PAT — tipe NAT yang paling banyak digunakan.
+
+## 6.6.1 PAT Scenario
+
+![PAT Scenario](https://itexamanswers.net/wp-content/uploads/2020/04/PAT-Scenario.jpg)
+
+### Skenario
+- Banyak host internal perlu akses internet
+- Hanya tersedia **sedikit alamat public** (atau bahkan hanya satu)
+- PAT menggunakan port number untuk membedakan sesi
+
+## 6.6.2 Configure PAT Using an Interface Address
+
+Cara paling sederhana: gunakan alamat public di interface router.
+
+```text
+R2(config)# access-list 1 permit 192.168.0.0 0.0.255.255
+R2(config)# ip nat inside source list 1 interface Serial0/1/1 overload
+```
+
+### Penjelasan
+- `overload` — kata kunci yang mengaktifkan PAT
+- Router menggunakan alamat IP interface `Serial0/1/1` sebagai inside global address
+- Semua host yang match ACL berbagi satu alamat public ini
+
+## 6.6.3 Configure PAT to Use an Address Pool
+
+Kalau kamu punya pool alamat public:
+
+```text
+R2(config)# ip nat pool NAT-POOL2 209.165.200.226 209.165.200.240 netmask 255.255.255.224
+R2(config)# access-list 1 permit 192.168.0.0 0.0.255.255
+R2(config)# ip nat inside source list 1 pool NAT-POOL2 overload
+```
+
+![Configure PAT to Use an Address Pool](https://itexamanswers.net/wp-content/uploads/2020/04/Configure-PAT-to-Use-an-Address-Pool.jpg)
+
+### Perbedaan dengan interface PAT
+
+| Metode | Sumber Alamat Public |
+|---|---|
+| Interface overload | Alamat IP di interface router |
+| Pool overload | Alamat dari pool yang didefinisikan |
+
+## 6.6.4 Analyze PAT
+
+### PC to Server
+
+![Analyze PAT PC to Server](https://itexamanswers.net/wp-content/uploads/2020/04/Analyze-PAT-PC-to-Server.jpg)
+
+### Server to PC
+
+![Analyze PAT Server to PC](https://itexamanswers.net/wp-content/uploads/2020/04/Analyze-PAT-Server-to-PC.jpg)
+
+### Perhatikan di NAT table
+Output `show ip nat translations` untuk PAT akan menunjukkan **port number** di samping IP address — ini yang membedakan PAT dari NAT biasa.
+
+```text
+R2# show ip nat translations
+Pro  Inside global         Inside local          Outside local         Outside global
+tcp  209.165.200.226:1025  192.168.10.10:1025    209.165.200.2:80       209.165.200.2:80
+tcp  209.165.200.226:1026  192.168.10.11:1026    209.165.200.2:80       209.165.200.2:80
+```
+
+Perhatikan: kedua host internal (`192.168.10.10` dan `192.168.10.11`) berbagi alamat public yang sama (`209.165.200.226`) tapi dengan port number yang berbeda.
+
+## 6.6.5 Verify PAT
+
+```text
+R2# show ip nat translations
+R2# show ip nat statistics
+R2# clear ip nat translation *
+```
+
+## 6.6.6 Packet Tracer – Configure PAT
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi PAT. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

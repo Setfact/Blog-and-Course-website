@@ -1,0 +1,78 @@
+---
+title: "QoS Models"
+language: id
+draft: false
+description: "Bagian ini membahas tiga model QoS yang tersedia."
+order: 60
+course: enterprise-network-ensa
+module: ensa-09-qos-concepts
+durationMinutes: 6
+---
+
+# QoS Models
+
+
+Bagian ini membahas tiga model QoS yang tersedia.
+
+## 9.4.1 Best-Effort Model
+
+**Best-Effort** — tidak ada QoS eksplisit. Semua traffic diperlakukan sama.
+
+### Kelebihan:
+- Sederhana, scalable
+
+### Kekurangan:
+- Tidak ada jaminan kualitas
+
+## 9.4.2 IntServ Model
+
+![Simple IntServ Example](https://itexamanswers.net/wp-content/uploads/2020/04/Simple-IntServ-Example.jpg)
+
+**IntServ (Integrated Services)** — reservasi resource per flow menggunakan **RSVP**.
+
+### Cara kerja:
+1. Aplikasi meminta reservasi bandwidth via RSVP
+2. Router memeriksa apakah resource cukup
+3. Jika cukup, reservasi dibuat
+4. Traffic yang sudah di-reservasi mendapat jaminan
+
+### Kelebihan:
+- **"Hard QoS"** — jaminan mutlak
+
+### Kekurangan:
+- **Tidak scalable** — setiap flow harus di-reservasi
+- Resource-intensive
+
+## 9.4.3 DiffServ Model
+
+![Simple DiffServ Example](https://itexamanswers.net/wp-content/uploads/2020/04/Simple-DiffServ-Example.jpg)
+
+**DiffServ (Differentiated Services)** — QoS berbasis class menggunakan marking **DSCP**.
+
+### Cara kerja:
+1. Traffic diklasifikasikan ke class-class
+2. Setiap class diberi **DSCP marking**
+3. Perangkat jaringan memperlakukan traffic berdasarkan marking
+
+### Kelebihan:
+- **Scalable** — tidak perlu reservasi per flow
+- **Fleksibel** — bisa menambah class baru
+- **"Soft QoS"** — prioritas tapi bukan jaminan mutlak
+
+### Kekurangan:
+- Tidak ada jaminan end-to-end yang absolut
+
+### Perbandingan Model
+
+| Model | QoS Guarantee | Scalability | Kompleksitas | Penggunaan |
+|---|---|---|---|---|
+| Best-Effort | ❌ | Sangat Tinggi | Rendah | Internet (default) |
+| IntServ | Hard QoS | Rendah | Tinggi | Jarang digunakan |
+| **DiffServ** | Soft QoS | **Tinggi** | **Sedang** | **Paling umum** |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 9: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-9-qos-concepts.html).

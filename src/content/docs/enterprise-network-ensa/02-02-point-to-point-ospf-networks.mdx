@@ -1,0 +1,230 @@
+---
+title: "Point-to-Point OSPF Networks"
+language: id
+draft: false
+description: "Bagian ini membahas cara mengaktifkan OSPF pada jaringan point-to-point."
+order: 8
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 9
+---
+
+# Point-to-Point OSPF Networks
+
+
+Bagian ini membahas cara mengaktifkan OSPF pada jaringan point-to-point.
+
+## 2.2.1 The network Command Syntax
+
+```text
+Router(config-router)# network network-address wildcard-mask area area-id
+```
+
+### Penjelasan parameter
+- `network-address` = network yang mau dicocokkan
+- `wildcard-mask` = pembanding bit yang dipakai OSPF
+- `area area-id` = area OSPF tempat interface itu dimasukkan
+
+Untuk single-area OSPFv2, **area 0** adalah pilihan best practice.
+
+### Cara kerja `network`
+
+Command `network` tidak menambahkan route. Fungsinya adalah **mengaktifkan OSPF pada interface yang cocok dengan pola address + wildcard**.
+
+## 2.2.2 The Wildcard Mask
+
+Wildcard mask adalah kebalikan dari subnet mask.
+
+### Aturan sederhana
+- **0 bit** = harus match
+- **1 bit** = diabaikan
+
+![Calculating a Wildcard Mask for /24](https://itexamanswers.net/wp-content/uploads/2020/04/Calculating-a-Wildcard-Mask-for-24.jpg)
+
+![Calculating a Wildcard Mask for /26](https://itexamanswers.net/wp-content/uploads/2020/04/Calculating-a-Wildcard-Mask-for-26.jpg)
+
+## 2.2.3 Configure OSPF Using the network Command
+
+![Configure OSPF Using the network Command](https://itexamanswers.net/wp-content/uploads/2020/04/Configure-OSPF-Using-the-network-Command.jpg)
+
+```text
+R1(config)# router ospf 10
+R1(config-router)# network 10.10.1.0 0.0.0.255 area 0
+R1(config-router)# network 10.1.1.4 0.0.0.3 area 0
+R1(config-router)# network 10.1.1.12 0.0.0.3 area 0
+```
+
+### Quad-zero wildcard
+
+Kalau kamu ingin mencocokkan satu interface saja secara spesifik:
+
+```text
+R1(config)# router ospf 10
+R1(config-router)# network 10.10.1.1 0.0.0.0 area 0
+R1(config-router)# network 10.1.1.5 0.0.0.0 area 0
+R1(config-router)# network 10.1.1.14 0.0.0.0 area 0
+```
+
+## 2.2.4 Syntax Checker — Configure R2 and R3 Using the network Command
+
+```text
+You are currently logged into R2:
+- Configure the R2 router ID of 2.2.2.2
+- Advertise the networks connected to R2 with the appropriate wildcard mask using area 0
+
+R2(config)#router ospf 10
+R2(config-router)#router-id 2.2.2.2
+R2(config-router)#network 10.10.2.0 0.0.0.255 area 0
+R2(config-router)#network 10.1.1.4 0.0.0.3 area 0
+R2(config-router)#network 10.1.1.8 0.0.0.3 area 0
+```
+
+## 2.2.5 Configure OSPF Using the ip ospf Command
+
+```text
+Router(config-if)# ip ospf process-id area area-id
+```
+
+### Konversi dari network ke ip ospf
+
+```text
+R1(config)# router ospf 10
+R1(config-router)# no network 10.10.1.1 0.0.0.0 area 0
+R1(config-router)# no network 10.1.1.5 0.0.0.0 area 0
+R1(config-router)# no network 10.1.1.14 0.0.0.0 area 0
+R1(config-router)# interface GigabitEthernet 0/0/0
+R1(config-if)# ip ospf 10 area 0
+R1(config-if)# interface GigabitEthernet 0/0/1 
+R1(config-if)# ip ospf 10 area 0
+R1(config-if)# interface Loopback 0
+R1(config-if)# ip ospf 10 area 0
+```
+
+### Perbedaan dengan `network`
+- `network` = pilih interface via pola network/wildcard
+- `ip ospf` = aktifkan langsung di interface
+
+## 2.2.6 Syntax Checker — Configure R2 and R3 Using the ip ospf Command
+
+```text
+R2(config)#interface lo0
+R2(config-if)#ip ospf 10 area 0
+R2(config-if)#interface g0/0/0
+R2(config-if)#ip ospf 10 area 0
+R2(config-if)#interface g0/0/1
+R2(config-if)#ip ospf 10 area 0
+```
+```text
+*Mar 25 21:19:21.938: %OSPF-5-ADJCHG: Process 10, Nbr 1.1.1.1 on GigabitEthernet0/0/0 from LOADING to FULL, Loading Done
+```
+
+Perhatikan pesan `%OSPF-5-ADJCHG` yang menunjukkan adjacency berhasil terbentuk.
+
+## 2.2.7 Passive Interface
+
+```text
+R1(config)# router ospf 10
+R1(config-router)# passive-interface loopback 0
+R1(config-router)# end
+```
+
+### Verifikasi
+
+```text
+R1# show ip protocols
+  Routing on Interfaces Configured Explicitly (Area 0):
+    Loopback0
+    GigabitEthernet0/0/1
+    GigabitEthernet0/0/0
+  Passive Interface(s):
+    Loopback0
+```
+
+**Loopback0** muncul di daftar **Passive Interface(s)** — OSPF tidak mengirim Hello dari interface tersebut, tapi network-nya tetap diiklankan.
+
+### Metode passive-interface default
+
+```text
+R3(config)# router ospf 10
+R3(config-router)# passive-interface default
+R3(config-router)# no passive-interface g0/0/0
+R3(config-router)# no passive-interface g0/0/1
+```
+
+## 2.2.8 Syntax Checker — Configure R2 and R3 Passive Interfaces
+
+```text
+R2(config)#router ospf 10
+R2(config-router)#passive-interface lo0
+R2(config-router)#end
+R2#show ip protocols
+Passive Interface(s):
+Loopback0
+```
+
+## 2.2.9 OSPF Point-to-Point Networks
+
+Secara default, interface Ethernet dianggap sebagai **broadcast network** dan OSPF melakukan DR/BDR election.
+
+### Cek network type default
+
+```text
+R1# show ip ospf interface GigabitEthernet 0/0/0
+  Process ID 10, Router ID 1.1.1.1, Network Type BROADCAST, Cost: 1
+  Transmit Delay is 1 sec, State BDR, Priority 1
+```
+
+### Ubah ke point-to-point
+
+```text
+R1(config)# interface GigabitEthernet 0/0/0
+R1(config-if)# ip ospf network point-to-point
+```
+```text
+*Jun  6 00:44:05.208: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from FULL to DOWN
+*Jun  6 00:44:05.211: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 from LOADING to FULL, Loading Done
+```
+```text
+R1(config-if)# interface GigabitEthernet 0/0/1
+R1(config-if)# ip ospf network point-to-point
+```
+```text
+*Jun  6 00:44:45.532: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 from FULL to DOWN
+*Jun  6 00:44:45.533: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 from LOADING to FULL, Loading Done
+```
+
+Adjacency turun sebentar lalu naik kembali. DR/BDR election tidak diperlukan lagi.
+
+## 2.2.10 Loopbacks and Point-to-Point Networks
+
+Loopback secara default diiklankan sebagai **/32 host route**:
+
+```text
+R2# show ip route | include 10.10.1
+```
+```text
+O        10.10.1.1/32 [110/2] via 10.1.1.5, 00:03:05, GigabitEthernet0/0/0
+```
+
+Setelah diubah ke point-to-point:
+
+```text
+R1(config-if)# interface Loopback 0
+R1(config-if)# ip ospf network point-to-point
+```
+
+```text
+R2# show ip route | include 10.10.1
+```
+```text
+O        10.10.1.0/24 [110/2] via 10.1.1.5, 00:00:30, GigabitEthernet0/0/0
+```
+
+Sekarang route muncul sebagai **/24** (network route) bukan /32.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

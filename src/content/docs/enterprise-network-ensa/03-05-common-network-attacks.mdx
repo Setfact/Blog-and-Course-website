@@ -1,0 +1,169 @@
+---
+title: "Common Network Attacks"
+language: id
+draft: false
+description: "Bagian ini adalah salah satu yang paling penting di modul ini. Kamu harus memahami tiga kategori utama serangan: reconnaissance, access, dan DoS/DDoS."
+order: 18
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 9
+---
+
+# Common Network Attacks
+
+
+Bagian ini adalah salah satu yang paling penting di modul ini. Kamu harus memahami tiga kategori utama serangan: **reconnaissance**, **access**, dan **DoS/DDoS**.
+
+## 3.5.1 Overview of Network Attacks
+
+Serangan jaringan bisa dikategorikan menjadi beberapa jenis utama yang masing-masing punya tujuan dan teknik berbeda.
+
+## 3.5.2 Video – Reconnaissance Attacks
+
+<Callout type="remember" title={"Video"}>
+Source menyediakan video tentang reconnaissance attacks. Tersedia di halaman source asli.
+</Callout>
+
+
+## 3.5.3 Reconnaissance Attacks
+
+Reconnaissance adalah tahap **pengumpulan informasi** sebelum serangan sesungguhnya dilakukan. Ini langkah pertama yang hampir selalu dilakukan attacker.
+
+### Tahapan reconnaissance
+
+1. **Information Query**
+   - mengumpulkan data tentang target dari sumber publik
+   - tools: Google, whois, analisis website
+   - contoh: mencari email karyawan, nama server, infrastruktur
+
+![Internet Information Queries](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.3-Internet-Information-Queries.gif)
+
+2. **Ping Sweep**
+   - mengirim paket ICMP ke range IP untuk menemukan host aktif
+   - membantu attacker memetakan jaringan
+
+![Performing Ping Sweeps](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.3-Performing-Ping-Sweeps.gif)
+
+3. **Port Scan**
+   - memindai port terbuka pada host target
+   - menentukan layanan apa yang sedang berjalan
+   - tools: Nmap, SuperScan
+
+![Performing Port Scans](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.3-Performing-Port-Scans.gif)
+
+4. **Vulnerability Scan**
+   - memindai sistem untuk menemukan kelemahan yang diketahui
+   - tools: Nessus, OpenVAS
+
+5. **Exploitation**
+   - mencoba mengeksploitasi layanan atau vulnerability yang ditemukan
+   - tools: Metasploit
+
+### Kenapa reconnaissance berbahaya?
+Karena semakin banyak informasi yang dikumpulkan attacker, semakin efektif serangan selanjutnya. Reconnaissance sendiri tidak merusak, tapi ini fondasi untuk serangan yang lebih serius.
+
+## 3.5.4 Video – Access and Social Engineering Attacks
+
+<Callout type="remember" title={"Video"}>
+Source menyediakan video tentang access dan social engineering attacks. Tersedia di halaman source asli.
+</Callout>
+
+
+## 3.5.5 Access Attacks
+
+Access attacks mengeksploitasi vulnerability untuk mendapatkan akses tidak sah.
+
+### Tipe-tipe Access Attacks
+
+| Tipe | Deskripsi |
+|---|---|
+| **Password Attacks** | Brute-force atau dictionary attack untuk menemukan kredensial |
+| **Spoofing** | Memalsukan data: IP spoofing, MAC spoofing, DHCP spoofing |
+| **Trust Exploitation** | Memanfaatkan hak akses yang tidak seharusnya dimiliki |
+
+![Trust Exploitation Example](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.5-Trust-Exploitation-Example.gif)
+
+| Tipe | Deskripsi |
+|---|---|
+| **Port Redirection** | Menggunakan host yang sudah terkompromi sebagai basis serangan |
+
+![Port Redirection Example](https://itexamanswers.net/wp-content/uploads/2020/04/Port-Redirection-Example.jpg)
+
+| Tipe | Deskripsi |
+|---|---|
+| **Man-in-the-Middle** | Mencegat komunikasi antara dua pihak |
+
+![Man-in-the-Middle Attack Example](https://itexamanswers.net/wp-content/uploads/2020/04/Man-in-the-Middle-Attack-Example.jpg)
+
+| Tipe | Deskripsi |
+|---|---|
+| **Buffer Overflow** | Membanjiri memori sistem dengan data berlebih untuk mengontrol alur eksekusi |
+
+![Buffer Overflow Attack](https://itexamanswers.net/wp-content/uploads/2020/04/Buffer-Overflow-Attack.jpg)
+
+## 3.5.6 Social Engineering Attacks
+
+Social engineering memanipulasi manusia, bukan sistem. Ini serangan yang paling sulit ditangani dengan teknologi karena targetnya adalah **psikologi manusia**.
+
+### Teknik Social Engineering
+
+| Teknik | Deskripsi |
+|---|---|
+| **Pretexting** | Berpura-pura membutuhkan data untuk verifikasi identitas |
+| **Phishing** | Email palsu dari sumber terpercaya untuk mencuri data |
+| **Spear Phishing** | Phishing yang difokuskan ke individu tertentu |
+| **Spam** | Email massal yang mengganggu atau berbahaya |
+| **Baiting** | Meletakkan USB terinfeksi di tempat umum |
+| **Impersonation** | Berpura-pura menjadi orang lain |
+| **Tailgating** | Mengikuti personel yang berwenang masuk ke area terbatas |
+| **Shoulder Surfing** | Mengintip saat seseorang mengetik password |
+| **Dumpster Diving** | Mencari informasi sensitif di tempat sampah |
+
+![Recommended Social Engineering Protection Practices](https://itexamanswers.net/wp-content/uploads/2020/04/Recommended-Social-Engineering-Protection-Practices.jpg)
+
+Gambar di atas menunjukkan praktik terbaik untuk melindungi diri dari social engineering. Intinya: **edukasi pengguna** dan **validasi identitas**.
+
+## 3.5.7 Lab – Social Engineering
+
+<Callout type="remember" title={"Lab"}>
+Source menyediakan lab interaktif tentang social engineering. Tersedia di halaman source asli.
+</Callout>
+
+
+## 3.5.8 Video – Denial of Service Attacks
+
+<Callout type="remember" title={"Video"}>
+Source menyediakan video tentang DoS attacks. Tersedia di halaman source asli.
+</Callout>
+
+
+## 3.5.9 DoS and DDoS Attacks
+
+### DoS (Denial of Service)
+Serangan dari **satu sumber** yang membanjiri target dengan traffic atau paket cacat sehingga layanan tidak bisa diakses.
+
+![DoS Attack](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.9-DoS-Attack.gif)
+
+### DDoS (Distributed Denial of Service)
+Serangan dari **banyak sumber** secara bersamaan. Biasanya menggunakan **botnet** — jaringan komputer zombie yang dikendalikan oleh attacker melalui **Command and Control (CnC)** server.
+
+![DDoS Attack](https://itexamanswers.net/wp-content/uploads/2020/04/3.5.9-DDoS-Attack.gif)
+
+### Perbedaan DoS vs DDoS
+
+| Aspek | DoS | DDoS |
+|---|---|---|
+| Sumber | Satu komputer | Banyak komputer (botnet) |
+| Kekuatan | Terbatas | Sangat besar |
+| Deteksi | Lebih mudah | Lebih sulit |
+| Dampak | Gangguan layanan | Bisa melumpuhkan infrastruktur besar |
+
+### Kenapa DDoS makin berbahaya?
+Karena volume traffic yang dihasilkan botnet bisa mencapai ratusan Gbps, cukup untuk menjatuhkan server besar sekalipun.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

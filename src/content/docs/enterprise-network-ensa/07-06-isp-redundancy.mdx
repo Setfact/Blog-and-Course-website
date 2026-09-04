@@ -1,0 +1,92 @@
+---
+title: "ISP Redundancy"
+language: id
+draft: false
+description: "Bagian ini membahas berbagai cara untuk mendapatkan redundancy dari ISP."
+order: 51
+course: enterprise-network-ensa
+module: ensa-07-wan-concepts
+durationMinutes: 7
+---
+
+# ISP Redundancy
+
+
+Bagian ini membahas berbagai cara untuk mendapatkan redundancy dari ISP.
+
+## Single-homed
+
+![Single-homed](https://itexamanswers.net/wp-content/uploads/2020/04/Single-homed.jpg)
+
+- Hanya satu koneksi ke satu ISP
+- **Single point of failure**
+- Biaya paling rendah
+
+## Dual-homed
+
+![Dual-homed](https://itexamanswers.net/wp-content/uploads/2020/04/Dual-homed.jpg)
+
+- Dua koneksi ke **satu ISP yang sama**
+- Ada redundancy di sisi link, tapi masih bergantung pada satu provider
+
+## Multihomed
+
+![Multihomed](https://itexamanswers.net/wp-content/uploads/2020/04/Multihomed.jpg)
+
+- Satu koneksi ke **beberapa ISP**
+- Bisa load balancing dan failover
+- Lebih fleksibel
+
+## Dual-multihomed
+
+![Dual-multihomed](https://itexamanswers.net/wp-content/uploads/2020/04/Dual-multihomed.jpg)
+
+- Dua koneksi ke **beberapa ISP**
+- **Paling redundan**
+- Load balancing, failover, availability sangat tinggi
+- Biaya paling tinggi
+
+### Perbandingan ISP Redundancy
+
+| Tipe | ISP | Koneksi | Redundancy | Biaya |
+|---|---|---|---|---|
+| Single-homed | 1 | 1 | Rendah | Rendah |
+| Dual-homed | 1 | 2 | Sedang | Sedang |
+| Multihomed | >1 | 1 per ISP | Tinggi | Tinggi |
+| Dual-multihomed | >1 | >1 per ISP | Sangat Tinggi | Sangat Tinggi |
+
+---
+
+# Ringkasan modul 7
+
+| Bagian | Isi utama |
+|---|---|
+| 7.0 | Pengenalan — kenapa WAN dibutuhkan |
+| 7.1 | Purpose of WANs — LAN vs WAN, topologi (point-to-point, hub-spoke, mesh), carrier connections, evolusi jaringan |
+| 7.2 | WAN Operations — standar, OSI model, terminologi (DTE/DCE/CPE), perangkat, komunikasi (serial, circuit/packet-switched), SDH/SONET/DWDM |
+| 7.3 | Traditional WAN — leased lines, PSTN, ISDN, Frame Relay, ATM (legacy) |
+| 7.4 | Modern WAN — dark fiber, Ethernet WAN (Metro Ethernet), MPLS |
+| 7.5 | Internet-Based Connectivity — DSL, PPPoE, cable (DOCSIS), wireless |
+| 7.6 | ISP Redundancy — single-homed, dual-homed, multihomed, dual-multihomed |
+
+---
+
+# Kata-kata kunci modul 7
+
+- **WAN** — Wide Area Network
+- **DTE** — Data Terminal Equipment
+- **DCE** — Data Communications Equipment
+- **CPE** — Customer Premises Equipment
+- **Local Loop** — Last Mile
+- **MPLS** — Multiprotocol Label Switching
+- **Metro Ethernet** — Ethernet WAN
+- **PPPoE** — PPP over Ethernet
+- **DOCSIS** — Data Over Cable Service Interface Specification
+- **DWDM** — Dense Wavelength Division Multiplexing
+- **DSLAM** — DSL Access Multiplexer
+- **CMTS** — Cable Modem Termination System
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 7: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-7-wan-concepts.html).

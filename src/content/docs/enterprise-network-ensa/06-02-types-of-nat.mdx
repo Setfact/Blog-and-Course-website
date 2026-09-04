@@ -1,0 +1,109 @@
+---
+title: "Types of NAT"
+language: id
+draft: false
+description: "Bagian ini membahas tiga tipe utama NAT: static, dynamic, dan PAT."
+order: 38
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 7
+---
+
+# Types of NAT
+
+
+Bagian ini membahas tiga tipe utama NAT: static, dynamic, dan PAT.
+
+## 6.2.1 Static NAT
+
+**Static NAT** memetakan **satu inside local ke satu inside global** secara permanen (one-to-one).
+
+![Static NAT](https://itexamanswers.net/wp-content/uploads/2020/04/Static-NAT.jpg)
+
+### Kapan dipakai?
+- untuk server yang harus selalu bisa diakses dari internet (web server, mail server)
+- mapping tetap, tidak berubah
+
+### Kelebihan
+- predictabel — alamat selalu sama
+- cocok untuk server yang membutuhkan akses publik
+
+### Kekurangan
+- tidak efisien — satu alamat public terpakai untuk satu host
+
+## 6.2.2 Dynamic NAT
+
+**Dynamic NAT** memetakan inside local ke **pool of inside global addresses** secara dinamis (first-come, first-served).
+
+![Dynamic NAT](https://itexamanswers.net/wp-content/uploads/2020/04/Dynamic-NAT.jpg)
+
+### Kapan dipakai?
+- untuk jaringan internal yang besar dan butuh akses internet fleksibel
+- host mendapat alamat public dari pool saat membutuhkan, dan dikembalikan saat selesai
+
+### Kelebihan
+- lebih fleksibel dari static NAT
+- beberapa host bisa berbagi pool
+
+### Kekurangan
+- jika pool habis, host baru tidak bisa akses internet
+- mapping tidak permanen
+
+## 6.2.3 Port Address Translation (PAT)
+
+**PAT (Port Address Translation)** — juga dikenal sebagai **NAT Overload** — memetakan **banyak inside local ke satu atau sedikit inside global** menggunakan nomor port Layer 4.
+
+![Port Address Translation](https://itexamanswers.net/wp-content/uploads/2020/04/6.2.3-Port-Address-Translation.gif)
+
+### Kenapa PAT sangat populer?
+Karena satu alamat public saja bisa melayani **ribuan host** secara bersamaan. Ini adalah tipe NAT yang paling banyak digunakan di rumah dan kantor.
+
+### Cara kerja PAT
+1. Host mengirim packet dengan source port tertentu
+2. Router mengganti source IP ke alamat public DAN mengganti source port ke port unik
+3. Mapping disimpan di NAT table: `inside local:port` ↔ `inside global:port`
+4. Return traffic dikembalikan berdasarkan port number
+
+## 6.2.4 Next Available Port
+
+Ketika PAT menggunakan alamat public yang sama, ia harus memastikan setiap sesi memiliki port number unik.
+
+![Next Available Port](https://itexamanswers.net/wp-content/uploads/2020/04/6.2.4-Next-Available-Port.gif)
+
+### Urutan penggunaan port
+1. Pertama, gunakan port yang sama dengan aslinya (jika tersedia)
+2. Kalau sudah terpakai, gunakan port berikutnya dari range:
+   - **0–511**
+   - **512–1023**
+   - **1024–65535**
+
+### Kapasitas PAT
+Dengan 65.535 port yang tersedia, satu alamat public bisa melayani hingga **65.535 sesi** secara bersamaan. Dalam praktiknya, lebih sedikit karena overhead dan batasan resource.
+
+## 6.2.5 NAT and PAT Comparison
+
+| Fitur | Static/Dynamic NAT | PAT |
+|---|---|---|
+| Mapping | One-to-one (static) atau pool-based (dynamic) | One-to-many menggunakan port |
+| Kebutuhan alamat | Satu alamat public per sesi concurrent | Satu alamat public bisa melayani banyak host |
+| Translation | Hanya IP address | IP address DAN port number |
+
+## 6.2.6 Packets without a Layer 4 Segment
+
+PAT mengandalkan port number untuk membedakan sesi. Lalu bagaimana dengan packet yang tidak punya Layer 4 segment (misal: ICMP)?
+
+Untuk packet seperti ICMP, PAT menggunakan **ICMP Query ID** sebagai pengganti port number. Setiap ICMP query mendapat ID unik yang memungkinkan PAT membedakan antar sesi.
+
+## 6.2.7 Packet Tracer – Investigate NAT Operations
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk menyelidiki operasi NAT. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

@@ -1,0 +1,127 @@
+---
+title: "IOS Image Management"
+language: id
+draft: false
+description: "Bagian ini membahas cara membackup dan mengupgrade IOS image."
+order: 69
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 7
+---
+
+# IOS Image Management
+
+
+Bagian ini membahas cara membackup dan mengupgrade IOS image.
+
+## 10.7.1 Backup IOS Image to TFTP
+
+![Backup IOS Image to TFTP Server Example](https://itexamanswers.net/wp-content/uploads/2020/04/Backup-IOS-Image-to-TFTP-Server-Example.jpg)
+
+### Langkah-langkah:
+
+**Step 1:** Cek nama file IOS di flash
+
+```text
+Router# show flash:
+```
+
+**Step 2:** Backup ke TFTP
+
+```text
+Router# copy flash: tftp:
+Source filename []? c2900-universalk9-mz.SPA.151-4.M4.bin
+Address or name of remote host []? 209.165.200.225
+Destination filename [c2900-universalk9-mz.SPA.151-4.M4.bin]?
+```
+
+## 10.7.2 Upgrade IOS Image from TFTP
+
+![Copy an IOS Image to a Device Example](https://itexamanswers.net/wp-content/uploads/2020/04/Copy-an-IOS-Image-to-a-Device-Example.jpg)
+
+### Langkah-langkah:
+
+**Step 1:** Pastikan flash punya cukup ruang
+
+```text
+Router# show flash:
+```
+
+**Step 2:** Copy image baru dari TFTP
+
+```text
+Router# copy tftp: flash:
+Address or name of remote host []? 209.165.200.225
+Source filename []? c2900-universalk9-mz.SPA.152-4.M3.bin
+Destination filename [c2900-universalk9-mz.SPA.152-4.M3.bin]?
+```
+
+**Step 3:** Konfigurasi boot path
+
+```text
+Router(config)# boot system flash:c2900-universalk9-mz.SPA.152-4.M3.bin
+```
+
+**Step 4:** Save dan reload
+
+```text
+Router# write memory
+Router# reload
+```
+
+**Step 5:** Verifikasi
+
+```text
+Router# show version
+```
+
+Pastikan IOS baru sudah aktif.
+
+---
+
+# Ringkasan modul 10
+
+| Bagian | Isi utama |
+|---|---|
+| 10.0 | Pengenalan — protokol untuk mengelola jaringan |
+| 10.1 | CDP — device discovery Cisco proprietary, perintah show, konfigurasi, security |
+| 10.2 | LLDP — device discovery vendor-neutral, perintah show, konfigurasi |
+| 10.3 | NTP — sinkronisasi waktu, stratum hierarchy, konfigurasi |
+| 10.4 | SNMP — NMS, agent, MIB/OID, operations, versi (v1/v2c/v3) |
+| 10.5 | Syslog — log collection, severity levels, format pesan |
+| 10.6 | File Maintenance — backup/restore (TFTP/USB), password recovery |
+| 10.7 | IOS Image Management — backup, upgrade, boot system |
+
+---
+
+# Command Reference modul 10
+
+| Command | Fungsi |
+|---|---|
+| `show cdp` | Verifikasi status CDP global |
+| `show cdp neighbors` | Lihat daftar neighbor CDP |
+| `show cdp neighbors detail` | Detail neighbor termasuk IP |
+| `cdp run` / `no cdp run` | Aktifkan/nonaktifkan CDP global |
+| `cdp enable` | Aktifkan CDP di interface |
+| `show lldp` | Verifikasi status LLDP |
+| `show lldp neighbors` | Lihat daftar neighbor LLDP |
+| `lldp run` | Aktifkan LLDP global |
+| `lldp transmit` / `lldp receive` | Aktifkan LLDP per interface |
+| `ntp server <ip>` | Konfigurasi NTP client |
+| `show clock detail` | Verifikasi waktu |
+| `show ntp associations` | Lihat asosiasi NTP |
+| `show ntp status` | Status sinkronisasi NTP |
+| `copy running-config tftp:` | Backup config ke TFTP |
+| `copy tftp: running-config` | Restore config dari TFTP |
+| `copy running-config usbflash0:` | Backup config ke USB |
+| `confreg 0x2142` | Set config register (password recovery) |
+| `boot system flash:<file>` | Set boot path IOS |
+| `service timestamps log datetime` | Aktifkan timestamp di log |
+| `show file systems` | Lihat semua storage |
+| `show flash:` | Lihat isi flash |
+| `show version` | Verifikasi IOS version |
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

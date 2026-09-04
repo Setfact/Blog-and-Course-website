@@ -1,0 +1,107 @@
+---
+title: 'Extended ACL dan Keamanan VTY'
+language: id
+draft: false
+description: 'Batasi traffic berdasarkan aplikasi dan lindungi akses SSH ke perangkat jaringan.'
+order: 4
+---
+
+# Extended ACL dan Keamanan VTY
+
+Extended ACL dapat memeriksa alamat sumber, tujuan, protokol, dan port. Kemampuan ini cocok untuk kebutuhan seperti “LAN siswa hanya boleh membuka HTTPS pada satu server”.
+
+## Pola sintaks
+
+```text
+permit|deny protocol source wildcard destination wildcard [operator port]
+```
+
+Contoh operator port yang sering ditemui:
+
+| Operator | Arti | Contoh |
+| --- | --- | --- |
+| `eq` | sama dengan | `eq 443` |
+| `range` | rentang port | `range 20 21` |
+| `gt` | lebih besar | `gt 1023` |
+| `lt` | lebih kecil | `lt 1024` |
+
+## Mengizinkan HTTPS menuju satu server
+
+<TopologyDiagram
+  title="Extended ACL ditempatkan dekat sumber"
+  caption="Traffic yang tidak sesuai dihentikan saat masuk melalui G0/0."
+  leftLabel="LAN Siswa"
+  leftMeta="192.168.10.0/24"
+  centerLabel="Router R1"
+  centerMeta="G0/0 · ACL in"
+  rightLabel="Web Server"
+  rightMeta="172.16.10.10 · TCP 443"
+/>
+
+```text
+ip access-list extended SISWA_KE_APLIKASI
+ 10 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.10 eq 443
+ 20 permit udp 192.168.10.0 0.0.0.255 any eq domain
+ 90 deny ip any any log
+exit
+
+interface GigabitEthernet0/0
+ description DARI_LAN_SISWA
+ ip access-group SISWA_KE_APLIKASI in
+```
+
+Rule 10 mengizinkan HTTPS ke satu server. Rule 20 mengizinkan query DNS UDP. Kebutuhan DNS TCP, ICMP, NTP, atau layanan lain harus dianalisis dan ditambahkan secara eksplisit bila memang diperlukan.
+
+<Callout type="mistake">
+Mengizinkan HTTPS tetapi melupakan DNS dapat membuat pengguna merasa “internet mati”, padahal koneksi ke alamat IP masih bekerja. Selalu petakan dependency layanan sebelum menutup traffic lain.
+</Callout>
+
+## Mengamankan jalur VTY
+
+ACL pada `line vty` memakai perintah `access-class`, bukan `ip access-group`. Skenario berikut hanya mengizinkan host admin `192.168.99.10` membuka sesi SSH.
+
+```text
+ip access-list standard MGMT_ONLY
+ 10 permit host 192.168.99.10
+ 90 deny any log
+exit
+
+line vty 0 4
+ transport input ssh
+ access-class MGMT_ONLY in
+ login local
+```
+
+<Callout type="remember">
+ACL VTY melindungi akses manajemen ke router. Ia berbeda dari interface ACL yang menyaring traffic transit melewati router.
+</Callout>
+
+## Verifikasi penerapan
+
+```text
+show access-lists SISWA_KE_APLIKASI
+show ip interface GigabitEthernet0/0
+show running-config | section line vty
+```
+
+Pastikan output interface menunjukkan ACL pada arah inbound dan nama yang sama dengan konfigurasi.
+
+<PracticeCTA
+  title="Uji layanan satu per satu"
+  description="Buktikan HTTPS dan DNS bekerja, lalu pastikan HTTP serta SSH dari host non-admin ditolak."
+  href="#latihan"
+/>
+
+## Latihan
+
+Buat tabel pengujian sebelum menjalankan traffic:
+
+| Sumber | Tujuan | Layanan | Hasil yang diharapkan |
+| --- | --- | --- | --- |
+| PC siswa | web server | HTTPS | permit |
+| PC siswa | web server | HTTP | deny |
+| PC siswa | DNS server | DNS | permit |
+| PC admin | router | SSH | permit |
+| PC siswa | router | SSH | deny |
+
+Setelah pengujian, cocokkan setiap hasil dengan hit counter pada ACL yang relevan.

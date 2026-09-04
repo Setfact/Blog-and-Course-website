@@ -1,0 +1,76 @@
+---
+title: "IP Vulnerabilities and Threats"
+language: id
+draft: false
+description: "Bagian ini membahas kerentanan pada protokol IP yang bisa dieksploitasi oleh attacker. Protokol IP pada dasarnya dirancang tanpa fitur keamanan bawaan, sehingga banyak jenis serang"
+order: 19
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 6
+---
+
+# IP Vulnerabilities and Threats
+
+
+Bagian ini membahas kerentanan pada protokol IP yang bisa dieksploitasi oleh attacker. Protokol IP pada dasarnya dirancang tanpa fitur keamanan bawaan, sehingga banyak jenis serangan yang memanfaatkan kelemahan tersebut.
+
+## 3.6.1 ICMP Attacks
+
+ICMP (Internet Control Message Protocol) aslinya dipakai untuk diagnostik jaringan (ping, traceroute). Tapi attacker bisa memanfaatkannya untuk:
+
+- **Reconnaissance:** ping sweep untuk menemukan host aktif
+- **DoS:** flood target dengan paket ICMP echo
+
+### Kenapa ICMP rentan?
+Karena ICMP tidak punya mekanisme autentikasi. Siapa saja bisa mengirim paket ICMP dengan IP sumber palsu.
+
+## 3.6.2 Amplification and Reflection Attacks
+
+Serangan amplification memanfaatkan layanan terbuka untuk memperbesar volume serangan. Contoh paling terkenal adalah **Smurf Attack**:
+
+1. Attacker mengirim ICMP echo request ke broadcast address dengan **IP sumber palsu** (IP korban)
+2. Semua host di network merespons ke IP korban
+3. Korban kewalahan oleh semua respons tersebut
+
+![Amplification and Reflection Attacks](https://itexamanswers.net/wp-content/uploads/2020/04/Amplification-and-Reflection-Attacks.jpg)
+
+Gambar di atas memperlihatkan mekanisme smurf attack: satu paket dari attacker memicu banyak respons yang mengarah ke korban.
+
+## 3.6.3 Address Spoofing
+
+### Non-Blind Spoofing
+- attacker berada di **satu segmen jaringan** yang sama dengan korban
+- bisa melihat reply dari korban
+- lebih berbahaya karena attacker bisa memantau respons
+
+### Blind Spoofing
+- attacker **tidak bisa melihat** reply
+- biasanya dipakai untuk serangan DoS
+
+## 3.6.4 MAC Address Spoofing
+
+Attacker mengubah MAC address perangkatnya untuk mencocokkan MAC address server yang sah.
+
+![Threat Actor Spoofs a Server's MAC Address](https://itexamanswers.net/wp-content/uploads/2020/04/Threat-Actor-Spoofs-a-Server%E2%80%99s-MAC-Address.jpg)
+
+Ketika switch menerima frame dari MAC address yang "baru", switch akan **mengupdate CAM table**-nya.
+
+![Switch Updates CAM Table with Spoofed Address](https://itexamanswers.net/wp-content/uploads/2020/04/Switch-Updates-CAM-Table-with-Spoofed-Address.jpg)
+
+Akibatnya, traffic yang seharusnya ditujukan ke server sah jadi diteruskan ke attacker.
+
+### Bagaimana cara melindunginya?
+- gunakan **DHCP snooping**
+- gunakan **Dynamic ARP Inspection (DAI)**
+- konfigurasi **port security** di switch
+
+## 3.6.5 Session Hijacking
+
+Session hijacking terjadi ketika attacker mengambil alih sesi komunikasi yang sudah terotentikasi. Attacker biasanya memanfaatkan预测 sequence number TCP untuk membajak sesi yang sedang aktif.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

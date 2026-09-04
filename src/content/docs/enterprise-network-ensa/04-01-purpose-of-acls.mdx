@@ -1,0 +1,104 @@
+---
+title: "Purpose of ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas apa itu ACL, bagaimana cara kerjanya, dan mengapa ACL penting di jaringan."
+order: 25
+course: enterprise-network-ensa
+module: ensa-04-acl-concepts
+durationMinutes: 8
+---
+
+# Purpose of ACLs
+
+
+Bagian ini membahas apa itu ACL, bagaimana cara kerjanya, dan mengapa ACL penting di jaringan.
+
+## 4.1.1 What is an ACL?
+
+**ACL (Access Control List)** adalah sekumpulan perintah IOS yang digunakan untuk memfilter packet berdasarkan informasi di dalam packet header.
+
+### Komponen ACL
+ACL terdiri dari daftar perintah **permit** atau **deny** yang disebut **Access Control Entries (ACE)**. Setiap ACE memeriksa atribut tertentu dari packet dan memutuskan apakah packet itu boleh lewat atau harus ditolak.
+
+### Tugas utama ACL
+- **Membatasi traffic jaringan** untuk meningkatkan performa
+- **Mengontrol alur traffic** (traffic flow control)
+- **Memberikan keamanan dasar** untuk akses jaringan
+- **Memfilter traffic berdasarkan tipe** — misal: permit email, deny Telnet
+- **Screening host** untuk mengizinkan atau menolak akses ke service tertentu (FTP, HTTP, dll)
+- **Memberikan prioritas** ke kelas traffic tertentu (misal: voice via QoS)
+
+### Analogi sederhana
+Bayangkan ACL seperti penjaga gerbang di pintu masuk gedung. Setiap orang (packet) yang mau masuk harus melewati penjaga (router) yang punya daftar nama (ACE). Kalau namanya ada di daftar "boleh masuk" (permit), dipersilakan lewat. Kalau namanya ada di daftar "tidak boleh masuk" (deny), ditolak. Kalau namanya tidak ada di daftar manapun, juga ditolak (implicit deny).
+
+## 4.1.2 Packet Filtering
+
+ACL melakukan **packet filtering** — yaitu memeriksa packet dan memutuskan apakah packet itu boleh lewat atau harus dibuang.
+
+### Filtering di Layer 3
+- menganalisis **source dan/atau destination IPv4 address**
+- lebih sederhana tapi kurang spesifik
+
+### Filtering di Layer 4
+- menganalisis **TCP/UDP ports dan protocol types**
+- memberikan kontrol yang lebih halus
+
+![Packet Filtering](https://itexamanswers.net/wp-content/uploads/2020/04/Packet-Filtering.jpg)
+
+Gambar di atas memperlihatkan bagaimana router memfilter packet. Perhatikan bahwa filtering bisa terjadi di layer 3 (IP address) maupun layer 4 (port number).
+
+### Tipe ACL di Cisco Router
+
+| Tipe | Filtering Berdasarkan | Layer |
+|---|---|---|
+| **Standard ACL** | Source IPv4 address saja | Layer 3 |
+| **Extended ACL** | Source/destination IPv4 + TCP/UDP ports + protocol | Layer 3 & 4 |
+
+## 4.1.3 ACL Operation
+
+ACL bisa diterapkan ke arah **inbound** (masuk) atau **outbound** (keluar) di suatu interface.
+
+### Inbound ACL
+- memfilter packet **sebelum** keputusan routing diambil
+- efisien untuk filtering dari satu source network
+- packet yang ditolak tidak perlu di-routing → menghemat resource
+
+### Outbound ACL
+- memfilter packet **setelah** routing diputuskan
+- cocok untuk menerapkan filter yang sama ke packet dari berbagai source yang keluar dari satu interface
+
+![ACL Operation](https://itexamanswers.net/wp-content/uploads/2020/04/ACL-Operation.jpg)
+
+### Langkah operasional ACL (contoh: inbound standard ACL):
+1. Router mengekstrak **source IPv4 address** dari packet
+2. Alamat dibandingkan secara **sekuensial** dengan setiap ACE
+3. Kalau ada **match**, jalankan perintah permit/deny dan **berhenti memproses**
+4. Kalau **tidak ada match** di semua ACE → packet **didiscard** oleh **implicit deny**
+
+<Callout type="warning" title={"Implicit Deny"}>
+Setiap ACL memiliki **implicit deny** — yaitu perintah `deny any` tersembunyi di akhir ACL. Artinya: kalau packet tidak match dengan ACE manapun, packet akan ditolak. **Pastikan ACL memiliki minimal satu perintah permit**, atau semua traffic akan ditolak!
+</Callout>
+
+
+### Perbedaan Inbound vs Outbound
+
+| Aspek | Inbound | Outbound |
+|---|---|---|
+| Kapan filter bekerja | Sebelum routing decision | Setelah routing decision |
+| Cocok untuk | Filtering dari satu source | Filtering ke satu destination |
+| Efisiensi | Lebih efisien (packet ditolak lebih awal) | Packet sudah di-route dulu baru difilter |
+
+## 4.1.4 Packet Tracer – ACL Demonstration
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk mendemonstrasikan ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 4: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-4-acl-concepts.html).

@@ -1,0 +1,104 @@
+---
+title: "Queuing Algorithms"
+language: id
+draft: false
+description: "Bagian ini membahas algoritma queuing yang digunakan QoS untuk mengelola congestion."
+order: 59
+course: enterprise-network-ensa
+module: ensa-09-qos-concepts
+durationMinutes: 7
+---
+
+# Queuing Algorithms
+
+
+Bagian ini membahas algoritma queuing yang digunakan QoS untuk mengelola congestion.
+
+## 9.3.1 FIFO Queuing
+
+![FIFO Queuing Example](https://itexamanswers.net/wp-content/uploads/2020/04/FIFO-Queuing-Example.jpg)
+
+**FIFO (First-In, First-Out)** — paket diproses sesuai urutan kedatangan.
+
+### Cara kerja:
+- Satu antrean tunggal
+- Paket pertama masuk = paket pertama keluar
+- Tidak ada prioritas
+
+### Kelebihan:
+- Sederhana, overhead minimal
+
+### Kekurangan:
+- **Tidak efektif saat congestion** — voice dan data diperlakukan sama
+- Tidak ada mekanisme prioritas
+
+## 9.3.2 Weighted Fair Queuing (WFQ)
+
+![Weighted Fair Queuing Example](https://itexamanswers.net/wp-content/uploads/2020/04/Weighted-Fair-Queuing-Example.jpg)
+
+**WFQ** — alokasi bandwidth secara otomatis berdasarkan flow.
+
+### Cara kerja:
+- Setiap flow mendapat antrean sendiri
+- Bandwidth dialokasikan secara **fair** (adil)
+- Flow dengan volume rendah (interactive) diprioritaskan
+
+### Kelebihan:
+- Otomatis — tidak perlu konfigurasi manual
+- Interaktif traffic mendapat prioritas
+
+### Kekurangan:
+- Tidak bisa menjamin bandwidth minimum untuk flow tertentu
+- Tidak optimal untuk voice
+
+## 9.3.3 Class-Based WFQ (CBWFQ)
+
+![CBWFQ Example](https://itexamanswers.net/wp-content/uploads/2020/04/CBWFQ-Example.jpg)
+
+**CBWFQ** — user mendefinisikan class sendiri dengan bandwidth guaranteed.
+
+### Cara kerja:
+- Traffic diklasifikasikan ke class-class
+- Setiap class mendapat **bandwidth guaranteed**
+- Queue limit bisa ditentukan per class
+
+### Kelebihan:
+- Fleksibel — user bisa menentukan class
+- Bandwidth guaranteed per class
+
+### Kekurangan:
+- Tidak ada mekanisme **strict priority queue** untuk voice
+
+## 9.3.4 Low Latency Queuing (LLQ)
+
+![LLQ Example](https://itexamanswers.net/wp-content/uploads/2020/04/LLQ-Example.jpg)
+
+**LLQ** — menambahkan **strict priority queue** ke CBWFQ.
+
+### Cara kerja:
+- LLQ = CBWFQ + **priority queue**
+- Voice ditempatkan di priority queue
+- Priority queue diproses **sebelum** class lainnya
+
+### Kelebihan:
+- **Mengurangi jitter untuk voice** secara signifikan
+- Voice mendapat perlakuan prioritas mutlak
+
+### Kekurangan:
+- Harus dikonfigurasi dengan hati-hati — jangan beri terlalu banyak traffic ke priority queue
+
+### Perbandingan Algoritma
+
+| Algoritma | Prioritas | Guaranteed BW | Kompleksitas | Cocok untuk Voice |
+|---|---|---|---|---|
+| FIFO | ❌ | ❌ | Rendah | ❌ |
+| WFQ | Otomatis | ❌ | Rendah | ⚠️ |
+| CBWFQ | Manual | ✅ | Sedang | ⚠️ |
+| LLQ | Manual + Strict | ✅ | Sedang | ✅ |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 9: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-9-qos-concepts.html).

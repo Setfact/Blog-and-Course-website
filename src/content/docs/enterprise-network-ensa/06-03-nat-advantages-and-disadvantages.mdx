@@ -1,0 +1,41 @@
+---
+title: "NAT Advantages and Disadvantages"
+language: id
+draft: false
+description: "Bagian ini membahas kelebihan dan kekurangan NAT secara objektif."
+order: 39
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 6
+---
+
+# NAT Advantages and Disadvantages
+
+
+Bagian ini membahas kelebihan dan kekurangan NAT secara objektif.
+
+## 6.3.1 Advantages of NAT
+
+| Kelebihan | Penjelasan |
+|---|---|
+| **Menghemat alamat public** | Banyak host berbagi sedikit alamat public |
+| **Fleksibilitas** | Bisa menggunakan multiple pools, load balancing |
+| **Mudah mengubah ISP** | Perubahan ISP tidak mempengaruhi alamat internal |
+| **Menyembunyikan struktur internal** | Alamat internal tidak terlihat dari luar (manfaat keamanan tambahan) |
+
+## 6.3.2 Disadvantages of NAT
+
+| Kekurangan | Penjelasan |
+|---|---|
+| **Performa** | Translation menambah forwarding delay |
+| **Carrier Grade NAT (CGN)** | ISP menggunakan private address → double NAT |
+| **Memutus end-to-end connectivity** | Beberapa protokol/ aplikasi butuh direct IP communication (VoIP, IPSec) |
+| **Troubleshooting sulit** | Traceability lebih rumit karena alamat berubah |
+| **Bukan mekanisme keamanan** | NAT menyembunyikan alamat tapi bukan firewall — gunakan stateful firewall untuk keamanan |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

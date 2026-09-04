@@ -1,0 +1,196 @@
+---
+interface Question {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+interface Props {
+  activityId: string;
+  courseSlug: string;
+  lessonId: string;
+  questions: Question[];
+  passingScore?: number;
+  xp?: number;
+}
+
+const {
+  activityId,
+  courseSlug,
+  lessonId,
+  questions,
+  passingScore = 67,
+  xp = 30,
+} = Astro.props;
+---
+
+<section
+  class="lesson-quiz"
+  data-lesson-quiz
+  data-activity-id={activityId}
+  data-course={courseSlug}
+  data-lesson={lessonId}
+  data-passing-score={passingScore}
+  data-xp={xp}
+>
+  <header>
+    <div><span>Quiz lesson</span><h2>Uji pemahamanmu</h2></div>
+    <strong>+{xp} XP</strong>
+  </header>
+  <p class="quiz-intro">Jawab seluruh pertanyaan. Nilai minimal {passingScore}% untuk menyelesaikan lesson.</p>
+
+  <form>
+    <div class="question-list">
+      {questions.map((item, questionIndex) => (
+        <fieldset data-question data-correct-index={item.correctIndex}>
+          <legend><span>{questionIndex + 1}</span>{item.question}</legend>
+          <div class="option-list">
+            {item.options.map((option, optionIndex) => (
+              <label data-option-index={optionIndex}>
+                <input type="radio" name={`${activityId}-${questionIndex}`} value={optionIndex} />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+          <p class="answer-feedback" data-answer-feedback hidden>{item.explanation}</p>
+        </fieldset>
+      ))}
+    </div>
+
+    <div class="quiz-actions">
+      <button type="submit">Periksa semua jawaban</button>
+      <button type="reset" class="secondary" data-retry hidden>Coba lagi</button>
+    </div>
+  </form>
+
+  <div class="quiz-result" data-quiz-result hidden aria-live="polite">
+    <strong data-score></strong>
+    <p data-result-message></p>
+  </div>
+</section>
+
+<script>
+  import { completeActivity, getLearningState } from '../scripts/learning-store';
+
+  const initialiseQuiz = (root: HTMLElement) => {
+    if (root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+    const form = root.querySelector<HTMLFormElement>('form');
+    const fieldsets = Array.from(root.querySelectorAll<HTMLFieldSetElement>('[data-question]'));
+    const result = root.querySelector<HTMLElement>('[data-quiz-result]');
+    const score = root.querySelector<HTMLElement>('[data-score]');
+    const message = root.querySelector<HTMLElement>('[data-result-message]');
+    const retry = root.querySelector<HTMLButtonElement>('[data-retry]');
+    if (!form || !result || !score || !message || !retry) return;
+
+    const activityKey = `${root.dataset.course}:${root.dataset.activityId}`;
+    if (getLearningState().completedActivities.includes(activityKey)) {
+      root.classList.add('is-completed');
+      result.hidden = false;
+      score.textContent = 'Quiz sudah diselesaikan';
+      message.textContent = 'Kamu tetap boleh mengulang quiz untuk meninjau materi tanpa mendapatkan XP tambahan.';
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const unanswered = fieldsets.some((fieldset) => !fieldset.querySelector<HTMLInputElement>('input:checked'));
+      result.hidden = false;
+
+      if (unanswered) {
+        result.className = 'quiz-result is-warning';
+        score.textContent = 'Belum lengkap';
+        message.textContent = 'Jawab semua pertanyaan sebelum memeriksa hasil.';
+        return;
+      }
+
+      let correctAnswers = 0;
+      fieldsets.forEach((fieldset) => {
+        const selected = fieldset.querySelector<HTMLInputElement>('input:checked');
+        const correct = Number(selected?.value) === Number(fieldset.dataset.correctIndex);
+        if (correct) correctAnswers += 1;
+        fieldset.classList.toggle('is-correct', correct);
+        fieldset.classList.toggle('is-incorrect', !correct);
+        const feedback = fieldset.querySelector<HTMLElement>('[data-answer-feedback]');
+        if (feedback) feedback.hidden = false;
+        fieldset.querySelectorAll<HTMLElement>('[data-option-index]').forEach((option) => {
+          const optionIndex = Number(option.dataset.optionIndex);
+          option.classList.toggle('is-answer', optionIndex === Number(fieldset.dataset.correctIndex));
+          option.classList.toggle('is-selected-wrong', optionIndex === Number(selected?.value) && !correct);
+        });
+      });
+
+      const percentage = Math.round((correctAnswers / fieldsets.length) * 100);
+      const passed = percentage >= Number(root.dataset.passingScore);
+      score.textContent = `${correctAnswers}/${fieldsets.length} benar · ${percentage}%`;
+      result.className = `quiz-result ${passed ? 'is-passed' : 'is-failed'}`;
+      retry.hidden = passed;
+
+      if (!passed) {
+        message.textContent = `Belum mencapai nilai minimal ${root.dataset.passingScore}%. Pelajari feedback setiap soal lalu coba kembali.`;
+        return;
+      }
+
+      const completion = completeActivity({
+        activityId: root.dataset.activityId ?? '',
+        courseSlug: root.dataset.course ?? '',
+        lessonId: root.dataset.lesson,
+        xp: Number(root.dataset.xp) || 30,
+        completesLesson: true,
+      });
+      root.classList.add('is-completed');
+      message.textContent = completion.firstCompletion
+        ? `Lesson selesai. Kamu mendapatkan ${completion.awardedXp} XP.`
+        : 'Lesson sudah pernah diselesaikan. Hasil terbaru tetap dapat kamu gunakan untuk belajar.';
+    });
+
+    form.addEventListener('reset', () => {
+      window.requestAnimationFrame(() => {
+        fieldsets.forEach((fieldset) => {
+          fieldset.classList.remove('is-correct', 'is-incorrect');
+          fieldset.querySelectorAll<HTMLElement>('[data-option-index]').forEach((option) => option.classList.remove('is-answer', 'is-selected-wrong'));
+          const feedback = fieldset.querySelector<HTMLElement>('[data-answer-feedback]');
+          if (feedback) feedback.hidden = true;
+        });
+        result.hidden = true;
+        retry.hidden = true;
+      });
+    });
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-lesson-quiz]').forEach(initialiseQuiz);
+</script>
+
+<style>
+  .lesson-quiz { margin: 2.5rem 0 1rem; border: 1px solid var(--color-phinisi-200); border-radius: 1.25rem; padding: clamp(1rem, 3vw, 1.5rem); background: #f8fbff; box-shadow: var(--shadow-soft); }
+  .lesson-quiz > header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+  header div { display: grid; gap: 0.28rem; }
+  header span { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.63rem; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; }
+  header h2 { margin: 0; border: 0; padding: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.35rem; font-weight: 600; }
+  header > strong { flex: 0 0 auto; color: var(--color-muted); font-size: 0.6rem; font-weight: 700; }
+  .quiz-intro { margin: 0.7rem 0 0; color: var(--color-muted); font-size: 0.78rem; }
+  .question-list { display: grid; gap: 0.85rem; margin-top: 1.2rem; }
+  fieldset { margin: 0; border: 1px solid var(--color-line); border-radius: 1rem; padding: 1rem; background: #fff; }
+  fieldset.is-correct { border-color: #9bd5ae; }
+  fieldset.is-incorrect { border-color: #edb0b4; }
+  legend { display: grid; width: 100%; grid-template-columns: auto 1fr; align-items: start; gap: 0.65rem; margin-bottom: 0.85rem; color: var(--color-navy); font-family: var(--font-heading); font-size: 0.96rem; font-weight: 600; line-height: 1.5; }
+  legend > span { display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 0.62rem; }
+  .option-list { display: grid; gap: 0.45rem; }
+  label { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 0.6rem; border: 1px solid var(--color-line); border-radius: 0.72rem; padding: 0.68rem; color: var(--color-ink); cursor: pointer; }
+  label:has(input:checked) { border-color: var(--color-primary); background: var(--color-phinisi-50); }
+  label.is-answer { border-color: #75c991; background: var(--color-success-soft); }
+  label.is-selected-wrong { border-color: #e58f95; background: var(--color-danger-soft); }
+  input { margin-top: 0.22rem; accent-color: var(--color-primary); }
+  .answer-feedback { margin: 0.75rem 0 0; border-radius: 0.65rem; padding: 0.65rem; background: var(--color-section); color: var(--color-muted); font-size: 0.72rem; line-height: 1.5; }
+  fieldset.is-correct .answer-feedback { background: var(--color-success-soft); color: #14763c; }
+  fieldset.is-incorrect .answer-feedback { background: var(--color-danger-soft); color: #a12b31; }
+  .quiz-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
+  .quiz-actions button { border: 0; border-radius: 0.75rem; padding: 0.72rem 0.9rem; background: var(--color-primary); box-shadow: var(--shadow-button); color: #fff; font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+  .quiz-actions .secondary { border: 1px solid var(--color-phinisi-200); background: #fff; box-shadow: none; color: var(--color-primary); }
+  .quiz-result { margin-top: 1rem; border-radius: 0.85rem; padding: 0.85rem; }
+  .quiz-result strong { color: inherit; font-family: var(--font-heading); }
+  .quiz-result p { margin: 0.25rem 0 0; color: inherit; font-size: 0.75rem; line-height: 1.5; }
+  .quiz-result.is-passed { background: var(--color-success-soft); color: #14763c; }
+  .quiz-result.is-failed { background: var(--color-danger-soft); color: #a12b31; }
+  .quiz-result.is-warning { background: var(--color-gold-soft); color: #7a5100; }
+</style>

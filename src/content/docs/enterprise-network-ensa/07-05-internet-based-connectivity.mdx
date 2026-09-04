@@ -1,0 +1,96 @@
+---
+title: "Internet-Based Connectivity"
+language: id
+draft: false
+description: "Bagian ini membahas opsi konektivitas berbasis internet, baik wired maupun wireless."
+order: 50
+course: enterprise-network-ensa
+module: ensa-07-wan-concepts
+durationMinutes: 6
+---
+
+# Internet-Based Connectivity
+
+
+Bagian ini membahas opsi konektivitas berbasis internet, baik wired maupun wireless.
+
+## 7.5.1 Internet-Based Connectivity Options
+
+![Internet-Based Connectivity Options](https://itexamanswers.net/wp-content/uploads/2020/04/Internet-Based-Connectivity-Options.jpg)
+
+### Opsi wired:
+- DSL
+- Cable
+- Fiber
+
+### Opsi wireless:
+- Cellular (3G/4G/5G)
+- Satellite
+- Wi-Fi
+
+## 7.5.2 DSL Technology
+
+![DSL Technology](https://itexamanswers.net/wp-content/uploads/2020/04/DSL-Technology.jpg)
+
+**DSL (Digital Subscriber Line)** menggunakan kabel twisted-pair yang sudah ada (kabel telepon) untuk mengirim data dengan kecepatan tinggi.
+
+### Tipe DSL:
+| Tipe | Deskripsi |
+|---|---|
+| **ADSL** (Asymmetric DSL) | Download lebih cepat dari upload |
+| **ADSL2+** | Versi lebih cepat dari ADSL |
+| **SDSL** (Symmetric DSL) | Upload dan download sama cepat |
+
+### Karakteristik:
+- **always-on** — tidak perlu dial-up
+- **bukan shared medium** — bandwidth dedicated ke setiap pelanggan
+
+## 7.5.3 DSL Connections
+
+![DSL Connections](https://itexamanswers.net/wp-content/uploads/2020/04/DSL-Connections.jpg)
+
+### Komponen DSL:
+- **DSL Modem** di sisi pelanggan
+- **DSLAM** (DSL Access Multiplexer) di Central Office provider
+- Koneksi dari modem ke DSLAM melalui local loop
+
+## 7.5.4 DSL and PPP
+
+DSL sering menggunakan **PPPoE** (PPP over Ethernet) untuk autentikasi, penugasan IP, dan QoS.
+
+### PPPoE pada Host
+
+![Host with PPPoE Client](https://itexamanswers.net/wp-content/uploads/2020/04/Host-with-PPPoE-Client.jpg)
+
+### PPPoE pada Router
+
+![Router PPPoE Client](https://itexamanswers.net/wp-content/uploads/2020/04/Router-PPPoE-Client.jpg)
+
+### Kelebihan PPPoE:
+- autentikasi user (username/password)
+- penugasan IP dinamis
+- dukungan QoS
+
+## 7.5.5 Cable Technology
+
+![Cable Technology](https://itexamanswers.net/wp-content/uploads/2020/04/Cable-Technology.jpg)
+
+**Cable broadband** menggunakan jaringan **HFC (Hybrid Fiber-Coaxial)** — kombinasi fiber-optic dan coaxial cable.
+
+### Komponen:
+- **Cable Modem** di sisi pelanggan
+- **CMTS** (Cable Modem Termination System) di provider headend
+
+### Standar: **DOCSIS** (Data Over Cable Service Interface Specification)
+
+### Karakteristik:
+- **always-on**
+- **shared bandwidth** — bandwidth dibagi antar pengguna di segmen yang sama
+- kecepatan download tinggi, upload lebih rendah
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 7: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-7-wan-concepts.html).

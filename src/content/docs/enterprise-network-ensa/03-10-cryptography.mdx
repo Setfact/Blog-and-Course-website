@@ -1,0 +1,145 @@
+---
+title: "Cryptography"
+language: id
+draft: false
+description: "Bagian ini membahas dasar-dasar kriptografi yang dipakai untuk melindungi data."
+order: 23
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 8
+---
+
+# Cryptography
+
+
+Bagian ini membahas dasar-dasar kriptografi yang dipakai untuk melindungi data.
+
+## 3.10.1 Hash Algorithms
+
+Hash adalah algoritma yang mengubah data menjadi **fixed-length string** yang tidak bisa dikembalikan ke bentuk asal.
+
+![Hash Algorithms](https://itexamanswers.net/wp-content/uploads/2020/04/Hash-Algorithms.jpg)
+
+### Karakteristik hash:
+- **input apapun** → output selalu **fixed length**
+- **sensitif terhadap perubahan** — satu bit diubah, hash berubah total
+- **tidak bisa dibalik** — tidak ada cara mengembalikan hash ke data asal
+
+### Contoh algoritma hash:
+- **MD5** — 128-bit digest, sudah dianggap tidak aman
+
+![MD5 with 128-bit Digest](https://itexamanswers.net/wp-content/uploads/2020/04/MD5-with-128-bit-Digest.jpg)
+
+- **SHA** — varian lebih panjang (SHA-1, SHA-256, SHA-512), lebih aman
+
+![SHA Hashing Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/SHA-Hashing-Algorithm.jpg)
+
+## 3.10.2 HMAC (Hash-based Message Authentication Code)
+
+HMAC menggabungkan hash dengan **kunci rahasia** untuk memastikan data tidak hanya utuh tapi juga **otentik**.
+
+![HMAC Hashing Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/HMAC-Hashing-Algorithm.jpg)
+
+### Cara kerja HMAC:
+
+![Creating the HMAC Value](https://itexamanswers.net/wp-content/uploads/2020/04/Creating-the-HMAC-Value.jpg)
+
+1. Data + kunci rahasia dimasukkan ke algoritma hash
+2. Menghasilkan HMAC value yang unik
+
+![Verifying the HMAC Value](https://itexamanswers.net/wp-content/uploads/2020/04/Verifying-the-HMAC-Value.jpg)
+
+3. Penerima menghitung ulang HMAC dengan kunci yang sama
+4. Kalau hasilnya cocok, data dianggap valid
+
+### Contoh di Cisco Router:
+
+![Cisco Router HMAC Example](https://itexamanswers.net/wp-content/uploads/2020/04/Cisco-Router-HMAC-Example.jpg)
+
+## 3.10.3 Data Confidentiality
+
+Enkripsi memastikan bahwa data hanya bisa dibaca oleh pihak yang memiliki kunci dekripsi.
+
+![Data Confidentiality](https://itexamanswers.net/wp-content/uploads/2020/04/Data-Confidentiality.jpg)
+
+## 3.10.4 Symmetric Encryption
+
+Symmetric encryption menggunakan **satu kunci yang sama** untuk enkripsi dan dekripsi.
+
+![Symmetric Encryption Example](https://itexamanswers.net/wp-content/uploads/2020/04/Symmetric-Encryption-Example.jpg)
+
+### Contoh algoritma: **AES** (Advanced Encryption Standard)
+
+### Kelebihan:
+- sangat cepat
+- cocok untuk data dalam jumlah besar
+
+### Kekurangan:
+- **distribusi kunci** jadi masalah — bagaimana cara mengirim kunci secara aman ke penerima?
+
+## 3.10.5 Asymmetric Encryption
+
+Asymmetric encryption menggunakan **pasangan kunci**: public key dan private key.
+
+![Asymmetric Encryption Example](https://itexamanswers.net/wp-content/uploads/2020/04/Asymmetric-Encryption-Example.jpg)
+
+### Cara kerja:
+- **Public key** → dipakai untuk mengenkripsi (dibagikan ke semua orang)
+- **Private key** → dipakai untuk mendekripsi (hanya dimiliki penerima)
+
+### Contoh algoritma: **RSA**
+
+### Kelebihan:
+- tidak perlu distribusi kunci rahasia
+- bisa dipakai untuk digital signature
+
+### Kekurangan:
+- jauh lebih lambat dari symmetric encryption
+- tidak cocok untuk data yang sangat besar
+
+## 3.10.6 Diffie-Hellman Key Exchange
+
+Diffie-Hellman memungkinkan dua pihak membuat **kunci bersama** secara aman melalui channel yang tidak terenkripsi.
+
+![Diffie-Hellman](https://itexamanswers.net/wp-content/uploads/2020/04/Diffie-Hellman.jpg)
+
+### Konsep dasar:
+1. Kedua pihak sepakat angka publik (g) dan modulus (p)
+2. Masing-masing memilih angka rahasia sendiri
+3. Masing-masing menghitung nilai publik dan mengirimkannya
+4. Dari nilai publik yang diterima, masing-masing menghitung kunci yang sama
+
+### Kenapa ini penting?
+Karena Diffie-Hellman menjadi dasar banyak protokol keamanan modern, termasuk **SSL/TLS**, **IPsec VPN**, dan banyak lagi.
+
+---
+
+# Ringkasan modul 3
+
+| Bagian | Isi utama |
+|---|---|
+| 3.0 | Pengenalan konsep keamanan jaringan |
+| 3.1 | Keadaan cybersecurity, istilah dasar, attack vectors |
+| 3.2 | Jenis-jenis threat actors |
+| 3.3 | Tools yang dipakai oleh attacker dan penetration tester |
+| 3.4 | Jenis-jenis malware |
+| 3.5 | Common network attacks: reconnaissance, access, social engineering, DoS/DDoS |
+| 3.6 | Kerentanan IP: ICMP, amplification, spoofing, MAC spoofing |
+| 3.7 | Kerentanan TCP/UDP: SYN flood, reset attack, session hijacking |
+| 3.8 | Kerentanan IP services: ARP cache poisoning, DNS attacks, rogue DHCP |
+| 3.9 | Best practices: CIA triad, defense-in-depth, firewall, IPS, ESA, WSA |
+| 3.10 | Kriptografi: hash, HMAC, symmetric/asymmetric encryption, Diffie-Hellman |
+
+---
+
+# Referensi tambahan
+
+Untuk pembelajaran lebih lanjut, kamu bisa baca:
+- Cisco Networking Academy course materials
+- NIST Cybersecurity Framework
+- OWASP Top 10
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

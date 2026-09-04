@@ -1,0 +1,59 @@
+---
+title: "Virtual Network Infrastructure"
+language: id
+draft: false
+description: "Bagian ini membahas virtualization di level jaringan."
+order: 84
+course: enterprise-network-ensa
+module: ensa-13-network-virtualization
+durationMinutes: 7
+---
+
+# Virtual Network Infrastructure
+
+
+Bagian ini membahas virtualization di level jaringan.
+
+## 13.3.1 Network Virtualization Technologies
+
+![The Complexity of Network Virtualization](https://itexamanswers.net/wp-content/uploads/2020/04/The-Complexity-of-Network-Virtualization.jpg)
+
+Network virtualization memungkinkan perangkat dan layanan jaringan di-segment menjadi multiple virtual devices. Dalam lingkungan virtual yang kompleks, ada banyak teknologi yang saling berinteraksi:
+
+- **VLAN** (Virtual LAN) — segmentasi Layer 2 yang memungkinkan kamu membagi satu physical switch menjadi multiple switch logis. Traffic di satu VLAN tidak terlihat di VLAN lain tanpa routing
+- **VRF** (Virtual Routing and Forwarding) — memungkinkan satu router menjalankan multiple routing table secara terpisah. Setiap VRF beroperasi seolah-olah itu adalah router independent, dengan interface, routing protocol, dan routing table sendiri
+- **Virtual Switches** — switch yang berjalan sebagai software di hypervisor, mengelola traffic antar VM di dalam satu physical host
+- **VPN Tunnels** — jalur encrypted yang memungkinkan traffic aman melewati jaringan yang tidak trusted
+
+Kompleksitas network virtualization terlihat dari banyaknya interaksi antara komponen-komponen ini. Sebagai network engineer, kamu harus memahami bagaimana VLAN, VRF, virtual switches, dan VPN saling berhubungan dalam satu desain jaringan.
+
+## 13.3.2 Traffic Flow Types
+
+Dalam lingkungan virtual, ada dua jenis traffic flow yang harus dipahami:
+
+### East-West Traffic
+
+East-west traffic adalah traffic **lateral** yang bergerak antar server **di dalam** data center yang sama. Misalnya, ketika web server berkomunikasi dengan database server di data center yang sama, itu adalah east-west traffic.
+
+East-west traffic bisa sangat **intense dan dynamic** karena dalam lingkungan virtual, banyak VM berkomunikasi satu sama lain untuk menjalankan aplikasi. Dengan semakin banyaknya microservices dan distributed applications, volume east-west traffic terus meningkat. Ini menjadi tantangan tersendiri karena traffic ini tidak melewati firewall perimeter tradisional.
+
+### North-South Traffic
+
+North-south traffic adalah traffic yang **masuk atau keluar** dari data center — misalnya traffic dari user di internet yang mengakses aplikasi di data center, atau traffic dari data center ke cloud provider lain.
+
+North-south traffic lebih **tradisional** dan biasanya sudah ditangani oleh firewall dan load balancer di perimeter data center. Namun dengan adanya hybrid cloud dan multi-cloud, north-south traffic juga menjadi semakin kompleks.
+
+## 13.3.3 Layer 3 Switch and CEF
+
+![Layer 3 Switch and CEF](https://itexamanswers.net/wp-content/uploads/2020/04/Layer-3-Switch-and-CEF.jpg)
+
+**CEF (Cisco Express Forwarding)** memungkinkan Layer 3 switch melakukan routing dengan kecepatan hardware. CEF menggunakan:
+- **FIB (Forwarding Information Base)** — untuk forwarding decisions
+- **Adjacency Table** — untuk Layer 2 encapsulation
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 13: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-13-network-virtualization.html).

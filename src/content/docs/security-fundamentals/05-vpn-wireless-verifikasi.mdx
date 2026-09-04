@@ -1,0 +1,106 @@
+---
+title: 'VPN, Wireless Security, dan Verifikasi'
+language: id
+draft: false
+description: 'Bandingkan remote-access dan site-to-site VPN, pahami WPA2/WPA3, lalu validasi kontrol dengan test matrix.'
+order: 6
+course: security-fundamentals
+module: security-fundamentals-05-vpn-wireless
+durationMinutes: 20
+---
+
+# VPN, Wireless Security, dan Verifikasi
+
+Lesson terakhir menghubungkan perlindungan data saat transit dengan kebiasaan verifikasi. Engineer tidak cukup mengatakan “fiturnya sudah aktif”; ia perlu membuktikan pengguna sah tetap dapat bekerja dan traffic yang dilarang benar-benar ditolak.
+
+## Dua pola VPN
+
+- **Remote-access VPN** menghubungkan satu pengguna atau endpoint dari lokasi luar menuju jaringan organisasi.
+- **Site-to-site VPN** menghubungkan dua jaringan melalui tunnel, misalnya kantor pusat dan cabang.
+
+IPsec menyediakan mekanisme untuk melindungi traffic IP melalui autentikasi peer, pemeriksaan integritas, dan enkripsi. Detail proposal serta parameter harus konsisten pada kedua sisi tunnel.
+
+## WPA2 dan WPA3
+
+Wireless security melindungi akses radio dan traffic wireless. WPA2 masih umum digunakan, sedangkan WPA3 membawa perlindungan autentikasi yang lebih modern. Untuk jaringan kecil berbasis pre-shared key:
+
+- gunakan passphrase panjang dan unik
+- hindari membagikan satu PSK ke terlalu banyak orang
+- pisahkan jaringan tamu dari jaringan internal
+- nonaktifkan protokol lama yang tidak dibutuhkan
+- dokumentasikan SSID, metode keamanan, dan siapa yang mengelolanya
+
+Pada skala enterprise, autentikasi berbasis identitas memungkinkan kontrol serta pencabutan akses per pengguna dibanding satu PSK bersama.
+
+## Verifikasi menggunakan test matrix
+
+Tuliskan hasil yang diharapkan sebelum pengujian:
+
+| Sumber | Tujuan | Layanan | Harus terjadi |
+| --- | --- | --- | --- |
+| admin | router | SSH | permit |
+| siswa | router | SSH | deny |
+| client cabang | server pusat | aplikasi internal | permit melalui VPN |
+| guest Wi-Fi | server internal | semua | deny |
+| user Wi-Fi | DNS resmi | DNS | permit |
+
+Setelah pengujian, kumpulkan evidence dari status interface, hit counter ACL, log autentikasi, association client, dan status tunnel. Jika hasil aktual berbeda, ubah satu variabel lalu uji ulang.
+
+<Callout type="mistake" title="Permit saja belum cukup">
+Kontrol baru terbukti ketika positive test dan negative test sama-sama sesuai. Uji bahwa layanan sah bekerja dan akses yang dilarang benar-benar gagal.
+</Callout>
+
+## Checklist penutup course
+
+- [ ] dapat membedakan threat, vulnerability, exploit, dan mitigation
+- [ ] memahami authentication, authorization, dan accounting
+- [ ] mengetahui baseline hardening akses perangkat
+- [ ] memahami dependency DHCP snooping dan DAI
+- [ ] dapat menentukan jenis, lokasi, dan arah ACL
+- [ ] dapat membedakan remote-access serta site-to-site VPN
+- [ ] memahami tujuan WPA2/WPA3 dan segmentasi guest
+- [ ] membuat test matrix yang memuat permit dan deny
+
+<LessonQuiz
+  activityId="security-lesson-5-quiz"
+  courseSlug="security-fundamentals"
+  lessonId="05-vpn-wireless-verifikasi"
+  questions={[
+    {
+      question: 'Pengujian mana yang paling kuat membuktikan kontrol akses bekerja sesuai desain?',
+      options: ['Hanya memastikan pengguna admin berhasil login', 'Hanya membaca running configuration', 'Menguji traffic yang harus diizinkan dan traffic yang harus ditolak lalu mencocokkannya dengan evidence', 'Memastikan semua interface berstatus up'],
+      correctIndex: 2,
+      explanation: 'Positive dan negative test membuktikan layanan sah tetap bekerja sekaligus akses yang tidak sah benar-benar diblokir.',
+    },
+    {
+      question: 'VPN apa yang menghubungkan jaringan kantor pusat dengan jaringan cabang?',
+      options: ['Remote-access VPN', 'Site-to-site VPN', 'Guest wireless', 'Port security'],
+      correctIndex: 1,
+      explanation: 'Site-to-site VPN membangun tunnel antara dua jaringan, sedangkan remote-access VPN melayani endpoint atau pengguna individual.',
+    },
+    {
+      question: 'Mengapa jaringan guest Wi-Fi perlu dipisahkan dari jaringan internal?',
+      options: ['Agar SSID lebih pendek', 'Untuk membatasi akses guest terhadap aset internal dan memperkecil dampak insiden', 'Agar semua pengguna memakai satu PSK', 'Supaya logging tidak dibutuhkan'],
+      correctIndex: 1,
+      explanation: 'Segmentasi guest membatasi trust dan mencegah perangkat tamu mencapai layanan internal yang tidak diperlukan.',
+    },
+  ]}
+  passingScore={67}
+  xp={40}
+/>
+
+<Callout type="success" title="Course selesai">
+Jika lima knowledge check sudah benar, progress course mencapai 100% dan badge Security Guardian tersimpan pada browser ini.
+</Callout>
+
+<PracticeCTA
+  title="Kembali ke roadmap CCNA"
+  description="Lihat posisi Security Fundamentals dan course berikutnya dalam perjalanan CCNA."
+  href="/learning-path/ccna-200-301"
+  label="Buka Learning Path"
+/>
+
+## Referensi resmi
+
+- [Cisco — CCNA Exam Topics](https://learningnetwork.cisco.com/s/ccna-exam-topics)
+- [Cisco — IOS XE Software Hardening Guide](https://sec.cloudapps.cisco.com/security/center/resources/IOS_XE_hardening)

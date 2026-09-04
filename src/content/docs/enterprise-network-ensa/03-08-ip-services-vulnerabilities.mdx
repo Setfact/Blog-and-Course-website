@@ -1,0 +1,94 @@
+---
+title: "IP Services Vulnerabilities"
+language: id
+draft: false
+description: "Bagian ini membahas kerentanan pada layanan-layanan IP yang sering dieksploitasi: ARP, DNS, dan DHCP."
+order: 21
+course: enterprise-network-ensa
+module: ensa-03-network-security-concepts
+durationMinutes: 7
+---
+
+# IP Services Vulnerabilities
+
+
+Bagian ini membahas kerentanan pada layanan-layanan IP yang sering dieksploitasi: ARP, DNS, dan DHCP.
+
+## 3.8.1 The ARP Process
+
+ARP (Address Resolution Protocol) digunakan untuk memetakan IP address ke MAC address di jaringan lokal.
+
+![The ARP Process](https://itexamanswers.net/wp-content/uploads/2020/04/3.8.1-The-ARP-Process.gif)
+
+### Cara kerja ARP normal:
+1. Host mengirim **ARP Request** (broadcast): "Siapa yang punya IP ini?"
+2. Host yang punya IP tersebut membalas dengan **ARP Reply** (unicast): "Ini MAC address saya"
+
+![ARP Request](https://itexamanswers.net/wp-content/uploads/2020/04/ARP-Request.jpg)
+
+![ARP Reply](https://itexamanswers.net/wp-content/uploads/2020/04/ARP-Reply.jpg)
+
+## 3.8.2 ARP Cache Poisoning
+
+ARP **tidak punya mekanisme autentikasi**. Siapa saja bisa mengirim ARP reply palsu.
+
+![Spoofed Gratuitous ARP Replies](https://itexamanswers.net/wp-content/uploads/2020/04/Spoofed-Gratuitous-ARP-Replies.jpg)
+
+### Cara kerja ARP Cache Poisoning:
+1. Attacker mengirim ARP reply palsu ke korban: "IP gateway ada di MAC saya"
+2. Korban memperbarui ARP cache-nya
+3. Sekarang semua traffic korban yang menuju gateway **diteruskan ke attacker**
+4. Attacker bisa membaca, mengubah, atau meneruskan traffic (**MITM**)
+
+### Tools yang sering dipakai:
+- **dsniff**
+- **Cain & Abel**
+
+## 3.8.3 Normal DHCP Operation
+
+DHCP (Dynamic Host Configuration Protocol) secara otomatis memberikan IP address, subnet mask, gateway, dan DNS server ke client.
+
+![Normal DHCP Operation](https://itexamanswers.net/wp-content/uploads/2020/04/Normal-DHCP-Operation.jpg)
+
+### Proses DHCP (DORA):
+1. **Discovery:** Client broadcast mencari DHCP server
+2. **Offer:** Server menawarkan IP address
+3. **Request:** Client menerima tawaran
+4. **Acknowledgment:** Server mengkonfirmasi
+
+![Client Broadcasts DHCP Discovery Messages](https://itexamanswers.net/wp-content/uploads/2020/04/Client-Broadcasts-DHCP-Discovery-Messages.jpg)
+
+![DHCP Servers Respond with Offers](https://itexamanswers.net/wp-content/uploads/2020/04/DHCP-Servers-Respond-with-Offers.jpg)
+
+## 3.8.4 Rogue DHCP Attack
+
+Attacker menjalankan **DHCP server palsu** (rogue DHCP) di jaringan.
+
+![Client Accepts Rogue DHCP Request](https://itexamanswers.net/wp-content/uploads/2020/04/Client-Accepts-Rogue-DHCP-Request.jpg)
+
+![Rogue DHCP Acknowledges the Request](https://itexamanswers.net/wp-content/uploads/2020/04/Rogue-DHCP-Acknowledges-the-Request.jpg)
+
+### Dampak rogue DHCP:
+- client mendapat **gateway palsu** → semua traffic melewati attacker
+- client mendapat **DNS server palsu** → redirect ke situs berbahaya
+- attacker bisa melakukan **MITM** tanpa diketahui korban
+
+### Cara melindunginya:
+- gunakan **DHCP snooping** di switch
+- batasi port mana yang boleh menjalankan DHCP server
+
+## 3.8.5 DNS Attacks
+
+| Tipe Serangan | Deskripsi |
+|---|---|
+| **Cache Poisoning** | Memalsukan entri DNS cache untuk redirect user ke situs berbahaya |
+| **Amplification/Reflection** | Memanfaatkan open resolver untuk DDoS |
+| **Tunneling** | Menyembunyikan data dalam DNS query untuk exfiltration data |
+| **Domain Shadowing** | Membuat subdomain palsu untuk distribusi malware |
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 3: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-3-network-security-concepts.html).

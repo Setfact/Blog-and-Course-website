@@ -1,0 +1,61 @@
+---
+title: "APIs (Application Programming Interface)"
+language: id
+draft: false
+description: "Bagian ini membahas konsep API dan berbagai tipe web service APIs."
+order: 90
+course: enterprise-network-ensa
+module: ensa-14-network-automation
+durationMinutes: 6
+---
+
+# APIs (Application Programming Interface)
+
+
+Bagian ini membahas konsep API dan berbagai tipe web service APIs.
+
+## 14.3.1 The API Concept
+
+![The API Concept](https://itexamanswers.net/wp-content/uploads/2020/04/The-API-Concept.jpg)
+
+**API (Application Programming Interface)** adalah software yang memungkinkan aplikasi mengakses data atau services dari aplikasi lain. API berfungsi sebagai "pembawa pesan" antara requesting application dan server.
+
+![An API Example - 1](https://itexamanswers.net/wp-content/uploads/2020/04/An-API-Example1.jpg)
+
+![An API Example - 2](https://itexamanswers.net/wp-content/uploads/2020/04/An-API-Example2.jpg)
+
+### Analogi sederhana:
+Bayangkan kamu di restoran. Kamu (aplikasi) memesan makanan dari menu. Pelayan (API) mengambil pesananmu dan membawanya ke dapur (server). Dapur menyiapkan makanan dan pelayan membawanya kembali kepadamu. Kamu tidak perlu tahu cara dapur bekerja — kamu cukup berinteraksi melalui pelayan (API).
+
+## 14.3.2 Types of APIs
+
+![Open, Internal, and Partner APIs](https://itexamanswers.net/wp-content/uploads/2020/04/Open-Internal-and-Partner-APIs.jpg)
+
+| Tipe API | Deskripsi | Contoh |
+|---|---|---|
+| **Open/Public API** | Tersedia untuk publik, siapapun bisa mengakses | ISS API, Twitter API, Google Maps API |
+| **Internal/Private API** | Untuk penggunaan internal organisasi | API internal perusahaan untuk integrasi sistem |
+| **Partner API** | Antara perusahaan dan business partners | API antara supplier dan retailer |
+
+## 14.3.3 Web Service API Types
+
+| API Type | Data Format | Kelebihan |
+|---|---|---|
+| **SOAP** | XML | Well-established, keamanan tinggi |
+| **REST** | JSON, XML, YAML | Fleksibel, widely used (80%+) |
+| **XML-RPC** | XML | Simpel |
+| **JSON-RPC** | JSON | Simpel |
+
+### Kenapa REST mendominasi?
+REST menjadi pilihan paling populer karena:
+- mendukung multiple data formats (JSON, XML, YAML)
+- stateless — tidak menyimpan data client antara requests
+- cacheable — responses bisa di-cache untuk performa lebih baik
+- menggunakan HTTP methods yang familiar (GET, POST, PUT, DELETE)
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 14: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-14-network-automation.html).

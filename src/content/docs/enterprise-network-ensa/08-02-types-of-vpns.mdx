@@ -1,0 +1,127 @@
+---
+title: "Types of VPNs"
+language: id
+draft: false
+description: "Bagian ini membahas berbagai tipe VPN secara detail."
+order: 54
+course: enterprise-network-ensa
+module: ensa-08-vpn-and-ipsec-concepts
+durationMinutes: 7
+---
+
+# Types of VPNs
+
+
+Bagian ini membahas berbagai tipe VPN secara detail.
+
+## 8.2.1 Remote-Access VPNs
+
+![Remote Access VPNs](https://itexamanswers.net/wp-content/uploads/2020/04/Remote-Access-VPNs.jpg)
+
+### Clientless VPN
+- Menggunakan **web browser** dengan SSL/TLS
+- Contoh: HTTPS untuk web apps
+- Tidak perlu install software tambahan
+- Keterbatasan: hanya untuk aplikasi berbasis web
+
+### Client-based VPN
+- Membutuhkan **VPN client software** (misal: Cisco AnyConnect)
+- Enkripsi via IPsec atau SSL
+- Bisa mengakses semua aplikasi, bukan hanya web
+
+## 8.2.2 SSL VPNs vs. IPsec VPNs
+
+| Fitur | IPsec VPN | SSL VPN |
+|---|---|---|
+| **Aplikasi** | Semua aplikasi IP-based | Terbatas (mostly web-based) |
+| **Autentikasi** | Kuat (two-way, PSK/Digital Certs) | Sedang (one atau two-way) |
+| **Enkripsi** | Kuat (56-bit sampai 256-bit) | Sedang sampai kuat (40-bit sampai 256-bit) |
+| **Kompleksitas** | Sedang (perlu client terinstall) | Rendah (hanya perlu browser) |
+| **Opsi Koneksi** | Terbatas (device/config spesifik) | Luas (device dengan browser) |
+
+<Callout type="remember" title={"Keduanya saling melengkapi"}>
+IPsec dan SSL bukan pengganti satu sama lain — keduanya sering digunakan bersamaan sesuai kebutuhan.
+</Callout>
+
+
+## 8.2.3 Site-to-Site IPsec VPNs
+
+![Site-to-Site IPsec VPNs](https://itexamanswers.net/wp-content/uploads/2020/04/Site-to-Site-IPsec-VPNs.jpg)
+
+### Cara kerja:
+1. VPN gateway di setiap site mengenkapsulasi dan mengenkripsi traffic
+2. Traffic melewati tunnel yang aman melalui internet
+3. VPN gateway di ujung lain mendekripsi dan meneruskan ke jaringan internal
+4. End hosts **tidak menyadari** adanya VPN
+
+## 8.2.4 GRE over IPsec
+
+### Masalah yang diselesaikan:
+- **GRE** mendukung multicast/broadcast (dibutuhkan routing protocols) tapi **tidak mengenkripsi**
+- **IPsec** mengenkripsi tapi hanya mendukung **unicast**
+
+### Solusi: GRE over IPsec
+
+![GRE over IPsec](https://itexamanswers.net/wp-content/uploads/2020/04/GRE-over-IPsec.jpg)
+
+### Komponen:
+
+![GRE over IPsec - Layer](https://itexamanswers.net/wp-content/uploads/2020/04/GRE-over-IPsec-2.jpg)
+
+| Layer | Protokol | Fungsi |
+|---|---|---|
+| **Passenger Protocol** | Packet asli (misal: OSPF update) | Data yang ingin dikirim |
+| **Carrier Protocol** | GRE | Mengenkapsulasi passenger |
+| **Transport Protocol** | IPsec | Mengenkripsi dan mengamankan paket GRE |
+
+![GRE over IPsec - Proses](https://itexamanswers.net/wp-content/uploads/2020/04/GRE-over-IPsec-3.jpg)
+
+## 8.2.5 Dynamic Multipoint VPN (DMVPN)
+
+![DMVPN Hub-to-Spoke Tunnels](https://itexamanswers.net/wp-content/uploads/2020/04/DMVPN-Hub-to-Spoke-Tunnels.jpg)
+
+### Apa itu DMVPN?
+Solusi Cisco yang **scalable** untuk menghubungkan multiple site secara dinamis.
+
+### Cara kerja:
+1. Menggunakan **Multipoint GRE (mGRE)** dan IPsec
+2. Setup awal: hub-and-spoke
+3. Setelah itu, spoke bisa membuat tunnel langsung ke spoke lain **tanpa reconfiguring hub**
+
+![DMVPN Hub-to-Spoke and Spoke-to-Spoke Tunnels](https://itexamanswers.net/wp-content/uploads/2020/04/DMVPN-Hub-to-Spoke-and-Spoke-to-Spoke-Tunnels.jpg)
+
+### Kelebihan:
+- menyederhanakan konfigurasi
+- memungkinkan topology full-mesh yang scalable
+- spoke-to-spoke tunnel dibuat on-demand
+
+## 8.2.6 IPsec Virtual Tunnel Interface (VTI)
+
+![IPsec Virtual Tunnel Interface](https://itexamanswers.net/wp-content/uploads/2020/04/IPsec-Virtual-Tunnel-Interface.jpg)
+
+### Apa itu VTI?
+Konfigurasi IPsec diterapkan ke **virtual interface** (bukan mapping statis ke physical interface).
+
+### Kelebihan:
+- mendukung unicast DAN multicast IP traffic secara native
+- **menghilangkan kebutuhan GRE tunnel** untuk routing protocols
+- mendukung site-to-site atau hub-and-spoke
+
+## 8.2.7 Service Provider MPLS VPNs
+
+![Service Provider MPLS VPNs](https://itexamanswers.net/wp-content/uploads/2020/04/Service-Provider-MPLS-VPNs.jpg)
+
+### Layer 3 MPLS VPN
+- Provider menjalankan routing antar site customer
+- Customer menyerahkan routing ke provider
+
+### Layer 2 MPLS VPN (VPLS)
+- Provider menyediakan switched Ethernet service
+- Customer mengontrol routing sendiri
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 8: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-8-vpn-and-ipsec-concepts.html).

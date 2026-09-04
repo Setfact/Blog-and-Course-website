@@ -1,10 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { loadLearningPaths } from '../../../data/learning';
 
-const allPathsRaw = await getCollection('paths');
-const allPaths = allPathsRaw.filter(path => path.data.language === 'en');
-const paths = allPaths.filter(path => path.data.draft !== true);
+const paths = await loadLearningPaths();
 ---
 
 <BaseLayout title="Learning Paths">
@@ -50,14 +48,14 @@ const paths = allPaths.filter(path => path.data.draft !== true);
 								<div class="flex items-center gap-3 mb-3">
 									<span class="px-2 py-1 bg-surface-variant text-on-surface-variant font-label-caps text-label-caps rounded-DEFAULT border border-border-subtle">PATH</span>
 								</div>
-								<h2 class="font-headline-md text-headline-md text-on-surface">{path.data.title}</h2>
+								<h2 class="font-headline-md text-headline-md text-on-surface">{path.title.en}</h2>
 							</header>
 							<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
-								{path.data.description || 'Pelajari langkah demi langkah dari dasar hingga mahir.'}
+								{path.description.en || 'Learn step by step through practical courses.'}
 							</p>
 							
 							<div class="mt-auto flex items-center gap-4 border-t border-border-subtle pt-6">
-								<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href={`/en/learning-path/${path.id}`}>Start Path</a>
+								<a class="px-6 py-2.5 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-DEFAULT hover:bg-primary hover:text-white transition-colors" href={`/en/learning-path/${path.slug}`}>Start Path</a>
 							</div>
 						</div>
 					</article>

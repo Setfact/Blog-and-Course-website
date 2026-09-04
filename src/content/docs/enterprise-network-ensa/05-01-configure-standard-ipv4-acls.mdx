@@ -1,0 +1,182 @@
+---
+title: "Configure Standard IPv4 ACLs"
+language: id
+draft: false
+description: "Bagian ini membahas cara membuat dan menerapkan standard ACL. Standard ACL hanya memfilter berdasarkan source IPv4 address."
+order: 31
+course: enterprise-network-ensa
+module: ensa-05-acls-for-ipv4-configuration
+durationMinutes: 9
+---
+
+# Configure Standard IPv4 ACLs
+
+
+Bagian ini membahas cara membuat dan menerapkan standard ACL. Standard ACL hanya memfilter berdasarkan **source IPv4 address**.
+
+![Configure Standard IPv4 ACLs](https://itexamanswers.net/wp-content/uploads/2020/04/Configure-Standard-IPv4-ACLs.jpg)
+
+## 5.1.1 Create an ACL
+
+### Perencanaan itu penting
+Sebelum mengetik command apapun, **rencanakan dulu** apa yang ingin kamu capai. Untuk ACL yang kompleks dengan banyak ACE, gunakan text editor untuk:
+1. menulis kebijakan yang ingin diterapkan
+2. menulis perintah IOS yang sesuai
+3. menambahkan **remark** (keterangan) untuk dokumentasi
+4. paste ke router
+5. **test menyeluruh**
+
+<Callout type="warning" title={"Jangan langsung konfigurasi!"}>
+ACL yang buruk bisa memblokir traffic penting atau membuka celah keamanan. Selalu rencanakan dan test dulu.
+</Callout>
+
+
+## 5.1.2 Numbered Standard IPv4 ACL Syntax
+
+### Syntax
+
+```text
+Router(config)# access-list access-list-number {deny | permit | remark text} source [source-wildcard] [log]
+```
+
+### Parameter
+
+| Parameter | Keterangan |
+|---|---|
+| `access-list-number` | Nomor ACL: **1–99** atau **1300–1999** |
+| `deny` | Tolak packet yang match |
+| `permit` | Izinkan packet yang match |
+| `remark` | Komentar/dokumentasi (maks 100 karakter) |
+| `source` | Alamat sumber: host spesifik, network, atau `any` |
+| `source-wildcard` | Wildcard mask (default: `0.0.0.0` = satu host) |
+| `log` | Generate message untuk packet pertama yang match |
+
+### Menghapus ACL
+
+```text
+Router(config)# no access-list access-list-number
+```
+
+## 5.1.3 Named Standard IPv4 ACL Syntax
+
+### Syntax
+
+```text
+Router(config)# ip access-list standard access-list-name
+```
+
+- Masuk ke named standard ACL configuration mode (`config-std-nacl`)
+- Nama ACL bersifat **alphanumeric, case-sensitive, dan unik**
+
+### Menghapus Named ACL
+
+```text
+Router(config)# no ip access-list standard access-list-name
+```
+
+### Kenapa named ACL lebih disukai?
+- bisa **diedit baris per baris** tanpa menghapus seluruh ACL
+- lebih mudah diidentifikasi (namanya deskriptif)
+- lebih mudah di-troubleshoot
+
+## 5.1.4 Apply a Standard IPv4 ACL
+
+Setelah ACL dibuat, kamu harus **menerapkannya ke interface**.
+
+### Syntax
+
+```text
+Router(config-if)# ip access-group {access-list-number | access-list-name} {in | out}
+```
+
+### Menghapus dari interface
+
+```text
+Router(config-if)# no ip access-group
+```
+
+## 5.1.5 Numbered Standard IPv4 ACL Example
+
+### Skenario
+Kamu hanya boleh mengizinkan **PC1 (192.168.10.10)** dan **LAN 2 (192.168.20.0/24)** untuk keluar ke internet.
+
+### Konfigurasi
+
+```text
+R1(config)# access-list 10 remark ACE permits ONLY host 192.168.10.10
+R1(config)# access-list 10 permit host 192.168.10.10
+R1(config)# access-list 10 remark ACE permits all host in LAN 2
+R1(config)# access-list 10 permit 192.168.20.0 0.0.0.255
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group 10 out
+```
+
+![Numbered Standard IPv4 ACL Example](https://itexamanswers.net/wp-content/uploads/2020/04/Numbered-Standard-IPv4-ACL-Example.jpg)
+
+### Penjelasan command per baris
+
+| Command | Arti |
+|---|---|
+| `access-list 10 remark ...` | Komentar dokumentasi — tidak mempengaruhi traffic |
+| `access-list 10 permit host 192.168.10.10` | Izinkan satu host spesifik |
+| `access-list 10 permit 192.168.20.0 0.0.0.255` | Izinkan seluruh subnet /24 |
+| `ip access-group 10 out` | Terapkan ACL 10 ke arah outbound |
+
+### Catatan penting
+- Karena ini **standard ACL**, ditempatkan **dekat destination** (di interface outbound)
+- ACE diproses dari atas ke bawah secara sekuensial
+- Kalau tidak ada match → **implicit deny** akan menolak packet
+
+## 5.1.6 Named Standard IPv4 ACL Example
+
+Sama seperti di atas, tapi menggunakan nama `PERMIT-ACCESS`.
+
+### Konfigurasi
+
+```text
+R1(config)# ip access-list standard PERMIT-ACCESS
+R1(config-std-nacl)# remark ACE permits host 192.168.10.10
+R1(config-std-nacl)# permit host 192.168.10.10
+R1(config-std-nacl)# remark ACE permits all hosts in LAN 2
+R1(config-std-nacl)# permit 192.168.20.0 0.0.0.255
+R1(config-std-nacl)# exit
+R1(config)# interface Serial 0/1/0
+R1(config-if)# ip access-group PERMIT-ACCESS out
+```
+
+### Perbandingan Numbered vs Named
+
+| Aspek              | Numbered                    | Named                               |
+| ------------------ | --------------------------- | ----------------------------------- |
+| Identifikasi       | Nomor (10)                  | Nama (PERMIT-ACCESS)                |
+| Edit per baris     | ❌ Tidak bisa                | ✅ Bisa                              |
+| Syntax             | `access-list 10 permit ...` | `ip access-list standard ...`       |
+| Apply ke interface | `ip access-group 10 out`    | `ip access-group PERMIT-ACCESS out` |
+
+## 5.1.7 Syntax Check – Configure Standard IPv4 ACLs
+
+<Callout type="remember" title={"Syntax Checker"}>
+Source menyediakan syntax checker interaktif untuk praktik konfigurasi standard ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+## 5.1.8 Packet Tracer – Configure Numbered Standard IPv4 ACLs
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi numbered standard ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+## 5.1.9 Packet Tracer – Configure Named Standard IPv4 ACLs
+
+<Callout type="remember" title={"Packet Tracer"}>
+Source menyediakan activity Packet Tracer untuk praktik konfigurasi named standard ACL. Tersedia di halaman source asli.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 5: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-5-acls-for-ipv4-configuration.html).

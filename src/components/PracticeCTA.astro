@@ -1,0 +1,88 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  href?: string;
+  label?: string;
+}
+
+const {
+  title = 'Siap menguji pemahamanmu?',
+  description = 'Pakai konsep di atas pada latihan singkat sebelum melanjutkan ke lesson berikutnya.',
+  href = '#latihan',
+  label = 'Coba Latihan',
+} = Astro.props;
+---
+
+<aside class="practice-cta">
+  <div class="practice-icon" aria-hidden="true">
+    <span class="material-symbols-outlined">science</span>
+  </div>
+  <div class="practice-copy">
+    <span>Lab singkat</span>
+    <strong>{title}</strong>
+    <p>{description}</p>
+  </div>
+  <a href={href} class="practice-button">
+    {label}
+    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+  </a>
+</aside>
+
+<style>
+  .practice-cta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    border: 1px solid #284875;
+    border-radius: 1.25rem;
+    padding: 1.2rem;
+    background: linear-gradient(135deg, var(--color-navy), #102f63);
+    color: #fff;
+    box-shadow: 0 15px 34px rgba(8, 26, 58, 0.18);
+  }
+
+  .practice-icon {
+    display: grid;
+    width: 3.3rem;
+    height: 3.3rem;
+    place-items: center;
+    border-radius: 1rem;
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--color-sky);
+  }
+
+  .practice-icon span { font-size: 1.65rem; }
+  .practice-copy { display: grid; gap: 0.12rem; }
+  .practice-copy > span { color: var(--color-sky); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .practice-copy strong { font-family: var(--font-heading); font-size: 1rem; font-weight: 900; }
+  .practice-copy p { margin: 0; color: #c4d8f6; font-size: 0.8rem; line-height: 1.5; }
+
+  .practice-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 0.8rem;
+    padding: 0.72rem 0.9rem;
+    background: var(--color-sky);
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-decoration: none;
+    box-shadow: 0 4px 0 #1686b5;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .practice-button:hover { transform: translateY(-1px); }
+  .practice-button:active { transform: translateY(3px); box-shadow: 0 1px 0 #1686b5; }
+  .practice-button span { font-size: 1rem; }
+
+  @media (max-width: 680px) {
+    .practice-cta { grid-template-columns: auto 1fr; }
+    .practice-button { grid-column: 1 / -1; width: 100%; }
+  }
+</style>

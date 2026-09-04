@@ -1,0 +1,234 @@
+---
+title: "OSPF Router ID"
+language: id
+draft: false
+description: "Bagian ini membahas salah satu identitas paling penting di OSPF, yaitu router ID. Walaupun kelihatannya hanya angka IPv4 biasa, router ID punya peran besar dalam proses internal OS"
+order: 7
+course: enterprise-network-ensa
+module: ensa-02-single-area-ospfv2-configuration
+durationMinutes: 10
+---
+
+# OSPF Router ID
+
+
+Bagian ini membahas salah satu identitas paling penting di OSPF, yaitu **router ID**. Walaupun kelihatannya hanya angka IPv4 biasa, router ID punya peran besar dalam proses internal OSPF. Dia dipakai untuk mengenali router secara unik, membantu sinkronisasi database, dan memengaruhi pemilihan DR/BDR di jaringan multiaccess.
+
+## 2.1.1 OSPF Reference Topology
+
+Topologi referensi di modul ini memakai router **R1, R2, dan R3** yang sudah punya interface IP address awal. Belum ada static routing atau dynamic routing lain yang aktif di awal.
+
+![OSPF Reference Topology](https://itexamanswers.net/wp-content/uploads/2020/04/OSPF-Reference-Topology.jpg)
+
+Gambar ini nunjukin susunan router dan link yang dipakai sebagai acuan seluruh konfigurasi di modul ini.
+
+Selain itu:
+- semua interface pada R1/R2/R3 masuk ke OSPF backbone area
+- **R2 Loopback1** dipakai untuk simulasi konektivitas tambahan
+- ada router **ISP** yang berperan sebagai gateway ke internet
+- loopback dipakai supaya topologi tetap konsisten dan mudah dipindahkan ke lingkungan lab lain
+
+Topologi referensi ini penting karena semua contoh konfigurasi router ID, network statement, passive-interface, dan default route propagation mengacu ke sini.
+
+## 2.1.2 Router Configuration Mode for OSPF
+
+OSPF diaktifkan dari global configuration mode lalu masuk ke OSPF router configuration mode.
+
+Contoh:
+```text
+R1(config)# router ospf 10
+R1(config-router)# ?
+```
+```text
+area                   OSPF area parameters
+  auto-cost              Calculate OSPF interface cost according to bandwidth
+  default-information    Control distribution of default information
+  distance               Define an administrative distance
+  exit                   Exit from routing protocol configuration mode
+  log-adjacency-changes  Log changes in adjacency state
+  neighbor               Specify a neighbor router
+  network                Enable routing on an IP network
+  no                     Negate a command or set its defaults
+  passive-interface      Suppress routing updates on an interface
+  redistribute           Redistribute information from another routing protocol
+  router-id              router-id for this OSPF process
+```
+
+### Arti process ID
+`router ospf 10` berarti OSPF process ID-nya adalah **10**.
+
+Penting banget untuk dipahami bahwa:
+- **process-id bersifat lokal**
+- router-router yang bertetangga **tidak harus memakai process ID yang sama**
+- best practice biasanya tetap memakai angka yang konsisten supaya dokumentasi rapi dan mudah di-troubleshoot
+
+## 2.1.3 Router IDs
+
+**OSPF router ID** adalah nilai **32-bit** yang ditulis seperti address IPv4.
+
+Fungsinya:
+- mengidentifikasi router OSPF secara unik
+- muncul di semua OSPF packet
+- dipakai saat sinkronisasi database
+- dipakai saat **DR/BDR election** di jaringan multiaccess
+
+## 2.1.4 Router ID Order of Precedence
+
+![Router ID Order of Precedence](https://itexamanswers.net/wp-content/uploads/2020/04/Router-ID-Order-of-Precedence.jpg)
+
+Cisco menentukan router ID dengan urutan prioritas berikut:
+1. **router-id** yang dikonfigurasi manual
+2. alamat IPv4 tertinggi pada **loopback interface**
+3. alamat IPv4 tertinggi pada **physical interface** aktif
+
+### Kenapa urutan ini penting?
+
+Karena kalau kamu tidak set router ID secara manual, OSPF akan memilih sendiri berdasarkan kondisi interface yang ada. Itu bisa bikin router ID berubah kalau interface berubah, dan itu tidak enak buat dokumentasi atau troubleshooting.
+
+### Contoh default router ID
+
+Kalau tidak ada loopback atau manual router ID:
+- **R1:** `10.1.1.14`
+- **R2:** `10.1.1.9`
+- **R3:** `10.1.1.13`
+
+## 2.1.5 Configure a Loopback Interface as the Router ID
+
+Best practice umum adalah memakai **loopback interface** sebagai dasar router ID.
+
+```text
+R1(config-if)# interface Loopback 1
+R1(config-if)# ip address 1.1.1.1 255.255.255.255
+R1(config-if)# end
+R1# show ip protocols | include Router ID
+Router ID 1.1.1.1
+```
+
+### Kenapa pakai /32?
+- `/32` membuat loopback menjadi **host route**
+- route tersebut tidak diperlakukan seperti network biasa
+- router ID jadi stabil karena loopback jarang berubah
+
+## 2.1.6 Explicitly Configure a Router ID
+
+![Explicitly Configure a Router ID](https://itexamanswers.net/wp-content/uploads/2020/04/Explicitly-Configure-a-Router-ID.jpg)
+
+```text
+R1(config)# router ospf 10
+R1(config-router)# router-id 1.1.1.1
+R1(config-router)# end
+```
+```text
+*May 23 19:33:42.689: %SYS-5-CONFIG_I: Configured from console by console
+```
+```text
+R1# show ip protocols | include Router ID
+```
+```text
+Router ID 1.1.1.1
+```
+
+Ini cara yang paling direkomendasikan karena paling jelas, paling mudah didokumentasikan, tidak tergantung urutan interface, dan paling gampang dicek saat troubleshooting.
+
+## 2.1.7 Modify a Router ID
+
+Kalau kamu coba mengubah router ID saat OSPF sudah jalan:
+
+```text
+R1# show ip protocols | include Router ID
+Router ID 10.10.1.1
+R1# conf t
+R1(config)# router ospf 10 
+R1(config-router)# router-id 1.1.1.1
+% OSPF: Reload or use "clear ip ospf process" command, for this to take effect
+```
+
+Router akan menolak perubahan sampai process di-reset:
+
+```text
+R1(config-router)# end
+R1# clear ip ospf process
+```
+```text
+Reset ALL OSPF processes? [no]: y
+*Jun  6 01:09:46.975: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 on GigabitEthernet0/0/1 from FULL to DOWN, Neighbor Down: Interface down or detached
+*Jun  6 01:09:46.975: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 on GigabitEthernet0/0/0 from FULL to DOWN, Neighbor Down: Interface down or detached
+```
+
+Adjacency turun (FULL to DOWN) lalu dibangun kembali dengan router ID baru. Router ID adalah bagian dari state OSPF — begitu OSPF sudah jalan dan database sudah terbentuk, perubahan router ID tidak boleh asal diterapkan tanpa refresh proses.
+
+## 2.1.8 Syntax Checker — Configure R2 and R3 Router IDs
+
+### Konfigurasi R2
+
+```text
+R2(config)#router ospf 10
+R2(config-router)#router-id 2.2.2.2
+R2(config-router)#end
+```
+```text
+R2#
+*Mar 25 20:03:56.863: %SYS-5-CONFIG_I: Configured from console by console
+```
+
+### Verifikasi R2
+
+```text
+R2#show ip protocols
+```
+```text
+*** IP Routing is NSF aware ***
+(output omitted)
+Routing Protocol is "ospf 10"
+  Outgoing update filter list for all interfaces is not set
+  Incoming update filter list for all interfaces is not set
+  Router ID 2.2.2.2
+  Number of areas in this router is 0.  0 normal 0 stub 0 nssa
+  Maximum path: 4
+  Routing for Networks:
+  Routing Information Sources:
+    Gateway         Distance      Last Update
+  Distance: (default is 110)
+R2#
+```
+
+### Konfigurasi R3
+
+```text
+R3(config)#router ospf 10
+R3(config-router)#router-id 3.3.3.3
+R3(config-router)#end
+```
+```text
+*Mar 25 20:11:05.415: %SYS-5-CONFIG_I: Configured from console by console
+```
+
+### Verifikasi R3
+
+```text
+R3#show ip protocols
+```
+```text
+*** IP Routing is NSF aware ***
+(output omitted)
+Routing Protocol is "ospf 10"
+  Router ID 3.3.3.3
+  Number of areas in this router is 0.  0 normal 0 stub 0 nssa
+  Maximum path: 4
+  Routing for Networks:
+  Routing Information Sources:
+    Gateway         Distance      Last Update
+  Distance: (default is 110)
+R3#
+```
+
+### Makna dari latihan ini
+
+Perhatikan bahwa **Number of areas** masih 0 karena belum ada network yang di-advertise ke OSPF. Router ID sudah terpasang, tapi OSPF belum benar-benar aktif di interface manapun.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 2: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-2-single-area-ospfv2-configuration.html).

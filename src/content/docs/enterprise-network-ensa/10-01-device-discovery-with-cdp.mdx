@@ -1,0 +1,93 @@
+---
+title: "Device Discovery with CDP"
+language: id
+draft: false
+description: "Bagian ini membahas Cisco Discovery Protocol (CDP) — protokol proprietary Cisco untuk menemukan perangkat yang terhubung langsung."
+order: 63
+course: enterprise-network-ensa
+module: ensa-10-network-management
+durationMinutes: 6
+---
+
+# Device Discovery with CDP
+
+
+Bagian ini membahas **Cisco Discovery Protocol (CDP)** — protokol proprietary Cisco untuk menemukan perangkat yang terhubung langsung.
+
+## 10.1.1 CDP Overview
+
+![CDP Overview](https://itexamanswers.net/wp-content/uploads/2020/04/CDP-Overview.jpg)
+
+### Apa itu CDP?
+CDP adalah protokol **Layer 2** yang berjalan di semua interface Cisco. Protokol ini mengirim frame multicast untuk memberitahu perangkat Cisco lain di link yang sama.
+
+### Informasi yang dikirim CDP:
+- Device ID (hostname)
+- Interface ID
+- Platform (model router/switch)
+- IOS version
+- Address list
+- Capabilities (Router, Switch, dll)
+
+## 10.1.2 Discover Devices by Using CDP
+
+### Perintah dasar
+
+![Discover Devices by Using CDP](https://itexamanswers.net/wp-content/uploads/2020/04/Discover-Devices-by-Using-CDP.jpg)
+
+```text
+Router# show cdp
+```
+
+Menampilkan informasi global CDP: apakah aktif, timer, hold time.
+
+```text
+Router# show cdp neighbors
+```
+
+Menampilkan daftar neighbor yang ditemukan oleh CDP.
+
+```text
+Router# show cdp neighbors detail
+```
+
+Menampilkan informasi detail tentang setiap neighbor, termasuk **IP address**.
+
+![Discover Devices by Using CDP - Detail](https://itexamanswers.net/wp-content/uploads/2020/04/Discover-Devices-by-Using-CDP1.jpg)
+
+![Discover Devices by Using CDP - Detail 2](https://itexamanswers.net/wp-content/uploads/2020/04/Discover-Devices-by-Using-CDP2.jpg)
+
+## 10.1.3 Configure CDP
+
+### Mengaktifkan/menonaktifkan CDP secara global
+
+```text
+Router(config)# cdp run        ! Aktifkan CDP (default aktif)
+Router(config)# no cdp run     ! Nonaktifkan CDP
+```
+
+### Mengaktifkan/menonaktifkan CDP per interface
+
+```text
+Router(config-if)# cdp enable       ! Aktifkan di interface
+Router(config-if)# no cdp enable    ! Nonaktifkan di interface
+```
+
+## 10.1.4 CDP Security Considerations
+
+<Callout type="warning" title={"CDP bisa berbahaya!"}>
+CDP mengirim informasi sensitif (IP, IOS version, platform) dalam frame yang tidak terenkripsi. Di interface yang menghadap ke internet atau jaringan tidak trusted, **CDP harus dimatikan**.
+</Callout>
+
+
+### Best practice:
+- Aktifkan CDP hanya di internal interfaces
+- Nonaktifkan di external-facing interfaces
+- Gunakan LLDP sebagai alternatif vendor-neutral
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 10: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-10-network-management.html).

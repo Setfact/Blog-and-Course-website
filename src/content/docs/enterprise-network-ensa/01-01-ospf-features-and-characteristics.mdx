@@ -1,0 +1,233 @@
+---
+title: "OSPF Features and Characteristics"
+language: id
+draft: false
+description: "Bagian ini menjelaskan apa itu OSPF, kenapa dipakai, dan bagaimana konsep dasarnya bekerja."
+order: 2
+course: enterprise-network-ensa
+module: ensa-01-single-area-ospfv2-concepts
+durationMinutes: 11
+---
+
+# OSPF Features and Characteristics
+
+
+Bagian ini menjelaskan apa itu OSPF, kenapa dipakai, dan bagaimana konsep dasarnya bekerja.
+
+## 1.1.1 Introduction to OSPF
+
+**OSPF (Open Shortest Path First)** adalah **link-state routing protocol**. Protokol ini dibuat sebagai alternatif dari **RIP (Routing Information Protocol)** yang hanya memakai **hop count**.
+
+### Kenapa OSPF lebih unggul dibanding RIP?
+- **Faster convergence**: OSPF lebih cepat menyesuaikan diri saat ada perubahan topologi.
+- **Better scalability**: OSPF lebih cocok untuk network besar dan kompleks.
+- OSPF bisa mempertimbangkan **kecepatan link** dan **cost**, bukan cuma jumlah hop.
+
+### Inti cara kerja OSPF
+OSPF tidak cuma melihat “berapa langkah” ke tujuan, tapi melihat **kualitas jalur**.
+
+Kalau RIP bilang, “yang hop-nya paling sedikit itu terbaik,” OSPF lebih pintar karena menghitung **cost total** dari setiap link.
+
+## 1.1.2 Components of OSPF
+
+Seperti routing protocol lain, OSPF punya 3 komponen utama:
+1. **Routing protocol messages**
+2. **Data structures**
+3. **Algorithm**
+
+### OSPF messages
+OSPF memakai 5 jenis packet:
+- **Hello**
+- **DBD (Database Description)**
+- **LSR (Link-State Request)**
+- **LSU (Link-State Update)**
+- **LSAck (Link-State Acknowledgment)**
+
+### OSPF databases / tables
+| Database | Table | Fungsi | Command |
+|---|---|---|---|
+| **Adjacency Database** | Neighbor Table | Menyimpan daftar neighbor yang sudah punya komunikasi dua arah | `show ip ospf neighbor` |
+| **Link-State Database (LSDB)** | Topology Table | Menyimpan topologi jaringan; semua router dalam area punya LSDB yang sama | `show ip ospf database` |
+| **Forwarding Database** | Routing Table | Menyimpan route hasil perhitungan SPF | `show ip route` |
+
+### Kenapa tiga database ini penting?
+Karena OSPF itu kerja bertahap:
+- pertama mengenal **neighbor**
+- lalu menyusun **topologi**
+- lalu hasilnya dipakai untuk **routing decision**
+
+Jadi bukan langsung belajar route, tapi dibangun dari bawah dulu.
+
+## 1.1.3 Link-State Operation
+
+OSPF bekerja dengan cara membangun gambaran topologi jaringan terlebih dulu, lalu menghitung jalur terbaik.
+
+### Alur dasarnya
+1. **Establish Neighbor Adjacencies**
+2. **Exchange Link-State Advertisements**
+3. **Build the Link State Database**
+4. **Execute the SPF Algorithm**
+5. **Choose the Best Route**
+
+### Penjelasan langkah demi langkah
+
+#### 1) Establish Neighbor Adjacencies
+
+![Establish Neighbor Adjacencies](https://itexamanswers.net/wp-content/uploads/2020/04/Establish-Neighbor-Adjacencies.jpg)
+
+Router mengirim **Hello packet** untuk menemukan neighbor. Kalau ada router lain yang cocok, mereka mulai membentuk adjacency.
+
+#### 2) Exchange Link-State Advertisements
+
+![Exchange Link-State Advertisements](https://itexamanswers.net/wp-content/uploads/2020/04/Exchange-Link-State-Advertisements.jpg)
+
+Setelah adjacency terbentuk, router saling bertukar **LSA**. LSA berisi informasi link-state dari interface yang terhubung langsung.
+
+#### 3) Build the Link State Database
+
+![Build the Link State Database](https://itexamanswers.net/wp-content/uploads/2020/04/Build-the-Link-State-Database.jpg)
+
+Setiap router menyusun **LSDB** dari LSA yang diterima. Di tahap ini, router mulai punya gambaran topologi jaringan yang lengkap.
+
+#### 4) Execute the SPF Algorithm
+
+![Execute the SPF Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/Execute-the-SPF-Algorithm.jpg)
+
+Setelah LSDB siap, router menjalankan **SPF algorithm** untuk menghitung jalur dengan cost paling kecil.
+
+#### 5) Choose the Best Route
+
+![Choose the Best Route](https://itexamanswers.net/wp-content/uploads/2020/04/Choose-the-Best-Route.jpg)
+
+Hasil SPF dimasukkan ke routing table. Dari sini router bisa memilih next-hop terbaik untuk setiap destination.
+
+### Gambar referensi tambahan
+
+![Routing Protocol Messages](https://itexamanswers.net/wp-content/uploads/2020/04/Routing-Protocol-Messages.jpg)
+
+![Algorithm](https://itexamanswers.net/wp-content/uploads/2020/04/Algorithm.jpg)
+
+## 1.1.4 Single-Area and Multiarea OSPF
+
+Bagian ini menjelaskan perbedaan antara **single-area OSPF** dan **multiarea OSPF**. Ini penting karena konsep area adalah salah satu alasan utama OSPF lebih scalable dibanding routing protocol yang lebih sederhana.
+
+### Single-Area OSPF
+
+![Single-Area OSPF](https://itexamanswers.net/wp-content/uploads/2020/04/Single-Area-OSPF1.jpg)
+
+Dalam **single-area OSPF**, semua router berada di **satu area yang sama**.
+
+Artinya:
+- semua router berbagi **link-state information** yang sama
+- semua router punya **LSDB** yang sama untuk area itu
+- proses routing lebih sederhana karena tidak ada pemisahan area
+
+**Best practice**-nya adalah memakai **area 0** sebagai area tunggal.
+
+Single-area OSPF cocok untuk:
+- network kecil
+- desain yang tidak terlalu kompleks
+- environment yang ingin konfigurasi lebih simpel
+
+### Multiarea OSPF
+
+![Multiarea OSPF](https://itexamanswers.net/wp-content/uploads/2020/04/Multiarea-OSPF.jpg)
+
+Kalau network makin besar, OSPF bisa dibagi menjadi beberapa area.
+
+Konsep utamanya:
+- network besar dibagi menjadi beberapa **area** yang lebih kecil
+- setiap area punya LSDB sendiri
+- perubahan di satu area tidak harus membebani seluruh network sekaligus
+
+Semua area harus terhubung ke **backbone area 0**.
+
+Kenapa?
+- area 0 adalah pusat utama OSPF
+- semua area lain wajib punya jalur ke backbone
+- backbone ini menjaga konektivitas antar-area tetap konsisten
+
+Router yang menghubungkan satu area ke area lain disebut **ABR (Area Border Router)**.
+
+ABR punya peran penting karena:
+- menerima routing information dari satu area
+- meneruskannya ke area lain
+- membantu summarization antar area
+- menjaga agar desain OSPF tetap rapi dan efisien
+
+### Kenapa multiarea itu berguna?
+
+![Link Change Impacts Local Area Only](https://itexamanswers.net/wp-content/uploads/2020/04/Link-Change-Impacts-Local-Area-Only.jpg)
+
+Multiarea OSPF dipakai supaya network besar tidak berat hanya karena semua router harus tahu semua detail topologi secara penuh.
+
+Keuntungannya:
+- **routing table lebih kecil** karena ada **summarization**
+- **LSA flooding lebih terbatas**
+- **SPF tidak harus dihitung ulang di seluruh network** saat ada perubahan kecil di satu area
+- troubleshooting lebih gampang kalau pembagian area rapi
+
+### Penjelasan gambar
+
+Gambar-gambar ini nunjukin bahwa OSPF tidak cuma soal router bisa ngomong, tapi juga soal sejauh mana informasi link-state disebarkan.
+
+Di **single-area**, semua router saling berbagi informasi dalam satu ruang yang sama, jadi semua perubahan topologi akan lebih terasa ke seluruh area.
+
+Di **multiarea**, jaringan dipisah supaya dampak perubahan bisa lebih terkontrol. Kalau ada link berubah di satu area, efek terbesarnya biasanya tetap di area itu dulu, bukan langsung ke semua area.
+
+### Hubungan dengan gambar LSAs
+
+Gambar diagram **Routers Exchange LSAs** menunjukkan proses ketika router-router bertukar **LSA (Link-State Advertisement)** yang berisi:
+- network prefix
+- prefix length
+- cost
+- informasi langsung dari link yang terhubung
+
+Dari gambar itu kelihatan bahwa:
+- setiap router mengirim informasi link-state ke neighbor-nya
+- neighbor yang menerima LSA akan meneruskannya lagi
+- proses ini disebut **flooding**
+- flooding berlanjut sampai semua router di area punya LSDB yang lengkap
+
+Ini inti kenapa OSPF bisa membangun topologi dengan akurat.
+
+### Contoh makna gambar
+Kalau sebuah router mempelajari link baru atau cost baru, informasi itu tidak disimpan diam-diam sendiri. Informasi itu dibungkus dalam LSA, dikirim ke neighbor, lalu neighbor meneruskannya ke router lain sampai semua router dalam area mengetahui update tersebut.
+
+Jadi yang dibagikan bukan sekadar "ada router A ke router B", tapi juga detail seperti:
+- prefix jaringan
+- panjang prefix
+- cost link
+
+Itulah sebabnya OSPF disebut link-state routing protocol.
+
+## 1.1.5 Multiarea OSPF
+
+Saat network dibagi ke beberapa area, perubahan topologi di satu area biasanya hanya berdampak besar pada area tersebut saja.
+
+Contoh dampaknya:
+- kalau ada perubahan link di Area 10, router di Area 20 tidak selalu perlu mengolah detail yang sama secara penuh
+- informasi bisa diringkas lewat **ABR**
+- beban SPF dan flooding jadi lebih efisien
+
+Jadi, multiarea OSPF bukan cuma bagi-bagi area doang, tapi memang strategi untuk bikin routing protocol tetap scalable saat jumlah router dan link makin banyak.
+
+## 1.1.6 OSPFv3
+
+**OSPFv3** adalah versi OSPF untuk **IPv6**.
+
+Perbandingan singkat:
+- **OSPFv2** → IPv4
+- **OSPFv3** → IPv6
+
+Meskipun sama-sama pakai konsep SPF, OSPFv3 punya dukungan address family yang lebih modern. Namun itu di luar fokus modul ini.
+
+### Gambar referensi
+![](https://itexamanswers.net/wp-content/uploads/2020/04/OSPFv2-and-OSPFv3-Data-Structures.jpg)
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 1: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-1-single-area-ospfv2-concepts.html).

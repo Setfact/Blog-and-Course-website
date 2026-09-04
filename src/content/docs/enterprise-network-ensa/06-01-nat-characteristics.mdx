@@ -1,0 +1,81 @@
+---
+title: "NAT Characteristics"
+language: id
+draft: false
+description: "Bagian ini membahas dasar-dasar NAT: alamat private, konsep NAT, cara kerja, dan terminologi."
+order: 37
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 7
+---
+
+# NAT Characteristics
+
+
+Bagian ini membahas dasar-dasar NAT: alamat private, konsep NAT, cara kerja, dan terminologi.
+
+## 6.1.1 IPv4 Private Address Space
+
+Karena jumlah alamat IPv4 terbatas (hanya sekitar 4,3 miliar), **RFC 1918** mendefinisikan rentang alamat private yang tidak bisa dirute di internet.
+
+![IPv4 Private Address Space](https://itexamanswers.net/wp-content/uploads/2020/04/IPv4-Private-Address-Space.jpg)
+
+### Rentang alamat private
+
+| Class | Rentang Alamat | Prefix |
+|---|---|---|
+| **A** | `10.0.0.0` – `10.255.255.255` | `10.0.0.0/8` |
+| **B** | `172.16.0.0` – `172.31.255.255` | `172.16.0.0/12` |
+| **C** | `192.168.0.0` – `192.168.255.255` | `192.168.0.0/16` |
+
+### Kenapa alamat private diperlukan?
+- menghemat alamat public
+- host di dalam jaringan bisa menggunakan alamat yang sama dengan host di jaringan lain
+- NAT menjadi jembatan antara alamat private dan public
+
+## 6.1.2 What is NAT
+
+**NAT (Network Address Translation)** adalah mekanisme untuk menerjemahkan alamat IP dari satu blok ke blok lainnya. Secara khusus, NAT menerjemahkan **alamat private (inside)** ke **alamat public (outside)**.
+
+![What is NAT](https://itexamanswers.net/wp-content/uploads/2020/04/What-is-NAT.jpg)
+
+### Fungsi utama NAT
+- **Menghemat alamat public** — banyak host berbagi sedikit alamat public
+- **Menambah fleksibilitas** — perubahan internal tidak mempengaruhi konfigurasi public
+- **Menyembunyikan struktur internal** — alamat internal tidak terlihat dari luar
+
+## 6.1.3 How NAT Works
+
+![How NAT Works](https://itexamanswers.net/wp-content/uploads/2020/04/6.1.3-How-NAT-Works.gif)
+
+### Cara kerja NAT secara sederhana:
+1. Host internal mengirim packet ke internet dengan **alamat private** sebagai source
+2. Router NAT menerima packet
+3. Router mengganti source address dari **alamat private** ke **alamat public**
+4. Router menyimpan mapping di **NAT translation table**
+5. Ketika ada respons dari internet, router menerjemahkan destination address kembali ke alamat private host asal
+
+## 6.1.4 NAT Terminology
+
+NAT menggunakan empat istilah yang harus dipahami:
+
+![NAT Terminology](https://itexamanswers.net/wp-content/uploads/2020/04/NAT-Terminology.jpg)
+
+| Istilah | Arti | Contoh |
+|---|---|---|
+| **Inside Local** | Alamat private host internal | `192.168.10.10` |
+| **Inside Global** | Alamat public yang mewakili host internal ke dunia luar | `209.165.200.226` |
+| **Outside Local** | Alamat destination seperti yang terlihat dari dalam jaringan | `172.16.2.2` |
+| **Outside Global** | Alamat public sebenarnya dari host destination di internet | `172.16.2.2` |
+
+<Callout type="warning" title={"Perspektif penting"}>
+Terminologi NAT selalu dilihat dari **perspektif device yang ditranslasi**. Jadi "inside" adalah sisi yang menggunakan NAT, dan "outside" adalah sisi internet.
+</Callout>
+
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

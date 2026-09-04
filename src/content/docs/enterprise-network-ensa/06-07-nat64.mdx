@@ -1,0 +1,39 @@
+---
+title: "NAT64"
+language: id
+draft: false
+description: "Bagian ini membahas NAT64 — mekanisme yang memungkinkan komunikasi antara jaringan IPv6-only dan IPv4-only."
+order: 43
+course: enterprise-network-ensa
+module: ensa-06-nat-for-ipv4
+durationMinutes: 6
+---
+
+# NAT64
+
+
+Bagian ini membahas NAT64 — mekanisme yang memungkinkan komunikasi antara jaringan **IPv6-only** dan **IPv4-only**.
+
+## 6.7.1 What is NAT64
+
+![NAT64](https://itexamanswers.net/wp-content/uploads/2020/04/NAT64.jpg)
+
+### Kenapa NAT64 diperlukan?
+- saat transisi dari IPv4 ke IPv6, ada periode di mana kedua protokol harus bisa berkomunikasi
+- NAT64 memungkinkan host IPv6-only mengakses layanan IPv4-only (dan sebaliknya)
+
+### Cara kerja NAT64
+1. Host IPv6 mengirim packet ke DNS64 server
+2. DNS64 mengembalikan alamat IPv6 yang mengandung IPv4 address di dalamnya
+3. NAT64 router menerjemahkan header IPv6 ke IPv4
+4. Packet diteruskan ke server IPv4
+
+### Catatan
+NAT64 biasanya dikombinasikan dengan **DNS64** untuk memfasilitasi transisi yang mulus.
+
+---
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 6: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-6-nat-for-ipv4.html).

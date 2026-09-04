@@ -1,0 +1,143 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  lessons?: number;
+  countLabel?: string;
+  duration?: string;
+  category?: string;
+  level?: string;
+  status?: string;
+  ctaLabel?: string;
+  progress?: number;
+  image?: string;
+  courseSlug?: string;
+  totalLessons?: number;
+  learningHref?: string;
+  accent?: 'primary' | 'sky' | 'gold' | 'success';
+  class?: string;
+  style?: string;
+}
+
+const {
+  href,
+  title,
+  description,
+  lessons = 0,
+  countLabel = 'materi',
+  duration,
+  category,
+  level = 'Pemula',
+  status = 'Tersedia',
+  ctaLabel = 'Mulai Belajar',
+  image,
+  courseSlug,
+  totalLessons = 0,
+  learningHref,
+  accent = 'primary',
+  class: className,
+  style,
+} = Astro.props;
+---
+
+<a
+  href={href}
+  class:list={['course-card', 'accent-' + accent, className]}
+  data-featured-course={courseSlug ? 'true' : undefined}
+  data-course={courseSlug}
+  data-total-lessons={totalLessons}
+  data-learning-href={learningHref}
+  data-reveal
+  style={style}
+>
+  <div class="course-cover">
+    {image && <img src={image} alt="" loading="lazy" width="960" height="540" />}
+    <div class="cover-badges">
+      {category && <span class="category-badge">{category}</span>}
+      <span class="status-badge">{status}</span>
+    </div>
+  </div>
+
+  <div class="course-content">
+    <h3>{title}</h3>
+    <p>{description}</p>
+
+    <ul class="course-meta" aria-label="Informasi course">
+      <li>{level}</li>
+      <li>{lessons} {countLabel}</li>
+      {duration && <li>{duration}</li>}
+    </ul>
+
+    <div class="local-progress" data-featured-progress hidden>
+      <div><span data-featured-progress-label></span><strong data-featured-progress-percent></strong></div>
+      <span><i data-featured-progress-fill></i></span>
+    </div>
+
+    <footer>
+      <span data-featured-cta>{ctaLabel}</span>
+      <strong aria-hidden="true">→</strong>
+    </footer>
+  </div>
+</a>
+
+<script>
+  import { getCourseProgress } from '../../scripts/learning-store';
+
+  const renderFeaturedProgress = () => {
+    document.querySelectorAll<HTMLAnchorElement>('[data-featured-course="true"]').forEach((card) => {
+      const learningHref = card.dataset.learningHref;
+      if (!learningHref) return;
+      const totalLessons = Number(card.dataset.totalLessons) || 0;
+      const progress = getCourseProgress(card.dataset.course ?? '', totalLessons);
+      if (progress.completedLessons === 0) return;
+      const container = card.querySelector<HTMLElement>('[data-featured-progress]');
+      const label = card.querySelector<HTMLElement>('[data-featured-progress-label]');
+      const percent = card.querySelector<HTMLElement>('[data-featured-progress-percent]');
+      const fill = card.querySelector<HTMLElement>('[data-featured-progress-fill]');
+      const cta = card.querySelector<HTMLElement>('[data-featured-cta]');
+      if (container) container.hidden = false;
+      if (label) label.textContent = progress.completedLessons + '/' + totalLessons + ' lesson';
+      if (percent) percent.textContent = progress.percent + '%';
+      if (fill) fill.style.width = progress.percent + '%';
+      if (cta) cta.textContent = 'Lanjutkan Belajar';
+      card.href = progress.resumeHref ?? learningHref;
+    });
+  };
+
+  renderFeaturedProgress();
+  window.addEventListener('phinisi-progress-updated', renderFeaturedProgress);
+</script>
+
+<style>
+  .course-card { display: flex; min-height: 100%; flex-direction: column; overflow: hidden; border: 1px solid rgba(17, 73, 173, .12); border-radius: 1.45rem; background: #fff; box-shadow: 0 16px 42px rgba(8, 42, 91, .08); color: inherit; text-decoration: none; transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
+  .course-card:hover { transform: translateY(-6px); border-color: rgba(34, 211, 238, .52); box-shadow: 0 24px 52px rgba(8, 42, 91, .14); }
+  .course-card:focus-visible { outline: 3px solid rgba(34, 211, 238, .72); outline-offset: 4px; }
+  .course-cover { position: relative; overflow: hidden; aspect-ratio: 16 / 9; background: #eaf6ff; }
+  .course-cover::after { position: absolute; right: 0; bottom: 0; left: 0; height: 34%; background: linear-gradient(180deg, transparent, rgba(4, 28, 66, .16)); content: ''; pointer-events: none; }
+  .course-cover img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 400ms ease; }
+  .course-card:hover .course-cover img { transform: scale(1.025); }
+  .cover-badges { position: absolute; z-index: 2; top: .85rem; right: .85rem; left: .85rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+  .cover-badges span { border: 1px solid rgba(8, 26, 58, .1); border-radius: 999px; padding: .35rem .62rem; background: rgba(255, 255, 255, .94); box-shadow: 0 5px 14px rgba(8, 26, 58, .08); font-size: .68rem; font-weight: 700; line-height: 1; backdrop-filter: blur(8px); }
+  .category-badge { color: var(--color-primary); }
+  .status-badge { color: #72520a; }
+  .course-content { display: flex; flex: 1; flex-direction: column; padding: 1.35rem 1.4rem 1.25rem; }
+  h3 { display: -webkit-box; overflow: hidden; margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(1.15rem, 1.5vw, 1.35rem); font-weight: 650; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  p { display: -webkit-box; overflow: hidden; margin: .65rem 0 1rem; color: var(--color-muted); font-size: .86rem; line-height: 1.62; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  .course-meta { display: flex; flex-wrap: wrap; gap: .45rem .85rem; margin: 0 0 1.15rem; padding: 0; color: #536982; font-size: .75rem; font-weight: 600; list-style: none; }
+  .course-meta li { position: relative; }
+  .course-meta li + li::before { position: absolute; top: 50%; left: -.5rem; width: 3px; height: 3px; border-radius: 50%; background: #38bdf8; content: ''; transform: translateY(-50%); }
+  footer { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: .75rem; margin-top: auto; border-top: 1px solid rgba(17, 73, 173, .1); padding-top: 1rem; color: var(--color-primary); font-size: .82rem; font-weight: 700; }
+  footer strong { font-size: 1.1rem; transition: transform 180ms ease; }
+  .course-card:hover footer strong { transform: translateX(4px); }
+  .local-progress { margin: 0 0 1rem; }
+  .local-progress[hidden] { display: none; }
+  .local-progress > div { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--color-muted); font-size: .72rem; }
+  .local-progress > div strong { color: var(--color-primary); }
+  .local-progress > span { display: block; height: .45rem; overflow: hidden; margin-top: .4rem; border-radius: 999px; background: var(--color-phinisi-100); }
+  .local-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-primary); }
+  @media (prefers-reduced-motion: reduce) {
+    .course-card, .course-cover img, footer strong { transition: none; }
+    .course-card:hover, .course-card:hover .course-cover img, .course-card:hover footer strong { transform: none; }
+  }
+</style>

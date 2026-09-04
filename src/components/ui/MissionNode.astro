@@ -1,0 +1,65 @@
+---
+import Badge from './Badge.astro';
+
+interface Props {
+  number: number;
+  title: string;
+  description?: string;
+  status?: 'locked' | 'current' | 'completed';
+  href?: string;
+  xp?: number;
+  class?: string;
+}
+
+const {
+  number,
+  title,
+  description,
+  status = 'locked',
+  href,
+  xp = 20,
+  class: className,
+} = Astro.props;
+
+const icon = status === 'completed' ? 'check' : status === 'locked' ? 'lock' : 'flag';
+const contentClasses = ['mission-node', `is-${status}`, className];
+---
+
+{href && status !== 'locked' ? (
+  <a href={href} class:list={contentClasses}>
+    <span class="mission-marker"><span class="material-symbols-outlined" aria-hidden="true">{icon}</span></span>
+    <span class="mission-copy">
+      <small>Misi {number}</small>
+      <strong>{title}</strong>
+      {description && <span>{description}</span>}
+    </span>
+    <Badge tone="gold" icon="bolt">+{xp} XP</Badge>
+  </a>
+) : (
+  <div class:list={contentClasses} aria-disabled={status === 'locked' ? 'true' : undefined}>
+    <span class="mission-marker"><span class="material-symbols-outlined" aria-hidden="true">{icon}</span></span>
+    <span class="mission-copy">
+      <small>Misi {number}</small>
+      <strong>{title}</strong>
+      {description && <span>{description}</span>}
+    </span>
+    <Badge tone={status === 'locked' ? 'neutral' : 'gold'} icon={status === 'locked' ? 'lock' : 'bolt'}>{status === 'locked' ? 'Terkunci' : `+${xp} XP`}</Badge>
+  </div>
+)}
+
+<style>
+  .mission-node { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; min-height: 104px; border: 1px solid var(--color-line); border-radius: 1.15rem; padding: 1rem; background: white; color: inherit; text-decoration: none; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  a.mission-node:hover { transform: translateX(5px); border-color: var(--color-phinisi-300); box-shadow: var(--shadow-soft); }
+  .mission-marker { display: grid; width: 52px; height: 52px; place-items: center; border: 5px solid var(--color-phinisi-100); border-radius: 50%; background: var(--color-phinisi-600); color: white; box-shadow: 0 5px 0 #0d429e; }
+  .mission-marker .material-symbols-outlined { font-size: 1.25rem; }
+  .mission-copy { display: flex; min-width: 0; flex-direction: column; }
+  .mission-copy small { margin-bottom: 0.18rem; color: var(--color-phinisi-600); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .mission-copy strong { color: var(--color-ink); font-family: var(--font-heading); font-size: 1rem; font-weight: 800; }
+  .mission-copy > span { overflow: hidden; margin-top: 0.2rem; color: var(--color-muted); font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
+  .is-completed .mission-marker { border-color: #cbeed7; background: var(--color-success); box-shadow: 0 5px 0 #14833f; }
+  .is-completed .mission-copy small { color: var(--color-success); }
+  .is-current { border: 2px solid var(--color-phinisi-300); background: var(--color-phinisi-50); }
+  .is-locked { background: #f7f9fc; opacity: 0.72; }
+  .is-locked .mission-marker { border-color: #e3eaf3; background: #a2afc2; box-shadow: 0 5px 0 #7e8da3; }
+  @media (max-width: 520px) { .mission-node { grid-template-columns: auto 1fr; } .mission-node > :global(.ph-badge) { grid-column: 2; width: fit-content; } }
+</style>

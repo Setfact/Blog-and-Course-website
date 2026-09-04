@@ -1,0 +1,112 @@
+---
+title: "End-to-End Connectivity"
+language: id
+draft: false
+description: "Bagian ini membahas troubleshooting konektivitas end-to-end menggunakan pendekatan layered."
+order: 80
+course: enterprise-network-ensa
+module: ensa-12-network-troubleshooting
+durationMinutes: 7
+---
+
+# End-to-End Connectivity
+
+
+Bagian ini membahas troubleshooting konektivitas end-to-end menggunakan pendekatan layered.
+
+## 12.5.1 Components of Troubleshooting End-to-End Connectivity
+
+![Components of Troubleshooting End-to-End Connectivity](https://itexamanswers.net/wp-content/uploads/2020/04/Components-of-Troubleshooting-End-to-End-Connectivity.jpg)
+
+### Komponen yang harus diverifikasi:
+1. **Physical** — kabel, port, link status
+2. **Data Link** — switch port, VLAN, STP
+3. **Network** — IP address, subnet mask, default gateway, routing
+4. **Transport** — TCP/UDP ports, ACL, NAT
+5. **Application** — DNS, DHCP, service status
+
+## 12.5.2 End-to-End Connectivity Problem
+
+![End-to-End Connectivity Problem Initiates Troubleshooting](https://itexamanswers.net/wp-content/uploads/2020/04/End-to-End-Connectivity-Problem-Initiates-Troubleshooting.jpg)
+
+### Skenario troubleshooting:
+
+![Troubleshooting Example](https://itexamanswers.net/wp-content/uploads/2020/04/Troubleshooting-Example.jpg)
+
+## 12.5.3 Step-by-Step Verification
+
+### Step 4: Verify Default Gateway
+
+![Step 4 Verify Default Gateway](https://itexamanswers.net/wp-content/uploads/2020/04/Step-4-Verify-Default-Gateway.jpg)
+
+```text
+PC> ipconfig
+Default Gateway: 192.168.1.1
+```
+
+Pastikan default gateway sudah dikonfigurasi dengan benar.
+
+### Step 5: Verify Correct Path
+
+![Step 5 Verify Correct Path](https://itexamanswers.net/wp-content/uploads/2020/04/Step-5-Verify-Correct-Path.jpg)
+
+```text
+Router# show ip route
+```
+
+Periksa apakah route ke destination ada di routing table.
+
+![Step 5 Verify Correct Path - 2](https://itexamanswers.net/wp-content/uploads/2020/04/Step-5-Verify-Correct-Path1.jpg)
+
+```text
+Router# traceroute 209.165.200.225
+```
+
+Identifikasi di mana paket berhenti.
+
+### Step 7: Verify ACLs
+
+![Step 7 Verify ACLs](https://itexamanswers.net/wp-content/uploads/2020/04/Step-7-Verify-ACLs.jpg)
+
+```text
+Router# show access-lists
+```
+
+Periksa apakah ada ACL yang memblokir traffic.
+
+---
+
+# Ringkasan modul 12
+
+| Bagian | Isi utama |
+|---|---|
+| 12.0 | Pengenalan — troubleshooting sistematis |
+| 12.1 | Network Documentation — topology diagrams, device docs, baseline |
+| 12.2 | Troubleshooting Process — 7 langkah, questioning, IOS commands, 5 metode |
+| 12.3 | Troubleshooting Tools — NMS, Wireshark, syslog, multimeter, cable tester |
+| 12.4 | Symptoms & Causes by OSI Layer — Physical, Data Link, Network, Transport, Application |
+| 12.5 | End-to-End Connectivity — components, step-by-step verification |
+
+---
+
+# Command Reference modul 12
+
+| Command | Fungsi |
+|---|---|
+| `ping` | Test konektivitas end-to-end |
+| `traceroute` | Identifikasi path dan failure point |
+| `show version` | Uptime, software/hardware info |
+| `show ip interface brief` | Status interface dan IP |
+| `show ip route` | Routing table |
+| `show cdp neighbors detail` | Neighbor Cisco |
+| `show running-config` | Konfigurasi saat ini |
+| `show tech-support` | Info komprehensif |
+| `show protocols` | Status protocol Layer 3 |
+| `show access-lists` | Cek ACL |
+| `debug` | Events real-time (hati-hati!) |
+| `logging host <ip>` | Konfigurasi syslog server |
+
+
+## Sumber materi
+
+Materi awal diadaptasi dari catatan ENSA Modul 12: [referensi sumber](https://itexamanswers.net/ccna-3-v7-0-curriculum-module-12-network-troubleshooting.html).

@@ -1,6 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import LearningStatus from '../components/LearningStatus.astro';
+import { getPathsForCourse } from '../data/learning';
 
 interface Props {
   entry: any;
@@ -8,124 +10,154 @@ interface Props {
 }
 
 const { entry, headings } = Astro.props;
-
-// Determine current category based on the entry ID (e.g. 'network/intro' -> 'network')
 const category = entry.id.split('/')[0];
-
-// Fetch all docs to build the sidebar
-const allDocs = await getCollection('docs');
-
-// Filter docs that belong to the same category
-const categoryDocs = allDocs
-  .filter(doc => doc.id.startsWith(category + '/'))
-  .map(doc => {
-    let slug = doc.id;
-    if (slug.endsWith('/index')) slug = slug.replace(/\/index$/, '');
-    else if (slug === 'index') slug = '';
-    return {
-      title: doc.data.title,
-      slug: slug,
-      id: doc.id,
-      order: doc.data.order || 999
-    };
-  })
-  .sort((a, b) => a.order - b.order);
-
-// Format category name for display
-const categoryName = category.toUpperCase();
-
 const currentPath = Astro.url.pathname.replace(/\/$/, '');
 const isEnglish = currentPath.startsWith('/en/');
+const currentLanguage = isEnglish ? 'en' : 'id';
 const langPrefix = isEnglish ? '/en' : '';
+const allDocs = await getCollection('lessons');
 
+const toSlug = (id: string) => {
+  if (id.endsWith('/index')) return id.replace(/\/index$/, '');
+  if (id === 'index') return '';
+  return id;
+};
+
+const categoryEntries = allDocs
+  .filter(doc => (
+    doc.data.draft !== true
+    && doc.data.language === currentLanguage
+    && (doc.id === category || doc.id.startsWith(`${category}/`))
+  ))
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+
+const categoryDocs = categoryEntries.map(doc => ({
+  title: doc.data.title,
+  description: doc.data.description,
+  slug: toSlug(doc.id),
+  id: doc.id,
+  isOverview: doc.id === category || doc.id.endsWith('/index'),
+}));
+
+const categoryRoot = categoryEntries.find(doc => doc.id === category || doc.id.endsWith('/index'));
+const categoryName = categoryRoot?.data.title ?? category.toUpperCase();
 const currentIndex = categoryDocs.findIndex(doc => doc.id === entry.id);
 const prevDoc = currentIndex > 0 ? categoryDocs[currentIndex - 1] : null;
 const nextDoc = currentIndex !== -1 && currentIndex < categoryDocs.length - 1 ? categoryDocs[currentIndex + 1] : null;
+const readingMinutes = Math.max(3, Math.ceil((entry.body?.trim().split(/\s+/).length ?? 0) / 210));
+const courseSlug = entry.data.course ?? categoryRoot?.data.course;
+const practicePath = courseSlug ? (await getPathsForCourse(courseSlug))[0]?.slug : undefined;
+const courseLessonCount = categoryDocs.filter(doc => !doc.isOverview).length;
+const visibleHeadings = headings?.filter(heading => heading.depth > 1 && heading.depth < 4) ?? [];
 ---
 
 <BaseLayout title={entry.data.title}>
-  <div class="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-start gap-8 relative">
-    
-    <!-- Left Sidebar (Desktop) -->
-    <aside class="hidden md:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-6 border-r border-border-subtle custom-scrollbar">
-      <div class="mb-6">
-        <span class="text-xs font-label-caps font-bold text-primary tracking-wider uppercase">{categoryName} COURSE</span>
+  <div class="reading-progress" role="progressbar" aria-label={isEnglish ? 'Reading progress' : 'Progress membaca'} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-reading-progress-track>
+    <span data-reading-progress></span>
+  </div>
+
+  <div class="docs-shell">
+    <aside class="library-sidebar custom-scrollbar" aria-label={isEnglish ? 'Lesson navigation' : 'Navigasi lesson'}>
+      <div class="library-heading">
+        <span class="material-symbols-outlined" aria-hidden="true">local_library</span>
+        <div>
+          <small>{isEnglish ? 'Reference Library' : 'Perpustakaan Referensi'}</small>
+          <strong>{categoryName}</strong>
+        </div>
       </div>
-      <nav class="flex flex-col gap-1">
-        {categoryDocs.map(doc => {
-          const docUrl = `${langPrefix}/docs/${doc.slug}`;
-          const isActive = currentPath === docUrl || currentPath === docUrl + '/';
+
+      <nav class="lesson-list">
+        {categoryDocs.map((doc, index) => {
+          const docUrl = `${langPrefix}/docs/${doc.slug}`.replace(/\/$/, '');
+          const isActive = currentPath === docUrl;
           return (
-            <a 
-              href={docUrl} 
-              class={`px-3 py-2 text-sm font-body-md rounded transition-colors ${
-                isActive 
-                  ? 'bg-primary-container text-on-primary font-medium' 
-                  : 'text-on-surface-variant hover:bg-surface-muted hover:text-on-background'
-              }`}
-            >
-              {doc.title}
+            <a href={docUrl || `${langPrefix}/docs`} class:list={['lesson-link', { 'lesson-link--active': isActive }]} aria-current={isActive ? 'page' : undefined}>
+              <span class="lesson-number">
+                {doc.isOverview ? <span class="material-symbols-outlined" aria-hidden="true">home</span> : index}
+              </span>
+              <span>
+                <small>{doc.isOverview ? (isEnglish ? 'Overview' : 'Mulai di sini') : `${isEnglish ? 'Lesson' : 'Lesson'} ${index}`}</small>
+                <strong>{doc.title}</strong>
+              </span>
             </a>
           );
         })}
       </nav>
+
+      <div class="library-note">
+        <span class="material-symbols-outlined" aria-hidden="true">explore</span>
+        <p>{isEnglish ? 'Documentation is your library. The learning path is the adventure.' : 'Dokumentasi adalah perpustakaan. Learning path adalah petualangannya.'}</p>
+      </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 py-8 md:py-12 min-w-0 max-w-3xl">
-      <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-headline-lg text-on-background mb-4">{entry.data.title}</h1>
-        <p class="text-lg text-on-surface-variant font-body-lg">{entry.data.description}</p>
-      </div>
-      
-      <div class="prose prose-slate prose-lg max-w-none 
-                  prose-headings:text-on-background prose-headings:font-headline-sm prose-headings:scroll-mt-24
-                  prose-p:text-on-surface-variant prose-p:font-body-md 
-                  prose-a:text-primary hover:prose-a:text-primary-container
-                  prose-code:text-secondary prose-code:bg-surface-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                  prose-pre:bg-terminal-bg prose-pre:border prose-pre:border-border-subtle
-                  prose-strong:text-on-background">
-        <slot />
-      </div>
+    <main class="doc-main">
+      <details class="mobile-library-nav">
+        <summary>
+          <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+          <span>{isEnglish ? 'Open lesson list' : 'Buka daftar lesson'}</span>
+          <span class="material-symbols-outlined chevron" aria-hidden="true">expand_more</span>
+        </summary>
+        <nav>
+          {categoryDocs.map((doc, index) => {
+            const docUrl = `${langPrefix}/docs/${doc.slug}`.replace(/\/$/, '');
+            const isActive = currentPath === docUrl;
+            return <a href={docUrl || `${langPrefix}/docs`} aria-current={isActive ? 'page' : undefined}>{doc.isOverview ? (isEnglish ? 'Overview' : 'Mulai di sini') : `Lesson ${index}`} · {doc.title}</a>;
+          })}
+        </nav>
+      </details>
 
-      <!-- Pagination / Next Prev -->
-      <div class="mt-16 pt-8 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <header class="doc-header">
+        <div class="doc-meta">
+          <span><span class="material-symbols-outlined" aria-hidden="true">menu_book</span>{isEnglish ? 'Learning reference' : 'Referensi belajar'}</span>
+          <span><span class="material-symbols-outlined" aria-hidden="true">schedule</span>{readingMinutes} {isEnglish ? 'min read' : 'menit baca'}</span>
+          {currentIndex >= 0 && <span>{isEnglish ? 'Part' : 'Bagian'} {currentIndex + 1}/{categoryDocs.length}</span>}
+        </div>
+        <h1>{entry.data.title}</h1>
+        {entry.data.description && <p>{entry.data.description}</p>}
+      </header>
+
+      {courseSlug && <LearningStatus courseSlug={courseSlug} totalLessons={courseLessonCount} />}
+
+      <article class="doc-content" data-doc-article>
+        <slot />
+      </article>
+
+      {practicePath && (
+        <aside class="path-cta">
+          <div>
+            <span>{isEnglish ? 'Ready to practice?' : 'Siap dipraktikkan?'}</span>
+            <strong>{isEnglish ? 'Continue this topic on the learning map.' : 'Lanjutkan topik ini di peta perjalanan belajar.'}</strong>
+          </div>
+          <a href={`${langPrefix}/learning-path/${practicePath}`}>
+            {isEnglish ? 'Try the Exercise' : 'Coba Latihan'}
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </aside>
+      )}
+
+      <nav class="lesson-pagination" aria-label={isEnglish ? 'Lesson pagination' : 'Navigasi lesson sebelum dan berikutnya'}>
         {prevDoc ? (
-          <a href={`${langPrefix}/docs/${prevDoc.slug}`} class="flex flex-col items-start p-4 rounded border border-border-subtle hover:border-primary hover:bg-surface-muted transition-colors group">
-            <span class="font-label-caps text-label-caps text-on-surface-variant group-hover:text-primary mb-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-              {isEnglish ? 'Previous Lesson' : 'Materi Sebelumnya'}
-            </span>
-            <span class="font-headline-sm text-sm text-on-background line-clamp-2">{prevDoc.title}</span>
+          <a href={`${langPrefix}/docs/${prevDoc.slug}`} class="pagination-card pagination-card--prev">
+            <span class="pagination-label"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>{isEnglish ? 'Previous lesson' : 'Lesson sebelumnya'}</span>
+            <strong>{prevDoc.title}</strong>
           </a>
-        ) : (<div></div>)}
-        
+        ) : <span></span>}
+
         {nextDoc ? (
-          <a href={`${langPrefix}/docs/${nextDoc.slug}`} class="flex flex-col items-end text-right p-4 rounded border border-border-subtle hover:border-primary hover:bg-surface-muted transition-colors group">
-            <span class="font-label-caps text-label-caps text-on-surface-variant group-hover:text-primary mb-1 flex items-center gap-1">
-              {isEnglish ? 'Next Lesson' : 'Materi Selanjutnya'}
-              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </span>
-            <span class="font-headline-sm text-sm text-on-background line-clamp-2">{nextDoc.title}</span>
+          <a href={`${langPrefix}/docs/${nextDoc.slug}`} class="pagination-card pagination-card--next">
+            <span class="pagination-label">{isEnglish ? 'Next lesson' : 'Lesson berikutnya'}<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></span>
+            <strong>{nextDoc.title}</strong>
           </a>
-        ) : (<div></div>)}
-      </div>
+        ) : <span></span>}
+      </nav>
     </main>
 
-    <!-- Right Sidebar (Table of Contents) -->
-    {headings && headings.length > 0 && (
-      <aside class="hidden xl:block w-64 flex-shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-6">
-        <h4 class="text-sm font-headline-sm font-semibold text-on-background mb-4">On this page</h4>
-        <nav class="flex flex-col gap-2 border-l-2 border-border-subtle pl-4">
-          {headings.filter(h => h.depth > 1 && h.depth < 4).map(heading => (
-            <a 
-              href={`#${heading.slug}`} 
-              class={`text-sm font-body-md text-on-surface-variant hover:text-primary transition-colors line-clamp-2
-                ${heading.depth === 3 ? 'ml-4' : ''}
-              `}
-            >
-              {heading.text}
-            </a>
+    {visibleHeadings.length > 0 && (
+      <aside class="toc-sidebar custom-scrollbar">
+        <p>{isEnglish ? 'On this page' : 'Di halaman ini'}</p>
+        <nav>
+          {visibleHeadings.map(heading => (
+            <a href={`#${heading.slug}`} class:list={{ 'toc-depth-3': heading.depth === 3 }} data-doc-toc-link>{heading.text}</a>
           ))}
         </nav>
       </aside>
@@ -134,37 +166,268 @@ const nextDoc = currentIndex !== -1 && currentIndex < categoryDocs.length - 1 ? 
 </BaseLayout>
 
 <style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  .reading-progress {
+    position: fixed;
+    z-index: 60;
+    top: 74px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(217, 235, 255, 0.72);
+    pointer-events: none;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+
+  .reading-progress span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 0 999px 999px 0;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-sky));
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+    transition: width 80ms linear;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-border-subtle);
-    border-radius: 20px;
+
+  .docs-shell {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 820px) 220px;
+    justify-content: center;
+    align-items: start;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    width: min(100% - 2rem, 1420px);
+    margin-inline: auto;
+  }
+
+  .library-sidebar,
+  .toc-sidebar {
+    position: sticky;
+    top: 92px;
+    max-height: calc(100vh - 112px);
+    overflow-y: auto;
+  }
+
+  .library-sidebar {
+    border-right: 1px solid var(--color-line);
+    padding: 2.2rem 1.25rem 2.5rem 0;
+  }
+
+  .library-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.1rem;
+    border-radius: 1rem;
+    padding: 0.8rem;
+    background: var(--color-section);
+  }
+
+  .library-heading > .material-symbols-outlined {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: 0.72rem;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 1.2rem;
+  }
+
+  .library-heading div { display: grid; min-width: 0; gap: 0.12rem; }
+  .library-heading small { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  .library-heading strong { overflow: hidden; color: var(--color-navy); font-size: 0.82rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .lesson-list { display: grid; gap: 0.35rem; }
+
+  .lesson-link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 0.9rem;
+    padding: 0.65rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+  }
+
+  .lesson-link:hover { border-color: var(--color-phinisi-200); background: var(--color-phinisi-50); transform: translateX(2px); }
+  .lesson-link--active { border-color: var(--color-phinisi-200); background: var(--color-phinisi-50); color: var(--color-navy); }
+  .lesson-number { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; border: 1px solid var(--color-line); border-radius: 0.58rem; background: #fff; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 900; }
+  .lesson-number .material-symbols-outlined { font-size: 0.95rem; }
+  .lesson-link--active .lesson-number { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+  .lesson-link > span:last-child { display: grid; min-width: 0; gap: 0.12rem; }
+  .lesson-link small { font-family: var(--font-mono); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .lesson-link strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: inherit; font-size: 0.76rem; line-height: 1.35; }
+
+  .library-note { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem; margin-top: 1.1rem; border-top: 1px dashed var(--color-line); padding: 1rem 0.6rem 0; color: var(--color-muted); }
+  .library-note .material-symbols-outlined { color: var(--color-gold); font-size: 1.15rem; }
+  .library-note p { margin: 0; font-size: 0.68rem; line-height: 1.5; }
+
+  .doc-main { min-width: 0; padding: 3rem 0 4.5rem; }
+  .mobile-library-nav { display: none; }
+
+  .doc-header { margin-bottom: 2.3rem; border-bottom: 1px solid var(--color-line); padding-bottom: 2rem; }
+  .doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.85rem; margin-bottom: 0.9rem; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.035em; text-transform: uppercase; }
+  .doc-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .doc-meta .material-symbols-outlined { font-size: 0.95rem; }
+  .doc-header h1 { max-width: 760px; margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
+  .doc-header p { max-width: 690px; margin: 1rem 0 0; color: var(--color-muted); font-size: 1.05rem; line-height: 1.65; }
+
+  .doc-content { color: var(--color-ink); font-size: 1rem; line-height: 1.78; }
+  .doc-content :global(> h1:first-child) { display: none; }
+  .doc-content :global(h2),
+  .doc-content :global(h3),
+  .doc-content :global(h4) { color: var(--color-navy); font-family: var(--font-heading); font-weight: 600; letter-spacing: -0.015em; scroll-margin-top: 110px; }
+  .doc-content :global(h2) { margin: 3rem 0 1rem; border-top: 1px solid var(--color-line); padding-top: 2rem; font-size: 1.7rem; line-height: 1.2; }
+  .doc-content :global(h3) { margin: 2rem 0 0.75rem; font-size: 1.28rem; }
+  .doc-content :global(h4) { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; }
+  .doc-content :global(p) { margin: 0.95rem 0; color: var(--color-muted); }
+  .doc-content :global(strong) { color: var(--color-ink); font-weight: 850; }
+  .doc-content :global(a:not(.practice-button)) { color: var(--color-primary); font-weight: 750; text-underline-offset: 3px; }
+  .doc-content :global(ul),
+  .doc-content :global(ol) { margin: 1rem 0; padding-left: 1.4rem; color: var(--color-muted); }
+  .doc-content :global(li) { margin: 0.42rem 0; padding-left: 0.25rem; }
+  .doc-content :global(li::marker) { color: var(--color-primary); font-weight: 800; }
+  .doc-content :global(code:not(pre code)) { border: 1px solid var(--color-phinisi-200); border-radius: 0.42rem; padding: 0.12rem 0.35rem; background: var(--color-phinisi-50); color: #0e4ca9; font-family: var(--font-mono); font-size: 0.86em; }
+  .doc-content :global(blockquote) { margin: 1.5rem 0; border-left: 4px solid var(--color-sky); border-radius: 0 0.8rem 0.8rem 0; padding: 0.6rem 1rem; background: var(--color-sky-soft); }
+  .doc-content :global(blockquote p) { color: var(--color-ink); }
+  .doc-content :global(table) { display: table; width: 100%; margin: 1.5rem 0; overflow: hidden; border: 1px solid var(--color-line); border-collapse: separate; border-spacing: 0; border-radius: 1rem; font-size: 0.88rem; }
+  .doc-content :global(th) { padding: 0.75rem; background: var(--color-navy); color: #fff; text-align: left; }
+  .doc-content :global(td) { border-top: 1px solid var(--color-line); padding: 0.75rem; color: var(--color-muted); vertical-align: top; }
+  .doc-content :global(tr:nth-child(even) td) { background: var(--color-phinisi-50); }
+  .doc-content :global(pre.astro-code) { position: relative; padding-top: 3.4rem !important; }
+  .doc-content :global(.doc-code-copy) { position: absolute; z-index: 2; top: 0.72rem; right: 0.72rem; display: inline-flex; align-items: center; gap: 0.32rem; border: 1px solid rgba(143, 199, 255, 0.25); border-radius: 0.6rem; padding: 0.38rem 0.55rem; background: rgba(255,255,255,0.08); color: #d9ebff; font-family: var(--font-heading); font-size: 0.7rem; font-weight: 800; cursor: pointer; }
+  .doc-content :global(.doc-code-copy:hover) { background: rgba(255,255,255,0.14); }
+  .doc-content :global(.doc-code-copy .material-symbols-outlined) { font-size: 0.9rem; }
+
+  .path-cta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; border-radius: 1.2rem; padding: 1.15rem 1.25rem; background: var(--color-navy); color: #fff; box-shadow: var(--shadow-card); }
+  .path-cta div { display: grid; gap: 0.18rem; }
+  .path-cta div span { color: var(--color-sky); font-family: var(--font-mono); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+  .path-cta div strong { font-size: 0.9rem; }
+  .path-cta a { display: inline-flex; flex: none; align-items: center; gap: 0.35rem; border-radius: 0.75rem; padding: 0.68rem 0.8rem; background: var(--color-sky); color: var(--color-navy); font-size: 0.76rem; font-weight: 900; text-decoration: none; box-shadow: 0 4px 0 #1686b5; }
+  .path-cta a .material-symbols-outlined { font-size: 1rem; }
+
+  .lesson-pagination { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--color-line); padding-top: 2rem; }
+  .pagination-card { display: grid; gap: 0.45rem; min-height: 112px; border: 1px solid var(--color-line); border-radius: 1rem; padding: 1rem; background: #fff; color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-soft); transition: border-color 150ms ease, transform 150ms ease; }
+  .pagination-card:hover { border-color: var(--color-phinisi-300); transform: translateY(-2px); }
+  .pagination-card--next { justify-items: end; text-align: right; }
+  .pagination-label { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pagination-label .material-symbols-outlined { font-size: 0.95rem; }
+  .pagination-card strong { align-self: end; font-size: 0.88rem; line-height: 1.35; }
+
+  .toc-sidebar { padding: 3rem 0 2.5rem; }
+  .toc-sidebar > p { margin: 0 0 0.8rem; color: var(--color-navy); font-size: 0.76rem; font-weight: 900; }
+  .toc-sidebar nav { display: grid; gap: 0.15rem; border-left: 2px solid var(--color-line); }
+  .toc-sidebar a { border-left: 2px solid transparent; margin-left: -2px; padding: 0.38rem 0 0.38rem 0.85rem; color: var(--color-muted); font-size: 0.7rem; line-height: 1.4; text-decoration: none; transition: color 150ms ease, border-color 150ms ease; }
+  .toc-sidebar a:hover,
+  .toc-sidebar a.is-active { border-left-color: var(--color-primary); color: var(--color-primary); }
+  .toc-sidebar .toc-depth-3 { padding-left: 1.35rem; }
+
+  .custom-scrollbar { scrollbar-width: thin; scrollbar-color: var(--color-outline-variant) transparent; }
+
+  @media (max-width: 1180px) {
+    .docs-shell { grid-template-columns: 230px minmax(0, 820px); }
+    .toc-sidebar { display: none; }
+  }
+
+  @media (max-width: 820px) {
+    .reading-progress { top: 68px; }
+    .docs-shell { display: block; width: min(100% - 2rem, 820px); }
+    .library-sidebar { display: none; }
+    .doc-main { padding-top: 1.4rem; }
+    .mobile-library-nav { display: block; margin-bottom: 1.5rem; border: 1px solid var(--color-line); border-radius: 1rem; background: #fff; }
+    .mobile-library-nav summary { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.55rem; padding: 0.85rem 1rem; color: var(--color-navy); font-size: 0.82rem; font-weight: 850; cursor: pointer; list-style: none; }
+    .mobile-library-nav summary::-webkit-details-marker { display: none; }
+    .mobile-library-nav summary .material-symbols-outlined { color: var(--color-primary); font-size: 1.15rem; }
+    .mobile-library-nav[open] .chevron { transform: rotate(180deg); }
+    .mobile-library-nav nav { display: grid; gap: 0.25rem; border-top: 1px solid var(--color-line); padding: 0.65rem; }
+    .mobile-library-nav nav a { border-radius: 0.65rem; padding: 0.62rem 0.7rem; color: var(--color-muted); font-size: 0.74rem; text-decoration: none; }
+    .mobile-library-nav nav a[aria-current='page'] { background: var(--color-phinisi-50); color: var(--color-primary); font-weight: 850; }
+  }
+
+  @media (max-width: 620px) {
+    .doc-main { padding-bottom: 3rem; }
+    .doc-header { margin-bottom: 1.7rem; padding-bottom: 1.5rem; }
+    .doc-header h1 { font-size: 2.15rem; }
+    .doc-header p { font-size: 0.96rem; }
+    .doc-content { font-size: 0.95rem; }
+    .doc-content :global(h2) { font-size: 1.45rem; }
+    .doc-content :global(table) { display: block; overflow-x: auto; }
+    .path-cta { align-items: stretch; flex-direction: column; }
+    .path-cta a { justify-content: center; }
+    .lesson-pagination { grid-template-columns: 1fr; }
+    .lesson-pagination > span:empty { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reading-progress span,
+    .lesson-link,
+    .pagination-card { transition: none; }
   }
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const id = entry.target.getAttribute('id');
-        const tocLink = document.querySelector(`aside nav a[href="#${id}"]`);
-        if (tocLink) {
-          if (entry.intersectionRatio > 0) {
-            document.querySelectorAll('aside nav a').forEach(a => {
-              a.classList.remove('text-primary', 'font-semibold');
-            });
-            tocLink.classList.add('text-primary', 'font-semibold');
-          }
-        }
-      });
-    }, { rootMargin: '0px 0px -80% 0px' });
+  const initDocumentation = () => {
+    const article = document.querySelector<HTMLElement>('[data-doc-article]');
+    const progress = document.querySelector<HTMLElement>('[data-reading-progress]');
+    const progressTrack = document.querySelector<HTMLElement>('[data-reading-progress-track]');
 
-    document.querySelectorAll('main h2, main h3').forEach((section) => {
-      observer.observe(section);
+    const updateReadingProgress = () => {
+      if (!article || !progress || !progressTrack) return;
+      const articleTop = window.scrollY + article.getBoundingClientRect().top;
+      const readableDistance = Math.max(article.offsetHeight - window.innerHeight * 0.55, 1);
+      const value = Math.min(100, Math.max(0, ((window.scrollY - articleTop + 150) / readableDistance) * 100));
+      progress.style.width = `${value}%`;
+      progressTrack.setAttribute('aria-valuenow', String(Math.round(value)));
+    };
+
+    updateReadingProgress();
+    window.addEventListener('scroll', updateReadingProgress, { passive: true });
+    window.addEventListener('resize', updateReadingProgress);
+
+    document.querySelectorAll<HTMLElement>('.doc-content pre.astro-code').forEach((pre) => {
+      if (pre.querySelector('[data-auto-copy]')) return;
+      const code = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'doc-code-copy';
+      button.dataset.autoCopy = 'true';
+      button.setAttribute('aria-label', 'Salin command');
+      button.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span><span>Salin</span>';
+
+      button.addEventListener('click', async () => {
+        const label = button.querySelector('span:last-child');
+        try {
+          await navigator.clipboard.writeText(code.trim());
+          if (label) label.textContent = 'Tersalin!';
+          button.querySelector('.material-symbols-outlined')!.textContent = 'check';
+        } catch {
+          if (label) label.textContent = 'Gagal';
+        }
+        window.setTimeout(() => {
+          if (label) label.textContent = 'Salin';
+          button.querySelector('.material-symbols-outlined')!.textContent = 'content_copy';
+        }, 1500);
+      });
+
+      pre.append(button);
     });
-  });
+
+    const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-doc-toc-link]'));
+    if (tocLinks.length > 0 && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.find(item => item.isIntersecting);
+        if (!visible) return;
+        tocLinks.forEach(link => link.classList.toggle('is-active', link.hash === `#${visible.target.id}`));
+      }, { rootMargin: '-18% 0px -72% 0px' });
+
+      document.querySelectorAll<HTMLElement>('.doc-content h2[id], .doc-content h3[id]').forEach(section => observer.observe(section));
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDocumentation, { once: true });
+  } else {
+    initDocumentation();
+  }
 </script>
