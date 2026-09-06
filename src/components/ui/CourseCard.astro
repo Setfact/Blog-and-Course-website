@@ -60,14 +60,20 @@ const {
   </div>
 
   <div class="course-content">
+    {category && <span class="course-kicker">{category}</span>}
     <h3>{title}</h3>
     <p>{description}</p>
 
-    <ul class="course-meta" aria-label="Informasi course">
-      <li>{level}</li>
-      <li>{lessons} {countLabel}</li>
-      {duration && <li>{duration}</li>}
-    </ul>
+    <div class="course-level-badge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 20v-4"/>
+        <path d="M12 20V10"/>
+        <path d="M18 20V4"/>
+      </svg>
+      <span>{level}</span>
+      {lessons > 0 && <span class="badge-sep">•</span>}
+      {lessons > 0 && <span>{lessons} {countLabel}</span>}
+    </div>
 
     <div class="local-progress" data-featured-progress hidden>
       <div><span data-featured-progress-label></span><strong data-featured-progress-percent></strong></div>
@@ -122,11 +128,58 @@ const {
   .category-badge { color: var(--color-primary); }
   .status-badge { color: #72520a; }
   .course-content { display: flex; flex: 1; flex-direction: column; padding: 1.35rem 1.4rem 1.25rem; }
-  h3 { display: -webkit-box; overflow: hidden; margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(1.15rem, 1.5vw, 1.35rem); font-weight: 650; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-  p { display: -webkit-box; overflow: hidden; margin: .65rem 0 1rem; color: var(--color-muted); font-size: .86rem; line-height: 1.62; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-  .course-meta { display: flex; flex-wrap: wrap; gap: .45rem .85rem; margin: 0 0 1.15rem; padding: 0; color: #536982; font-size: .75rem; font-weight: 600; list-style: none; }
-  .course-meta li { position: relative; }
-  .course-meta li + li::before { position: absolute; top: 50%; left: -.5rem; width: 3px; height: 3px; border-radius: 50%; background: #38bdf8; content: ''; transform: translateY(-50%); }
+  .course-kicker {
+    margin-bottom: 0.35rem;
+    color: #0284c7;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  h3 {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 0.5rem;
+    min-height: 2.7em;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: clamp(1.15rem, 1.4vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 1.25rem;
+    min-height: 4.8em;
+    color: var(--color-muted);
+    font-size: 0.86rem;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .course-level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    align-self: flex-start;
+    margin-top: auto;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    padding: .32rem .75rem;
+    background: rgba(240, 249, 255, 0.95);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    color: #0284c7;
+    font-size: .74rem;
+    font-weight: 750;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+  .course-level-badge svg { color: #0284c7; flex-shrink: 0; }
+  .badge-sep { opacity: 0.45; margin: 0 0.1rem; }
   footer { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: .75rem; margin-top: auto; border-top: 1px solid rgba(17, 73, 173, .1); padding-top: 1rem; color: var(--color-primary); font-size: .82rem; font-weight: 700; }
   footer strong { font-size: 1.1rem; transition: transform 180ms ease; }
   .course-card:hover footer strong { transform: translateX(4px); }

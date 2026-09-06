@@ -11,41 +11,82 @@ const { courseSlug, lessonId, nextHref, nextLabel, isLast = false } = Astro.prop
 ---
 
 <section class="lesson-gate" data-lesson-gate data-course={courseSlug} data-lesson={lessonId}>
-  <div>
+  <div class="gate-info">
     <span data-gate-kicker>Belum selesai</span>
-    <strong data-gate-title>Selesaikan quiz lesson untuk memperbarui progress.</strong>
+    <strong data-gate-title>Sudah membaca dan memahami semua materi di atas?</strong>
   </div>
-  <a href={nextHref} data-next-link>{isLast ? 'Kembali ke roadmap' : `Lanjut: ${nextLabel}`} →</a>
+  <div class="gate-actions">
+    <button type="button" class="mark-complete-btn" data-mark-complete>
+      <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span data-mark-text>Tandai Selesai</span>
+    </button>
+    <a href={nextHref} class="next-link" data-next-link>{isLast ? 'Kembali ke detail' : `Lanjut: ${nextLabel}`} →</a>
+  </div>
 </section>
 
 <script>
-  import { getLearningState } from '../scripts/learning-store';
+  import { getLearningState, markLessonComplete } from '../scripts/learning-store';
 
-  const renderGate = (root: HTMLElement) => {
-    const lessonKey = `${root.dataset.course}/${root.dataset.lesson}`;
-    const complete = getLearningState().completedLessons.includes(lessonKey);
-    root.classList.toggle('is-complete', complete);
+  const setupGate = (root: HTMLElement) => {
+    const courseSlug = root.dataset.course ?? '';
+    const lessonId = root.dataset.lesson ?? '';
+    const lessonKey = `${courseSlug}/${lessonId}`;
+
+    const markBtn = root.querySelector<HTMLButtonElement>('[data-mark-complete]');
+    const markText = root.querySelector<HTMLElement>('[data-mark-text]');
     const kicker = root.querySelector<HTMLElement>('[data-gate-kicker]');
     const title = root.querySelector<HTMLElement>('[data-gate-title]');
-    if (kicker) kicker.textContent = complete ? 'Lesson selesai' : 'Belum selesai';
-    if (title) title.textContent = complete
-      ? 'Progress belajar sudah diperbarui.'
-      : 'Selesaikan quiz lesson untuk memperbarui progress.';
+
+    const updateState = () => {
+      const complete = getLearningState().completedLessons.includes(lessonKey);
+      root.classList.toggle('is-complete', complete);
+      if (kicker) kicker.textContent = complete ? 'Lesson Selesai' : 'Belum Selesai';
+      if (title) title.textContent = complete
+        ? 'Bagus! Materi pada lesson ini sudah kamu kuasai.'
+        : 'Sudah membaca dan memahami semua materi di atas?';
+      if (markText) markText.textContent = complete ? 'Tercentang Selesai' : 'Tandai Selesai';
+      if (markBtn) {
+        markBtn.classList.toggle('completed', complete);
+      }
+    };
+
+    if (markBtn && courseSlug && lessonId) {
+      markBtn.addEventListener('click', () => {
+        markLessonComplete(courseSlug, lessonId);
+        updateState();
+      });
+    }
+
+    updateState();
   };
 
-  document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(renderGate);
+  document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(setupGate);
   window.addEventListener('phinisi-progress-updated', () => {
-    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(renderGate);
+    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(setupGate);
   });
 </script>
 
 <style>
-  .lesson-gate { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2.5rem; border: 1px solid #efd087; border-radius: 1.1rem; padding: 1rem; background: var(--color-gold-soft); }
-  .lesson-gate.is-complete { border-color: #9bd5ae; background: var(--color-success-soft); }
-  .lesson-gate > div { display: grid; gap: 0.18rem; }
-  .lesson-gate span { color: #7a5100; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; }
-  .lesson-gate.is-complete span { color: #14763c; }
-  .lesson-gate strong { color: var(--color-navy); font-size: 0.82rem; }
-  .lesson-gate a { flex: 0 0 auto; border-radius: 0.75rem; padding: 0.65rem 0.8rem; background: var(--color-primary); color: #fff; font-size: 0.72rem; font-weight: 900; text-decoration: none; }
-  @media (max-width: 620px) { .lesson-gate { align-items: stretch; flex-direction: column; } .lesson-gate a { text-align: center; } }
+  .lesson-gate { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; margin-top: 2.5rem; border: 1px solid #e2e8f0; border-radius: 1.1rem; padding: 1.1rem 1.25rem; background: #fafcfd; box-shadow: 0 4px 14px rgba(8, 42, 81, 0.04); transition: all 200ms ease; }
+  .lesson-gate.is-complete { border-color: #bbf7d0; background: #f0fdf4; }
+  .gate-info { display: grid; gap: 0.2rem; }
+  .lesson-gate span[data-gate-kicker] { color: var(--color-muted); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lesson-gate.is-complete span[data-gate-kicker] { color: #15803d; }
+  .lesson-gate strong { color: var(--color-navy); font-size: 0.88rem; font-weight: 700; }
+  .gate-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .mark-complete-btn { display: inline-flex; align-items: center; gap: 0.45rem; border: 1px solid var(--color-phinisi-200); border-radius: 0.75rem; padding: 0.62rem 0.95rem; background: #ffffff; color: var(--color-primary); font-size: 0.76rem; font-weight: 800; cursor: pointer; transition: all 180ms ease; box-shadow: 0 2px 6px rgba(8, 42, 81, 0.05); }
+  .mark-complete-btn:hover { background: var(--color-phinisi-50); border-color: var(--color-primary); }
+  .mark-complete-btn.completed { border-color: #86efac; background: #16a34a; color: #ffffff; }
+  .mark-complete-btn.completed .check-icon { stroke: #ffffff; }
+
+  .next-link { display: inline-flex; align-items: center; border-radius: 0.75rem; padding: 0.62rem 0.95rem; background: var(--color-primary); color: #ffffff; font-size: 0.76rem; font-weight: 800; text-decoration: none; transition: background 180ms ease; box-shadow: 0 4px 12px rgba(20, 91, 215, 0.2); }
+  .next-link:hover { background: #0e4ca9; }
+
+  @media (max-width: 620px) {
+    .lesson-gate { align-items: stretch; flex-direction: column; }
+    .gate-actions { flex-direction: column; }
+    .mark-complete-btn, .next-link { justify-content: center; width: 100%; }
+  }
 </style>
+

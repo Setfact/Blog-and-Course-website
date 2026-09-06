@@ -127,3 +127,22 @@ export const completeActivity = ({
 
   return { state, firstCompletion, awardedXp: firstCompletion ? xp : 0 };
 };
+
+export const markLessonComplete = (courseSlug: string, lessonId: string) => {
+  const state = getLearningState();
+  const lessonKey = `${courseSlug}/${lessonId}`;
+  if (!state.completedLessons.includes(lessonKey)) {
+    state.completedLessons.push(lessonKey);
+    state.xp += 25;
+    const today = localDateKey();
+    if (state.lastStudyDate !== today) {
+      state.streak = state.lastStudyDate === yesterdayKey() ? state.streak + 1 : 1;
+      state.lastStudyDate = today;
+    }
+    state.badges = deriveBadges(state);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.dispatchEvent(new CustomEvent('phinisi-progress-updated', { detail: state }));
+  }
+  return state;
+};
+

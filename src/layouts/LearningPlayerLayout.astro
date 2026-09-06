@@ -50,8 +50,6 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
 ---
 
 <BaseLayout title={`${entry.data.title} · ${course.title}`} description={entry.data.description ?? course.description.id}>
-  <div class="player-progress" aria-hidden="true"><span data-reading-progress></span></div>
-
   <div
     class="learning-player"
     data-learning-player
@@ -59,88 +57,123 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
     data-current-lesson={currentLessonSlug || undefined}
     data-current-href={Astro.url.pathname}
   >
-    <aside class="course-sidebar">
-      <a class="back-course" href={`/courses/${course.slug}`}>← Detail course</a>
-      <img src={course.cover} alt="" width="960" height="540" />
-      <div class="course-sidebar-heading">
-        <small>Learning Player</small>
-        <strong>{course.title}</strong>
+    <aside class="course-sidebar" data-course-sidebar>
+      <div class="sidebar-resizer" data-sidebar-resizer title="Geser untuk mengatur lebar sidebar" aria-label="Geser ukuran sidebar"></div>
+
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <a class="back-course" href={`/courses/${course.slug}`}>← Detail course</a>
+          <button type="button" class="sidebar-toggle-btn" data-sidebar-toggle title="Tutup sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+        </div>
+        <div class="course-sidebar-heading">
+          <small>Learning Player</small>
+          <strong>{course.title}</strong>
+        </div>
       </div>
 
       <nav aria-label="Daftar lesson course">
         {overview && (
-          <a href={playerHref(overview)} class:list={['overview-link', { active: isOverview }]} aria-current={isOverview ? 'page' : undefined}>
-            <span>00</span><strong>Overview course</strong>
+          <a href={playerHref(overview)} class:list={['overview-link', { active: isOverview }]} aria-current={isOverview ? 'page' : undefined} data-player-lesson data-lesson-key={`${course.slug}/${overview.id.replace(`${category}/`, '')}`}>
+            <span class="lesson-step-badge">
+              <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <strong>Overview course</strong>
           </a>
         )}
-        {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => (
-          <section class="module-group">
-            <div class="module-heading"><span>Modul {moduleIndex + 1}</span><strong>{module.title.id}</strong></div>
-            {moduleLessons.map((lesson) => {
-              const index = lessons.findIndex((item) => item.id === lesson.id);
-              const lessonSlug = lesson.id.replace(`${category}/`, '');
-              const active = lesson.id === entry.id;
-              return (
-                <a href={playerHref(lesson)} class:list={['lesson-link', { active }]} aria-current={active ? 'page' : undefined} data-player-lesson data-lesson-key={`${course.slug}/${lessonSlug}`}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <span><small>Lesson {index + 1}</small><strong>{lesson.data.title}</strong></span>
-                  <b data-lesson-state aria-label="Status lesson"></b>
-                </a>
-              );
-            })}
-          </section>
-        ))}
+        {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => {
+          const hasActiveLesson = moduleLessons.some(l => l.id === entry.id);
+          return (
+            <details class="module-group" open={hasActiveLesson || isOverview}>
+              <summary class="module-heading">
+                <div>
+                  <span>Modul {moduleIndex + 1}</span>
+                  <strong>{module.title.id}</strong>
+                </div>
+                <div class="module-meta">
+                  <span class="module-progress-count" data-module-count data-total={moduleLessons.length}>0/{moduleLessons.length}</span>
+                  <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </summary>
+              <div class="module-lessons">
+                {moduleLessons.map((lesson) => {
+                  const index = lessons.findIndex((item) => item.id === lesson.id);
+                  const lessonSlug = lesson.id.replace(`${category}/`, '');
+                  const active = lesson.id === entry.id;
+                  return (
+                    <a href={playerHref(lesson)} class:list={['lesson-link', { active }]} aria-current={active ? 'page' : undefined} data-player-lesson data-lesson-key={`${course.slug}/${lessonSlug}`}>
+                      <span class="lesson-step-badge">
+                        <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </span>
+                      <span class="lesson-info"><small>Lesson {index + 1}</small><strong>{lesson.data.title}</strong></span>
+                    </a>
+                  );
+                })}
+              </div>
+            </details>
+          );
+        })}
       </nav>
       <LearningStatus courseSlug={course.slug} totalLessons={lessons.length} />
     </aside>
 
     <main class="player-main">
-      <details class="mobile-course-nav">
-        <summary>Daftar lesson <span>{isOverview ? 'Overview' : `${currentLessonIndex + 1}/${lessons.length}`}</span></summary>
-        <nav>
-          {overview && <a href={playerHref(overview)} aria-current={isOverview ? 'page' : undefined}>Overview course</a>}
-          {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => (
-            <section><strong>Modul {moduleIndex + 1} · {module.title.id}</strong>{moduleLessons.map((lesson) => {
-              const index = lessons.findIndex((item) => item.id === lesson.id);
-              return <a href={playerHref(lesson)} aria-current={lesson.id === entry.id ? 'page' : undefined}>Lesson {index + 1} · {lesson.data.title}</a>;
-            })}</section>
-          ))}
+      <div class="player-content-container">
+        <div class="desktop-sidebar-reopen">
+          <button type="button" class="sidebar-reopen-btn" data-sidebar-toggle title="Buka sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/></svg>
+            <span>Daftar Materi</span>
+          </button>
+        </div>
+
+        <details class="mobile-course-nav">
+          <summary>Daftar lesson <span>{isOverview ? 'Overview' : `${currentLessonIndex + 1}/${lessons.length}`}</span></summary>
+          <nav>
+            {overview && <a href={playerHref(overview)} aria-current={isOverview ? 'page' : undefined}>Overview course</a>}
+            {moduleGroups.map(({ module, lessons: moduleLessons }, moduleIndex) => (
+              <section><strong>Modul {moduleIndex + 1} · {module.title.id}</strong>{moduleLessons.map((lesson) => {
+                const index = lessons.findIndex((item) => item.id === lesson.id);
+                return <a href={playerHref(lesson)} aria-current={lesson.id === entry.id ? 'page' : undefined}>Lesson {index + 1} · {lesson.data.title}</a>;
+              })}</section>
+            ))}
+          </nav>
+        </details>
+
+        <div class="mobile-learning-status"><LearningStatus courseSlug={course.slug} totalLessons={lessons.length} /></div>
+
+        <header class="lesson-header">
+          <div class="lesson-meta">
+            <span>{isOverview ? 'Course overview' : `Lesson ${currentLessonIndex + 1} dari ${lessons.length}`}</span>
+            <span>{readingMinutes} menit baca</span>
+          </div>
+          <h1>{entry.data.title}</h1>
+          {entry.data.description && <p>{entry.data.description}</p>}
+          <div class="lesson-resources">
+            <a href={docsHref}>Buka dokumentasi</a>
+            {relatedPath && <a href={'/learning-path/' + relatedPath.slug}>Lihat roadmap</a>}
+          </div>
+        </header>
+
+        <article class="lesson-content" data-player-article>
+          <slot />
+        </article>
+
+        {!isOverview && (
+          <LessonGate
+            courseSlug={course.slug}
+            lessonId={currentLessonSlug}
+            nextHref={nextGateHref}
+            nextLabel={nextGateLabel}
+            isLast={!nextEntry}
+          />
+        )}
+
+        <nav class="player-pagination" aria-label="Navigasi lesson">
+          {previousEntry ? <a href={playerHref(previousEntry)}>← <span><small>Sebelumnya</small><strong>{previousEntry.data.title}</strong></span></a> : <span></span>}
+          {nextEntry ? <a class="next" href={playerHref(nextEntry)}><span><small>Berikutnya</small><strong>{nextEntry.data.title}</strong></span> →</a> : <span></span>}
         </nav>
-      </details>
-
-      <div class="mobile-learning-status"><LearningStatus courseSlug={course.slug} totalLessons={lessons.length} /></div>
-
-      <header class="lesson-header">
-        <div class="lesson-meta">
-          <span>{isOverview ? 'Course overview' : `Lesson ${currentLessonIndex + 1} dari ${lessons.length}`}</span>
-          <span>{readingMinutes} menit baca</span>
-        </div>
-        <h1>{entry.data.title}</h1>
-        {entry.data.description && <p>{entry.data.description}</p>}
-        <div class="lesson-resources">
-          <a href={docsHref}>Buka dokumentasi</a>
-          {relatedPath && <a href={'/learning-path/' + relatedPath.slug}>Lihat roadmap</a>}
-        </div>
-      </header>
-
-      <article class="lesson-content" data-player-article>
-        <slot />
-      </article>
-
-      {!isOverview && (
-        <LessonGate
-          courseSlug={course.slug}
-          lessonId={currentLessonSlug}
-          nextHref={nextGateHref}
-          nextLabel={nextGateLabel}
-          isLast={!nextEntry}
-        />
-      )}
-
-      <nav class="player-pagination" aria-label="Navigasi lesson">
-        {previousEntry ? <a href={playerHref(previousEntry)}>← <span><small>Sebelumnya</small><strong>{previousEntry.data.title}</strong></span></a> : <span></span>}
-        {nextEntry ? <a class="next" href={playerHref(nextEntry)}><span><small>Berikutnya</small><strong>{nextEntry.data.title}</strong></span> →</a> : <span></span>}
-      </nav>
+      </div>
     </main>
 
   </div>
@@ -157,31 +190,80 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
     const currentHref = root.dataset.currentHref;
     if (courseSlug && currentLesson && currentHref) setLastVisitedLesson(courseSlug, currentHref);
 
+    // Load saved sidebar collapse state
+    const savedCollapsed = localStorage.getItem('phinisi_sidebar_collapsed') === 'true';
+    if (savedCollapsed) {
+      root.classList.add('sidebar-collapsed');
+    }
+
+    const sidebar = root.querySelector<HTMLElement>('[data-course-sidebar]');
+    const resizer = root.querySelector<HTMLElement>('[data-sidebar-resizer]');
+    if (sidebar && resizer) {
+      const savedWidth = localStorage.getItem('phinisi_sidebar_width');
+      if (savedWidth && window.innerWidth > 820) {
+        sidebar.style.width = savedWidth;
+      }
+
+      let isResizing = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      const onMouseMove = (e: MouseEvent) => {
+        if (!isResizing) return;
+        const deltaX = e.clientX - startX;
+        const newWidth = Math.min(480, Math.max(220, startWidth + deltaX));
+        sidebar.style.width = `${newWidth}px`;
+        localStorage.setItem('phinisi_sidebar_width', `${newWidth}px`);
+      };
+
+      const onMouseUp = () => {
+        if (!isResizing) return;
+        isResizing = false;
+        document.body.classList.remove('is-resizing-sidebar');
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+
+      resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = sidebar.offsetWidth;
+        document.body.classList.add('is-resizing-sidebar');
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    root.querySelectorAll<HTMLButtonElement>('[data-sidebar-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const isCollapsed = root.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('phinisi_sidebar_collapsed', String(isCollapsed));
+      });
+    });
+
     const updateLessonStates = () => {
       const state = getLearningState();
       root.querySelectorAll<HTMLElement>('[data-player-lesson]').forEach((link) => {
         const complete = state.completedLessons.includes(link.dataset.lessonKey ?? '');
         link.classList.toggle('complete', complete);
-        const label = link.querySelector<HTMLElement>('[data-lesson-state]');
-        if (label) label.textContent = complete ? '✓' : '';
+      });
+
+      root.querySelectorAll<HTMLElement>('.module-group').forEach((group) => {
+        const lessonsInGroup = group.querySelectorAll<HTMLElement>('[data-player-lesson]');
+        let completedCount = 0;
+        lessonsInGroup.forEach((l) => {
+          if (l.classList.contains('complete')) completedCount++;
+        });
+        const countEl = group.querySelector<HTMLElement>('[data-module-count]');
+        if (countEl) {
+          const total = countEl.dataset.total ?? lessonsInGroup.length;
+          countEl.textContent = `${completedCount}/${total}`;
+        }
       });
     };
 
     updateLessonStates();
     window.addEventListener('phinisi-progress-updated', updateLessonStates);
-
-    const article = root.querySelector<HTMLElement>('[data-player-article]');
-    const progress = document.querySelector<HTMLElement>('[data-reading-progress]');
-    const updateReadingProgress = () => {
-      if (!article || !progress) return;
-      const articleTop = window.scrollY + article.getBoundingClientRect().top;
-      const readableDistance = Math.max(article.offsetHeight - window.innerHeight * 0.55, 1);
-      const value = Math.min(100, Math.max(0, ((window.scrollY - articleTop + 150) / readableDistance) * 100));
-      progress.style.width = `${value}%`;
-    };
-    updateReadingProgress();
-    window.addEventListener('scroll', updateReadingProgress, { passive: true });
-    window.addEventListener('resize', updateReadingProgress);
 
     root.querySelectorAll<HTMLElement>('.lesson-content pre.astro-code').forEach((pre) => {
       if (pre.querySelector('[data-auto-copy]')) return;
@@ -211,33 +293,103 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
 <style>
   .player-progress { position: fixed; z-index: 70; top: 74px; left: 0; width: 100%; height: 3px; background: var(--color-phinisi-100); pointer-events: none; }
   .player-progress span { display: block; width: 0; height: 100%; background: var(--color-primary); }
-  .learning-player { display: grid; width: min(100% - 2rem, 1100px); grid-template-columns: 245px minmax(0, 760px); justify-content: center; align-items: start; gap: clamp(2rem, 5vw, 4rem); margin-inline: auto; }
-  .course-sidebar { position: sticky; top: 96px; max-height: calc(100vh - 116px); overflow-y: auto; padding-block: 2rem; }
-  .back-course { display: inline-flex; margin-bottom: 0.8rem; color: var(--color-primary); font-size: 0.68rem; font-weight: 850; text-decoration: none; }
-  .course-sidebar > img { display: block; width: 100%; aspect-ratio: 16 / 7; border: 1px solid var(--color-line); border-radius: var(--radius-DEFAULT); object-fit: cover; }
-  .course-sidebar-heading { display: grid; gap: 0.2rem; padding: 0.9rem 0.3rem; }
-  .course-sidebar-heading small { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.58rem; font-weight: 850; text-transform: uppercase; }
-  .course-sidebar-heading strong { color: var(--color-navy); font-family: var(--font-heading); font-size: 0.92rem; font-weight: 600; }
-  .course-sidebar nav { display: grid; gap: 0.3rem; }
-  .module-group { display: grid; gap: .2rem; margin-top: .55rem; }
-  .module-heading { display: grid; gap: .12rem; padding: .55rem .65rem .3rem; }
-  .module-heading span { color: var(--color-primary); font-size: .58rem; font-weight: 650; text-transform: uppercase; }
-  .module-heading strong { color: var(--color-navy); font-size: .7rem; font-weight: 650; line-height: 1.35; }
-  .course-sidebar nav a { display: grid; align-items: center; border: 1px solid transparent; border-radius: var(--radius-DEFAULT); color: var(--color-muted); text-decoration: none; }
-  .overview-link { grid-template-columns: auto 1fr; gap: 0.6rem; padding: 0.65rem; }
-  .overview-link > span, .lesson-link > span:first-child { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 0.55rem; background: var(--color-phinisi-50); color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 900; }
-  .lesson-link { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.58rem; padding: 0.62rem; }
-  .lesson-link > span:nth-child(2) { display: grid; min-width: 0; gap: 0.12rem; }
-  .lesson-link small { font-family: var(--font-mono); font-size: 0.54rem; font-weight: 800; text-transform: uppercase; }
-  .lesson-link strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: inherit; font-size: 0.7rem; line-height: 1.35; }
-  .lesson-link b { min-width: 0.8rem; color: var(--color-success); font-size: 0.7rem; text-align: center; }
-  .course-sidebar nav a:hover, .course-sidebar nav a.active { border-color: var(--color-phinisi-200); background: var(--color-phinisi-50); color: var(--color-navy); }
-  .course-sidebar nav a.active > span:first-child { background: var(--color-primary); color: #fff; }
-  .lesson-link.complete b { color: var(--color-success); }
-  .lesson-link.complete > span:first-child { background: var(--color-success-soft); color: var(--color-success); }
+  .learning-player {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-height: calc(100vh - 71px);
+    margin: 0;
+    padding: 0;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .learning-player.sidebar-collapsed .course-sidebar {
+    width: 0px !important;
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    border-right: none;
+    overflow: hidden;
+  }
+
+  .desktop-sidebar-reopen { display: none; margin-bottom: 1.5rem; }
+  .learning-player.sidebar-collapsed .desktop-sidebar-reopen { display: block; }
+  .sidebar-reopen-btn { display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--color-phinisi-200); border-radius: 0.65rem; padding: 0.45rem 0.85rem; background: #ffffff; color: var(--color-primary); font-size: 0.76rem; font-weight: 750; cursor: pointer; box-shadow: 0 4px 12px rgba(8, 42, 81, 0.06); transition: all 180ms ease; }
+  .sidebar-reopen-btn:hover { background: var(--color-phinisi-50); border-color: var(--color-primary); }
+
+  .course-sidebar {
+    position: sticky;
+    top: 71px;
+    width: 290px;
+    flex-shrink: 0;
+    height: calc(100vh - 71px);
+    overflow-y: auto;
+    padding: 1.5rem 1.25rem 2.5rem 1.75rem;
+    border-right: 1px solid var(--color-line);
+    background: #fafcfd;
+    transition: padding 300ms ease, opacity 250ms ease, visibility 250ms ease;
+  }
+
+  .sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 20;
+    transition: background 150ms ease;
+  }
+  .sidebar-resizer:hover, :global(body.is-resizing-sidebar) .sidebar-resizer {
+    background: var(--color-primary);
+  }
+  :global(body.is-resizing-sidebar) {
+    user-select: none !important;
+    cursor: col-resize !important;
+  }
+
+  .sidebar-header { margin-bottom: 1rem; border-bottom: 1px solid var(--color-line); padding-bottom: 0.85rem; }
+  .sidebar-header-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .back-course { display: inline-flex; color: var(--color-primary); font-size: 0.72rem; font-weight: 800; text-decoration: none; }
+  .sidebar-toggle-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-line); border-radius: 0.45rem; background: #ffffff; color: var(--color-muted); cursor: pointer; transition: all 180ms ease; }
+  .sidebar-toggle-btn:hover { background: var(--color-phinisi-50); color: var(--color-primary); border-color: var(--color-phinisi-200); }
+  .course-sidebar-heading { display: grid; gap: 0.15rem; }
+  .course-sidebar-heading small { color: var(--color-primary); font-family: var(--font-mono); font-size: 0.58rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.04em; }
+  .course-sidebar-heading strong { color: var(--color-navy); font-family: var(--font-heading); font-size: 0.96rem; font-weight: 700; line-height: 1.3; }
+
+  .course-sidebar nav { display: grid; gap: 0.4rem; }
+  .module-group { border: 1px solid var(--color-line); border-radius: 0.75rem; background: #ffffff; overflow: hidden; transition: border-color 200ms ease; }
+  .module-group[open] { border-color: rgba(40, 201, 232, 0.4); box-shadow: 0 4px 16px rgba(8, 42, 81, 0.03); }
+  .module-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.65rem 0.75rem; background: #fafcfd; cursor: pointer; user-select: none; list-style: none; }
+  .module-heading::-webkit-details-marker { display: none; }
+  .module-heading div { display: grid; gap: 0.08rem; }
+  .module-heading span { color: var(--color-primary); font-size: 0.58rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0.04em; }
+  .module-heading strong { color: var(--color-navy); font-size: 0.72rem; font-weight: 700; line-height: 1.3; }
+  .module-meta { display: flex; align-items: center; gap: 0.4rem; }
+  .module-progress-count { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; color: var(--color-primary); background: var(--color-phinisi-50); border: 1px solid var(--color-phinisi-200); border-radius: 0.4rem; padding: 0.1rem 0.35rem; }
+  .module-heading .chevron { color: var(--color-muted); transition: transform 200ms ease; flex-shrink: 0; }
+  .module-group[open] .module-heading .chevron { transform: rotate(180deg); color: var(--color-primary); }
+  .module-lessons { display: grid; gap: 0.2rem; padding: 0.35rem; border-top: 1px solid var(--color-line); background: #ffffff; }
+
+  .overview-link, .lesson-link { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.65rem; border: 1px solid transparent; border-radius: 0.55rem; padding: 0.5rem 0.6rem; color: var(--color-muted); text-decoration: none; transition: all 180ms ease; }
+  .lesson-step-badge { display: grid; width: 1.35rem; height: 1.35rem; place-items: center; border: 2px solid #cbd5e1; border-radius: 50%; background: #ffffff; color: transparent; transition: all 180ms ease; flex-shrink: 0; }
+  .lesson-step-badge .check-icon { display: none; }
+
+  .lesson-info { display: grid; min-width: 0; gap: 0.08rem; }
+  .lesson-info small { font-family: var(--font-mono); font-size: 0.54rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+  .lesson-info strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: inherit; font-size: 0.72rem; line-height: 1.35; }
+  .lesson-link:hover, .overview-link:hover { background: var(--color-phinisi-50); color: var(--color-navy); }
+  .lesson-link.active, .overview-link.active { border-color: var(--color-phinisi-200); background: #e0f2fe; color: var(--color-navy); font-weight: 700; }
+  
+  .lesson-link.complete .lesson-step-badge, .overview-link.complete .lesson-step-badge { border-color: #16a34a; background: #16a34a; color: #ffffff; box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25); }
+  .lesson-link.complete .lesson-step-badge .check-icon, .overview-link.complete .lesson-step-badge .check-icon { display: block; stroke: #ffffff; }
+  .lesson-link.active .lesson-step-badge, .overview-link.active .lesson-step-badge { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.15); }
+  .lesson-link.active.complete .lesson-step-badge, .overview-link.active.complete .lesson-step-badge { border-color: #16a34a; }
 
   .course-sidebar :global(.learning-status) { margin-bottom: 0; }
-  .player-main { min-width: 0; padding: 3rem 0 5rem; }
+  .player-main { flex: 1; min-width: 0; width: 100%; padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 5rem; }
+  .player-content-container { width: 100%; max-width: 880px; margin-inline: auto; }
   .lesson-header { margin-bottom: 2.25rem; border-bottom: 1px solid var(--color-line); padding-bottom: 1.75rem; }
   .lesson-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.85rem; margin-bottom: 0.8rem; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.04em; text-transform: uppercase; }
   .lesson-header h1 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
@@ -256,6 +408,7 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
   .lesson-content :global(li) { margin: 0.42rem 0; padding-left: 0.25rem; }
   .lesson-content :global(li::marker) { color: var(--color-primary); font-weight: 800; }
   .lesson-content :global(code:not(pre code)) { border: 1px solid var(--color-phinisi-200); border-radius: 0.42rem; padding: 0.12rem 0.35rem; background: var(--color-phinisi-50); color: #0e4ca9; font-family: var(--font-mono); font-size: 0.86em; }
+  .lesson-content :global(img) { max-width: 100%; height: auto; border-radius: 0.75rem; box-shadow: 0 4px 18px rgba(8, 42, 81, 0.08); margin: 1.75rem auto; display: block; }
   .lesson-content :global(table) { display: table; width: 100%; margin: 1.5rem 0; overflow: hidden; border: 1px solid var(--color-line); border-collapse: separate; border-spacing: 0; border-radius: 1rem; font-size: 0.88rem; }
   .lesson-content :global(th) { padding: 0.75rem; background: var(--color-navy); color: #fff; text-align: left; }
   .lesson-content :global(td) { border-top: 1px solid var(--color-line); padding: 0.75rem; color: var(--color-muted); vertical-align: top; }

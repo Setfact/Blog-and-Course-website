@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/ui/Button.astro';
 import CourseCard from '../components/ui/CourseCard.astro';
-import { PhinisiBentoGrid } from '../components/ui/PhinisiBentoGrid';
+import { PhinisiJourneySection } from '../components/ui/PhinisiJourneySection';
 import { categoryLabels, isRecentlyPublished, isRecentlyUpdated, loadCourses, type CourseCategory } from '../data/learning';
 
 const courses = await loadCourses();
@@ -52,35 +52,6 @@ const areas = (Object.keys(areaCopy) as CourseCategory[]).map((category) => {
   const representative = areaCourses.find((course) => course.status === 'published') ?? areaCourses[0];
   return { category, courses: areaCourses, representative, ...areaCopy[category] };
 });
-
-const learningProcess = [
-  {
-    number: '01',
-    title: 'Pahami konsep',
-    description: 'Pelajari fundamental melalui materi yang terstruktur, relevan, dan mudah dipahami.',
-    image: '/assets/milestone-concept.png',
-  },
-  {
-    number: '02',
-    title: 'Terapkan langsung',
-    description: 'Praktikkan command, konfigurasi, troubleshooting, dan workflow menggunakan tools industri.',
-    image: '/assets/milestone-practice.png',
-  },
-  {
-    number: '03',
-    title: 'Bangun project',
-    description: 'Selesaikan studi kasus dan project nyata yang dapat dikembangkan menjadi portofolio.',
-    image: '/assets/milestone-project.png',
-  },
-  {
-    number: '04',
-    title: 'Validasi kemampuan',
-    description: 'Ukur kemampuan melalui quiz, challenge, evaluasi, dan penyelesaian project.',
-    image: '/assets/milestone-validation.png',
-  },
-];
-
-
 
 const levelLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' } as const;
 ---
@@ -199,68 +170,37 @@ const levelLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'L
     </div>
   </section>
 
-  <section class="home-section journey-section" aria-labelledby="journey-title">
+  <section class="home-section industry-section" aria-labelledby="industry-title">
     <div class="page-shell home-shell">
-      <header class="home-heading centered" data-reveal>
-        <p class="section-kicker">DARI TEORI MENJADI KEMAMPUAN</p>
-        <h2 id="journey-title">Belajar sampai benar-benar bisa praktik</h2>
-        <p>Setiap perjalanan belajar menggabungkan pemahaman konsep, praktik langsung, project, dan validasi kemampuan.</p>
+      <header class="home-heading centered" style="margin-bottom: 2.75rem;" data-reveal>
+        <p class="section-kicker">KESIAPAN INDUSTRI</p>
+        <h2 id="industry-title">Bangun Skill yang Relevan untuk Dunia Industri</h2>
+        <p>Phinisi Learn membantu kamu berkembang melalui materi bertahap, praktik langsung, studi kasus, dan project yang mendekati kebutuhan teknologi di dunia nyata.</p>
       </header>
-      <div class="learning-process">
-        <ol class="process-steps" aria-label="Empat tahap proses belajar">
-          {learningProcess.map((step, index) => (
-            <li class="process-step" style={`--reveal-delay:${120 + index * 90}ms`} data-reveal>
-              <div class="process-index" aria-label={`Tahap ${step.number}`}>
-                <span class="step-number" aria-hidden="true">{step.number}</span>
-                <span class="process-node" aria-hidden="true"></span>
-              </div>
-              <div class="process-icon-box" aria-hidden="true">
-                <img src={step.image} alt="" width="120" height="120" loading="lazy" decoding="async" class="milestone-img" />
-              </div>
-              <div class="process-copy">
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+      <div data-reveal>
+        <PhinisiJourneySection client:visible />
       </div>
     </div>
   </section>
 
   <div class="dark-ocean-wrap">
-  <section class="industry-section" aria-labelledby="industry-title">
-    <!-- Treasure chest kanan bawah -->
-    <img class="industry-treasure" src="/assets/treasure-chest.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
-    <div class="page-shell home-shell">
-      <header class="home-heading centered" style="margin-bottom: 3.5rem;" data-reveal>
-        <p class="section-kicker on-dark">KESIAPAN INDUSTRI</p>
-        <h2 id="industry-title" style="color: #fff;">Bangun Skill yang Relevan untuk Dunia Industri</h2>
-        <p style="color: #c6def2; max-width: 720px; margin-inline: auto;">Phinisi Learn membantu kamu berkembang melalui materi bertahap, praktik langsung, studi kasus, dan project yang mendekati kebutuhan teknologi di dunia nyata.</p>
-      </header>
-      <div data-reveal style="position: relative; z-index: 2;">
-        <PhinisiBentoGrid client:visible />
+    <section class="closing-section" aria-labelledby="closing-title">
+      <!-- Kapal Phinisi kiri bawah -->
+      <img class="closing-ship" src="/assets/phinisi-ship.png" alt="" width="1024" height="1536" loading="lazy" decoding="async" aria-hidden="true" />
+      <!-- Pulau router kanan atas -->
+      <img class="closing-island" src="/assets/router-island.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
+      <!-- Light arc -->
+      <div class="closing-wave" aria-hidden="true"></div>
+      <div class="page-shell home-shell closing-content" data-reveal>
+        <p class="section-kicker on-dark">MULAI PERJALANANMU</p>
+        <h2 id="closing-title">Siap Memulai Perjalanan Teknologimu?</h2>
+        <p>Pilih bidang yang ingin kamu kuasai dan mulai bangun kemampuan melalui learning path Phinisi Learn.</p>
+        <div class="closing-actions">
+          <Button href="/courses" size="lg" class="closing-primary">Mulai Belajar Sekarang</Button>
+          <a class="closing-secondary" href="/learning-path">Lihat Semua Learning Path <span aria-hidden="true">→</span></a>
+        </div>
       </div>
-    </div>
-  </section>
-
-  <section class="closing-section" aria-labelledby="closing-title">
-    <!-- Kapal Phinisi kiri bawah -->
-    <img class="closing-ship" src="/assets/phinisi-ship.png" alt="" width="1024" height="1536" loading="lazy" decoding="async" aria-hidden="true" />
-    <!-- Pulau router kanan atas -->
-    <img class="closing-island" src="/assets/router-island.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" aria-hidden="true" />
-    <!-- Light arc -->
-    <div class="closing-wave" aria-hidden="true"></div>
-    <div class="page-shell home-shell closing-content" data-reveal>
-      <p class="section-kicker on-dark">MULAI PERJALANANMU</p>
-      <h2 id="closing-title">Siap Memulai Perjalanan Teknologimu?</h2>
-      <p>Pilih bidang yang ingin kamu kuasai dan mulai bangun kemampuan melalui learning path Phinisi Learn.</p>
-      <div class="closing-actions">
-        <Button href="/courses" size="lg" class="closing-primary">Mulai Belajar Sekarang</Button>
-        <a class="closing-secondary" href="/learning-path">Lihat Semua Learning Path <span aria-hidden="true">→</span></a>
-      </div>
-    </div>
-  </section>
+    </section>
   </div>
 
   <script>

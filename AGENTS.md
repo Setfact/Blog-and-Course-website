@@ -20,3 +20,8 @@ Consult these guides before working on related tasks:
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+
+## User Preferences & Rules
+
+- **Dilarang Menggunakan Emoji/Emote**: Jangan pernah menggunakan emoji atau emote dalam bentuk apa pun di dalam respon, pesan, dokumentasi, maupun kode.
+

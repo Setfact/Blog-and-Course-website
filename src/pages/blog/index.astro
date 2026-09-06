@@ -18,14 +18,14 @@ const remainingPosts = sortedPosts.slice(1);
 		<!-- Header & Filters -->
 		<section class="flex flex-col gap-6">
 			<div class="flex flex-col gap-2">
-				<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Blog Engineer</h1>
-				<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Penjelasan mendalam mengenai protokol jaringan, administrasi Linux, dan otomatisasi infrastruktur. Ditulis oleh engineer, untuk engineer.</p>
+				<h1 class="font-heading font-bold text-3xl md:text-4xl text-[#061d3f]">Blog Engineer</h1>
+				<p class="font-body text-[#374e6c] max-w-2xl text-base leading-relaxed">Penjelasan mendalam mengenai protokol jaringan, administrasi Linux, dan otomatisasi infrastruktur. Ditulis oleh engineer, untuk engineer.</p>
 			</div>
 			<div class="flex flex-wrap gap-3 mt-4" id="blog-filters">
-				<button data-filter="all" class="font-label-caps text-label-caps px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">Semua Artikel</button>
-				<button data-filter="Sysadmin" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Sysadmin</button>
-				<button data-filter="Automation" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Automation</button>
-				<button data-filter="Networking" class="font-label-caps text-label-caps px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Networking</button>
+				<button data-filter="all" class="font-heading font-semibold text-xs px-4 py-2 bg-primary text-on-primary rounded border border-primary transition-colors">Semua Artikel</button>
+				<button data-filter="Sysadmin" class="font-heading font-semibold text-xs px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Sysadmin</button>
+				<button data-filter="Automation" class="font-heading font-semibold text-xs px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Automation</button>
+				<button data-filter="Networking" class="font-heading font-semibold text-xs px-4 py-2 bg-surface-muted text-on-surface-variant rounded border border-border-subtle hover:border-primary transition-colors">Networking</button>
 			</div>
 		</section>
 
@@ -35,24 +35,24 @@ const remainingPosts = sortedPosts.slice(1);
 			<div class="md:col-span-7 h-64 md:h-auto bg-surface-dim relative">
 				<div class="bg-cover bg-center w-full h-full absolute inset-0" style={`background-image: url('${featuredPost.data.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVWtjcGQ_erUpnc5D1p4GDLLG2G73xvENriL281qyvSSuweFuKIsvbQitC2I-sdFrwvYVC3qtWXJtZtB3mS0hTZ03AyriSB2efjMKt3RjPcngYNAEAg3qFrrstwhv2lIw31sfuDzyjVHED0HPKcOg2vuO13qG7Zp2DMFpSfBeVRmme3mbx2AAEuh2eUtiezxofRifKFEoT5IACyoIFaZaIwjD0nvqd5eyh92nZZxQPVvbOryp0ZLycygfRlIOxfhPYg72rhnE2fGw'}')`}></div>
 				<div class="absolute top-4 left-4">
-					<span class="font-label-caps text-label-caps px-2 py-1 bg-terminal-bg text-on-primary rounded border border-outline-variant/30 backdrop-blur-sm">{featuredPost.data.category}</span>
+					<span class="font-heading font-bold text-xs px-2.5 py-1 bg-terminal-bg text-on-primary rounded border border-outline-variant/30 backdrop-blur-sm">{featuredPost.data.category}</span>
 				</div>
 			</div>
 			<div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-center gap-4">
-				<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-code-block text-sm">
+				<div class="flex items-center gap-2 text-on-surface-variant font-mono text-xs">
 					<span class="material-symbols-outlined text-[16px]">calendar_today</span>
 					<span class="">{new Date(featuredPost.data.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
 				</div>
-				<h2 class="font-headline-md text-headline-md text-on-background group-hover:text-primary transition-colors">{featuredPost.data.title}</h2>
-				<p class="font-body-md text-body-md text-on-surface-variant flex-grow line-clamp-3">{featuredPost.data.description}</p>
+				<h2 class="font-heading font-bold text-xl md:text-2xl text-[#061d3f] group-hover:text-primary transition-colors">{featuredPost.data.title}</h2>
+				<p class="font-body text-sm text-[#374e6c] flex-grow line-clamp-3 leading-relaxed">{featuredPost.data.description}</p>
 				<div class="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between">
 					<div class="flex items-center gap-3">
 						<div class="w-12 h-12 rounded-full overflow-hidden shadow-sm border border-border-subtle flex-shrink-0">
 							<img src="/foto-calvin.png" alt="Author" class="w-full h-full object-cover scale-[1.7] origin-center" />
 						</div>
-						<span class="font-semibold text-sm text-on-surface-variant">{featuredPost.data.author || 'Calvin Umboh'}</span>
+						<span class="font-heading font-bold text-sm text-[#061d3f]">{featuredPost.data.author || 'Calvin Umboh'}</span>
 					</div>
-					<a class="font-label-caps text-label-caps text-primary hover:text-primary-container flex items-center gap-1 group" href={`/blog/${featuredPost.id}`}>
+					<a class="font-heading font-bold text-xs text-primary hover:text-primary-container flex items-center gap-1 group" href={`/blog/${featuredPost.id}`}>
 						{t('blog.readMore')} <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
 					</a>
 				</div>
@@ -68,18 +68,18 @@ const remainingPosts = sortedPosts.slice(1);
 				<div class="h-48 relative overflow-hidden bg-surface-dim border-b border-border-subtle">
 					<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" style={`background-image: url('${post.data.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuA48BdDJtzlCaxnScgbV7Nr2kMyaJFEXLvO3yCxH9A-yzNVD3iDRwCFP1zjwrkqUf1YVzkX-y4mAvar6Y5Gs1TYH_2OAVkp_Dm41PnqNuCYuOUQeOQMid4tovl-b0P6ximR4AETAXpK-zcyxL-3zhIFO76n_y46NpamxzP7BTsMVVBD8JMyWyDHEuQH4FRmepjZBC4hOyFYTg7l3AQnefNrbXbZCkipCKBfdN7-z8zTtVwcnhX17PSHK6jnpN8ncpPkY9Um9JsYcrg'}')`}></div>
 					<div class="absolute top-3 left-3">
-						<span class="font-label-caps text-label-caps px-2 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">{post.data.category}</span>
+						<span class="font-heading font-bold text-xs px-2.5 py-1 bg-surface-muted text-on-surface-variant border border-border-subtle rounded shadow-sm">{post.data.category}</span>
 					</div>
 				</div>
 				<div class="p-5 flex flex-col gap-3 flex-grow">
-					<div class="flex items-center gap-2 text-on-surface-variant font-code-block text-xs">
+					<div class="flex items-center gap-2 text-on-surface-variant font-mono text-xs">
 						<span class="">{new Date(post.data.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
 					</div>
-					<h3 class="font-headline-sm text-headline-sm text-on-background group-hover:text-primary line-clamp-2">{post.data.title}</h3>
-					<p class="font-body-md text-sm text-on-surface-variant line-clamp-3">{post.data.description}</p>
+					<h3 class="font-heading font-bold text-lg text-[#061d3f] group-hover:text-primary line-clamp-2">{post.data.title}</h3>
+					<p class="font-body text-sm text-[#374e6c] line-clamp-3 leading-relaxed">{post.data.description}</p>
 				</div>
 				<div class="p-5 pt-0 mt-auto">
-					<a class="font-label-caps text-label-caps text-primary hover:underline" href={`/blog/${post.id}`}>{t('blog.readMore')} -&gt;</a>
+					<a class="font-heading font-bold text-xs text-primary hover:underline" href={`/blog/${post.id}`}>{t('blog.readMore')} -&gt;</a>
 				</div>
 			</article>
 			))}

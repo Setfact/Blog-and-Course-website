@@ -19,7 +19,7 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
 ---
 
 <header class="site-header">
-  <div class="header-inner page-shell">
+  <div class="header-inner">
     <a href={`${prefix}/`} class="brand" aria-label="Phinisi Learn — halaman utama">
       <img src="/Logo Phinisi Learn.png" alt="Phinisi Learn" width="2170" height="725" />
     </a>
@@ -37,13 +37,7 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
         </div>
       )}
 
-      <div class="language-switcher" aria-label="Pilih bahasa">
-        <a href={Astro.url.pathname.replace(/^\/en/, '') || '/'} class:list={{ active: lang === 'id' }}>ID</a>
-        <span>/</span>
-        <a href={`/en${Astro.url.pathname.replace(/^\/en/, '')}`} class:list={{ active: lang === 'en' }}>EN</a>
-      </div>
-
-      <Button href={`${prefix}/courses`} size="sm" class="header-cta">{lang === 'id' ? 'Mulai Belajar' : 'Start Learning'}</Button>
+      <Button href={`${prefix}/courses`} size="sm" class="header-cta">Mulai Belajar</Button>
 
       <details class="mobile-menu">
         <summary aria-label="Buka menu"><span class="material-symbols-outlined">menu</span></summary>
@@ -57,7 +51,7 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
 
 <style>
   .site-header { position: sticky; z-index: 50; top: 0; border-bottom: 1px solid var(--color-line); background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(14px); }
-  .header-inner { display: flex; min-height: 70px; align-items: center; justify-content: space-between; gap: 1.25rem; }
+  .header-inner { display: flex; width: 100%; max-width: 100%; min-height: 70px; align-items: center; justify-content: space-between; gap: 1.25rem; padding-inline: 1.75rem; }
   .brand { display: inline-flex; flex: 0 0 auto; align-items: center; color: var(--color-navy); text-decoration: none; }
   .brand img { display: block; width: 146px; height: 49px; object-fit: contain; }
   .desktop-nav { display: flex; align-items: center; gap: 0.35rem; }
@@ -65,9 +59,6 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
   .desktop-nav a:hover, .desktop-nav a.active { background: var(--color-phinisi-50); color: var(--color-phinisi-700); }
   .header-actions { display: flex; align-items: center; gap: 0.85rem; }
   .search-wrap { position: relative; width: 220px; }
-  .language-switcher { display: flex; align-items: center; gap: 0.25rem; color: #9aa9bc; font-size: 0.72rem; }
-  .language-switcher a { color: var(--color-muted); font-weight: 700; text-decoration: none; }
-  .language-switcher a.active { color: var(--color-phinisi-600); }
   .mobile-menu { display: none; position: relative; }
   .mobile-menu summary { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--color-line); border-radius: 0.8rem; background: white; color: var(--color-navy); cursor: pointer; list-style: none; }
   .mobile-menu summary::-webkit-details-marker { display: none; }
@@ -83,5 +74,5 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
 
   @media (max-width: 1080px) { .search-wrap { display: none; } }
   @media (max-width: 820px) { .desktop-nav { display: none; } .mobile-menu { display: block; } }
-  @media (max-width: 560px) { .header-inner { min-height: 68px; gap: 0.6rem; } .header-actions { gap: 0.55rem; } .language-switcher { display: none; } .brand img { width: 124px; height: 42px; } :global(.header-cta) { min-height: 36px; padding: 0.55rem 0.75rem; font-size: 0.75rem; } }
+  @media (max-width: 560px) { .header-inner { min-height: 68px; gap: 0.6rem; } .header-actions { gap: 0.55rem; } .brand img { width: 124px; height: 42px; } :global(.header-cta) { min-height: 36px; padding: 0.55rem 0.75rem; font-size: 0.75rem; } }
 </style>

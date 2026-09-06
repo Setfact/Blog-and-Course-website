@@ -247,3 +247,127 @@ pre.astro-code code span {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Path Banner Card Styles */
+.path-banner-section {
+  padding-top: 2rem;
+  padding-bottom: 1.5rem;
+}
+.path-banner-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 24px;
+  padding: clamp(2.2rem, 4.5vw, 3.5rem);
+  background: linear-gradient(135deg, #04122b 0%, #082d68 55%, #0c4d9e 100%);
+  border: 1px solid rgba(103, 232, 249, 0.35);
+  box-shadow: 0 20px 45px rgba(4, 29, 69, 0.22);
+  color: #ffffff;
+}
+.banner-glow-effect {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.2) 0%, transparent 45%),
+                    radial-gradient(circle at 10% 80%, rgba(34, 211, 238, 0.12) 0%, transparent 40%);
+  pointer-events: none;
+}
+.banner-content-layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1.5rem, 4vw, 3rem);
+}
+.banner-copy {
+  flex: 1;
+  max-width: 640px;
+}
+.banner-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(103, 232, 249, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  background: rgba(3, 33, 78, 0.5);
+  color: #67e8f9;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(8px);
+  margin-bottom: 1.1rem;
+}
+.kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.6);
+}
+.banner-copy h1 {
+  margin: 0 0 0.85rem;
+  color: #ffffff !important;
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+.banner-copy h1 span {
+  color: #78e9ff !important;
+  display: block;
+}
+.banner-text {
+  margin: 0 0 1.5rem;
+  color: #c8e5ff !important;
+  font-size: clamp(0.96rem, 1.15vw, 1.05rem);
+  line-height: 1.68;
+  max-width: 580px;
+}
+.banner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.banner-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(186, 238, 255, 0.25);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  background: rgba(255, 255, 255, 0.09);
+  color: #e2f4ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+.banner-visual {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-buoy-img {
+  width: clamp(150px, 18vw, 220px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(3, 33, 75, 0.4));
+  animation: buoy-float 6s ease-in-out infinite;
+}
+@keyframes buoy-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1.5deg); } }
+
+@media (max-width: 768px) {
+  .banner-content-layout {
+    flex-direction: column;
+    text-align: center;
+  }
+  .banner-copy {
+    max-width: 100%;
+  }
+  .banner-chips {
+    justify-content: center;
+  }
+}

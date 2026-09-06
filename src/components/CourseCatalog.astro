@@ -1,46 +1,45 @@
 ---
-import { categoryLabels, loadCourses, type Language } from '../data/learning';
+import { categoryLabels, loadCourses } from '../data/learning';
 
-interface Props { language?: Language; }
-
-const { language = 'id' } = Astro.props;
-const isEnglish = language === 'en';
-const prefix = isEnglish ? '/en' : '';
 const courses = await loadCourses();
 const requestedCategory = Astro.url.searchParams.get('category');
 const activeFilter = ['networking', 'linux', 'automation', 'iot'].includes(requestedCategory ?? '') ? requestedCategory! : 'all';
 
-const copy = isEnglish ? {
-  title: 'Explore courses',
-  description: 'Choose a practical course and build one skill at a time.',
-  all: 'All', available: 'Available', planned: 'Coming soon', view: 'View course',
-  beginner: 'Beginner', intermediate: 'Intermediate', hours: 'hours', modules: 'modules',
-  filtersLabel: 'Filter courses by field', imageAlt: 'Course cover for',
-} : {
-  title: 'Jelajahi course',
-  description: 'Pilih course praktik dan bangun satu skill pada satu waktu.',
-  all: 'Semua', available: 'Tersedia', planned: 'Segera hadir', view: 'Lihat course',
-  beginner: 'Pemula', intermediate: 'Menengah', hours: 'jam', modules: 'modul',
-  filtersLabel: 'Filter course berdasarkan bidang', imageAlt: 'Cover course',
-};
-
 const filters = [
-  { value: 'all', label: copy.all },
+  { value: 'all', label: 'Semua' },
   { value: 'networking', label: 'Networking' },
-  { value: 'linux', label: 'Linux' },
+  { value: 'linux', label: 'Linux & SysAdmin' },
   { value: 'automation', label: 'Automation' },
   { value: 'iot', label: 'IoT' },
 ];
+
+const levelLabels: Record<string, string> = {
+  beginner: 'Pemula',
+  intermediate: 'Menengah',
+  advanced: 'Lanjutan',
+};
 ---
 
 <main class="course-catalog" data-course-catalog>
   <div class="page-shell">
-    <header class="catalog-header">
-      <h1>{copy.title}</h1>
-      <p>{copy.description}</p>
-    </header>
+    <section class="course-banner-section">
+      <div class="course-banner-card" data-reveal>
+        <div class="banner-glow-effect" aria-hidden="true"></div>
+        <div class="banner-content-layout">
+          <div class="banner-visual-left" aria-hidden="true">
+            <img src="/asset-Hero-section/milestone-concept.png" alt="" width="180" height="180" loading="eager" decoding="async" />
+          </div>
+          <div class="banner-copy centered">
+            <h1>Jelajahi Course <span>dan Kuasai Skills yang Kamu Sukai</span></h1>
+          </div>
+          <div class="banner-visual-right" aria-hidden="true">
+            <img src="/asset-Hero-section/milestone-validation.png.png" alt="" width="180" height="180" loading="eager" decoding="async" />
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <nav class="course-filters" aria-label={copy.filtersLabel}>
+    <nav class="course-filters" aria-label="Filter course berdasarkan bidang">
       {filters.map((filter) => (
         <button type="button" data-course-filter={filter.value} aria-pressed={filter.value === activeFilter ? 'true' : 'false'}>
           {filter.label}
@@ -48,12 +47,12 @@ const filters = [
       ))}
     </nav>
 
-    <section class="course-grid" aria-label={isEnglish ? 'Course list' : 'Daftar course'}>
+    <section class="course-grid" aria-label="Daftar course">
       {courses.map((course) => {
-        const courseHref = prefix + '/courses/' + course.slug;
-        const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
-        const materialAvailable = Boolean(course.contentHref?.[language]);
-        const learningHref = course.learningHref?.[language];
+        const courseHref = '/courses/' + course.slug;
+        const level = levelLabels[course.level] ?? 'Pemula';
+        const materialAvailable = course.status === 'published';
+        const learningHref = course.learningHref?.id;
         return (
           <article
             class="course-card"
@@ -65,23 +64,32 @@ const filters = [
             hidden={activeFilter !== 'all' && activeFilter !== course.category}
           >
             <div class="course-cover">
-              <img src={course.cover} alt={copy.imageAlt + ' ' + course.title} width="960" height="540" loading="lazy" decoding="async" />
-              <span class:list={['course-status', { available: materialAvailable }]}>{materialAvailable ? copy.available : copy.planned}</span>
+              <img src={course.cover} alt={'Cover course ' + course.title} width="960" height="540" loading="lazy" decoding="async" />
+              <span class:list={['course-status', { available: materialAvailable }]}>{materialAvailable ? 'Tersedia' : 'Segera hadir'}</span>
             </div>
 
             <div class="course-content">
-              <span class="course-category">{categoryLabels[course.category][language]}</span>
+              <span class="course-category">{categoryLabels[course.category]?.id ?? course.category}</span>
               <h2><a href={courseHref} data-course-link>{course.title}</a></h2>
-              <p>{course.description[language]}</p>
-
-              <div class="course-meta">{level} · {course.moduleCount} {copy.modules} · ±{course.durationHours} {copy.hours}</div>
+              <p>{course.description.id}</p>
+              
+              <div class="course-level-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 20v-4"/>
+                  <path d="M12 20V10"/>
+                  <path d="M18 20V4"/>
+                </svg>
+                <span>{level}</span>
+                <span class="badge-sep">•</span>
+                <span>{course.moduleCount} modul</span>
+              </div>
 
               <div class="local-progress" data-card-progress hidden>
                 <div><span data-card-progress-label></span><strong data-card-progress-percent></strong></div>
                 <span><i data-card-progress-fill></i></span>
               </div>
 
-              <footer><strong data-course-action>{copy.view} →</strong></footer>
+              <footer><strong data-course-action>Lihat course →</strong></footer>
             </div>
           </article>
         );
@@ -121,7 +129,7 @@ const filters = [
         if (percent) percent.textContent = progress.percent + '%';
         if (fill) fill.style.width = progress.percent + '%';
         if (link) link.href = progress.resumeHref ?? learningHref;
-        if (action) action.textContent = progress.percent === 100 ? 'Tinjau kembali →' : 'Lanjutkan course →';
+        if (action) action.innerHTML = (progress.percent === 100 ? 'Tinjau kembali' : 'Lanjutkan course') + ' <b aria-hidden="true">→</b>';
       });
     };
 
@@ -142,37 +150,273 @@ const filters = [
 </script>
 
 <style>
-  .course-catalog { min-height: 70vh; padding: clamp(3.5rem, 7vw, 5.5rem) 0 clamp(5rem, 8vw, 7rem); background: var(--color-canvas); }
-  .catalog-header { max-width: 680px; }
-  .catalog-header h1 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.7rem, 6vw, 4.3rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
-  .catalog-header p { margin: 0.85rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.65; }
-  .course-filters { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 2rem 0 1.5rem; }
-  .course-filters button { min-height: 36px; border: 1px solid var(--color-line); border-radius: 999px; padding: 0.4rem 0.8rem; background: #fff; color: var(--color-muted); font-family: var(--font-heading); font-size: 0.72rem; font-weight: 600; cursor: pointer; }
-  .course-filters button[aria-pressed='true'] { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
-  .course-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.15rem; }
-  .course-card { position: relative; overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: #fff; transition: border-color 160ms ease, box-shadow 160ms ease; }
-  .course-card:hover { border-color: var(--color-phinisi-300); box-shadow: var(--shadow-soft); }
+  .course-catalog {
+    min-height: 70vh;
+    padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(4rem, 6vw, 6rem);
+    background: var(--color-canvas);
+  }
+  .course-banner-section {
+    padding-bottom: 1.5rem;
+  }
+  .course-banner-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 24px;
+    padding: clamp(2.2rem, 4vw, 3.2rem) clamp(1.5rem, 3vw, 2.5rem);
+    background: linear-gradient(135deg, #04122b 0%, #082d68 55%, #0c4d9e 100%);
+    border: 1px solid rgba(103, 232, 249, 0.35);
+    box-shadow: 0 20px 45px rgba(4, 29, 69, 0.22);
+    color: #ffffff;
+  }
+  .banner-glow-effect {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.22) 0%, transparent 60%),
+                      radial-gradient(circle at 10% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .banner-content-layout {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+  .banner-copy.centered {
+    flex: 1;
+    text-align: center;
+  }
+  .banner-copy.centered h1 {
+    margin: 0;
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 3.8vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+  .banner-copy.centered h1 span {
+    color: #78e9ff;
+    display: block;
+  }
+
+  .banner-visual-left, .banner-visual-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .banner-visual-left img {
+    width: clamp(110px, 14vw, 175px);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
+    animation: banner-float-left 7s ease-in-out infinite;
+  }
+  .banner-visual-right img {
+    width: clamp(110px, 14vw, 175px);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
+    animation: banner-float-right 8s ease-in-out -3s infinite;
+  }
+
+  @keyframes banner-float-left {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+  }
+  @keyframes banner-float-right {
+    0%, 100% { transform: translateY(0) rotate(2deg); }
+    50% { transform: translateY(-8px) rotate(-2deg); }
+  }
+
+  .course-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 1.75rem 0 1.75rem;
+  }
+  .course-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 38px;
+    border: 1px solid rgba(8, 42, 91, 0.15);
+    border-radius: 999px;
+    padding: 0.5rem 1.1rem;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(8, 42, 81, 0.05);
+    color: #475569;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, color 200ms ease, box-shadow 200ms ease;
+  }
+  .course-filters button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(2, 132, 199, 0.6);
+    color: #0f172a;
+    box-shadow: 0 6px 16px rgba(8, 42, 81, 0.08);
+  }
+  .course-filters button[aria-pressed='true'] {
+    border-color: rgba(34, 211, 238, 0.8);
+    background: linear-gradient(135deg, #0284c7 0%, #061d3f 100%);
+    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.35);
+    color: #ffffff;
+    transform: translateY(-2px);
+  }
+
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .course-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(17, 73, 173, .12);
+    border-radius: 1.45rem;
+    background: #fff;
+    box-shadow: 0 16px 42px rgba(8, 42, 91, .08);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  }
+  .course-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(34, 211, 238, .52);
+    box-shadow: 0 24px 52px rgba(8, 42, 91, .14);
+  }
   .course-card[hidden] { display: none; }
-  .course-cover { position: relative; overflow: hidden; aspect-ratio: 16 / 9; background: var(--color-section); }
-  .course-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .course-status { position: absolute; top: 0.65rem; right: 0.65rem; border: 1px solid rgba(8, 26, 58, 0.1); border-radius: 999px; padding: 0.28rem 0.5rem; background: rgba(255, 255, 255, 0.92); color: var(--color-muted); font-size: 0.6rem; font-weight: 850; }
-  .course-status.available { color: var(--color-success); }
-  .course-content { display: flex; min-height: 280px; flex-direction: column; padding: 1.25rem; }
-  .course-category { color: var(--color-primary); font-size: 0.72rem; font-weight: 650; text-transform: uppercase; }
-  .course-content h2 { margin: 0.45rem 0 0; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.18rem; font-weight: 650; letter-spacing: -0.01em; line-height: 1.4; }
+
+  .course-cover {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: #eaf6ff;
+  }
+  .course-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 400ms ease;
+  }
+  .course-card:hover .course-cover img { transform: scale(1.025); }
+
+  .course-status {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    border: 1px solid rgba(8, 26, 58, 0.12);
+    border-radius: 999px;
+    padding: 0.32rem 0.65rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.1);
+    color: #72520a;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .course-status.available { color: #059669; }
+
+  .course-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.35rem 1.4rem 1.25rem;
+  }
+
+  .course-category {
+    margin-bottom: 0.35rem;
+    color: #0284c7;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .course-content h2 {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 0.5rem;
+    min-height: 2.7em;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: clamp(1.15rem, 1.4vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
   .course-content h2 a { color: inherit; text-decoration: none; }
   .course-content h2 a::after { position: absolute; inset: 0; content: ''; }
-  .course-content > p { display: -webkit-box; overflow: hidden; margin: 0.65rem 0 1rem; -webkit-box-orient: vertical; -webkit-line-clamp: 3; color: var(--color-muted); font-size: 0.86rem; line-height: 1.6; }
-  .course-meta { margin-top: auto; color: var(--color-muted); font-size: 0.76rem; font-weight: 550; }
+  .course-content > p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 1.25rem;
+    min-height: 4.8em;
+    color: var(--color-muted);
+    font-size: 0.86rem;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .course-level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: flex-start;
+    margin-top: auto;
+    margin-bottom: 0.9rem;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    background: rgba(240, 249, 255, 0.95);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    color: #0284c7;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .course-level-badge svg { color: #0284c7; flex-shrink: 0; }
+  .badge-sep { opacity: 0.45; margin: 0 0.1rem; }
+
   .local-progress { margin-top: 0.8rem; }
   .local-progress[hidden] { display: none; }
   .local-progress > div { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 0.6rem; }
   .local-progress > div strong { color: var(--color-primary); }
   .local-progress > span { display: block; height: 0.4rem; overflow: hidden; margin-top: 0.3rem; border-radius: 999px; background: var(--color-phinisi-100); }
   .local-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-primary); }
-  .course-content footer { margin-top: 0.9rem; border-top: 1px solid var(--color-line); padding-top: 0.8rem; color: var(--color-primary); font-size: 0.78rem; text-align: right; }
 
-  @media (max-width: 900px) { .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .course-content footer {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: auto;
+    border-top: 1px solid rgba(17, 73, 173, 0.1);
+    padding-top: 0.9rem;
+    color: var(--color-primary);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 900px) {
+    .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .banner-content-layout { flex-direction: column; text-align: center; }
+    .banner-visual-left, .banner-visual-right { display: none; }
+  }
   @media (max-width: 620px) {
     .course-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
     .course-filters button { flex: none; }
