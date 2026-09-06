@@ -1,45 +1,86 @@
 import { defineMiddleware } from 'astro:middleware';
+import { createSupabaseServerClient, getOrCreateUserProfile } from './lib/supabase';
 
-export const onRequest = defineMiddleware((context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
 
-  // Proteksi panel serta API Keystatic tanpa mengganggu halaman publik.
-  if (url.pathname.startsWith('/keystatic') || url.pathname.startsWith('/api/keystatic')) {
-    const isLocalDevelopment = import.meta.env.DEV
-      && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
+  // Inisialisasi locals user
+  context.locals.user = null;
 
-    // Dev server hanya bind ke komputer lokal. Membuka CMS tanpa Basic Auth di
-    // sini menghindari dialog login yang tidak didukung in-app browser.
-    if (isLocalDevelopment) {
+  // Coba ambil session pengguna dari cookie Supabase jika terkonfigurasi
+  const supabase = createSupabaseServerClient({
+    request: context.request,
+    cookies: context.cookies,
+  });
+
+  if (supabase) {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        context.locals.user = await getOrCreateUserProfile(supabase, authUser);
+      }
+    } catch (err) {
+      console.error('Middleware auth check error:', err);
+    }
+  }
+
+  // Proteksi Keystatic CMS & API: Khusus Administrator
+  if (url.pathname.startsWith('/keystatic') || url.pathname.startsWith('/api/keystatic')) {
+    // 1. Izinkan jika user sudah login dan memiliki role admin
+    if (context.locals.user && context.locals.user.role === 'admin') {
       return next();
     }
 
+    // 2. Fallback Basic Auth untuk keperluan otomasi / script deploy
     const authHeader = context.request.headers.get('authorization');
-
-    // Deployment selain localhost wajib menyediakan kredensial melalui
-    // environment variable.
     const adminUser = process.env.ADMIN_USERNAME;
     const adminPass = process.env.ADMIN_PASSWORD;
 
-    if (!adminUser || !adminPass) {
-      return new Response('Admin credentials are not configured.', {
-        status: 503,
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      });
+    if (adminUser && adminPass) {
+      const expectedAuth = 'Basic ' + Buffer.from(`${adminUser}:${adminPass}`).toString('base64');
+      if (authHeader === expectedAuth) {
+        return next();
+      }
     }
 
-    const expectedAuth = 'Basic ' + Buffer.from(`${adminUser}:${adminPass}`).toString('base64');
+    // 3. Jika belum login sama sekali -> arahkan ke halaman login
+    if (!context.locals.user) {
+      if (url.pathname.startsWith('/api/keystatic')) {
+        return new Response(JSON.stringify({ error: 'Akses ditolak: login administrator diperlukan' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
+    }
 
-    if (authHeader !== expectedAuth) {
-      return new Response('Unauthorized', {
-        status: 401,
-        headers: {
-          'WWW-Authenticate': 'Basic realm="Keystatic Admin Panel"',
-          'Cache-Control': 'no-store',
-        },
+    // 4. Jika sudah login tetapi perannya bukan admin (misalnya siswa biasa) -> tolak akses
+    if (url.pathname.startsWith('/api/keystatic')) {
+      return new Response(JSON.stringify({ error: 'Akses terlarang: hanya administrator yang diizinkan' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
       });
+    }
+    return context.redirect('/dashboard?error=unauthorized_keystatic');
+  }
+
+  // Proteksi Rute Komunitas (Wajib Login sesuai arahan)
+  if (url.pathname.startsWith('/community') && !context.locals.user) {
+    return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
+  }
+
+  // Proteksi Rute Dashboard Siswa (Wajib Login)
+  if (url.pathname.startsWith('/dashboard') && !context.locals.user) {
+    return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
+  }
+
+  // Proteksi Rute Administrator (Wajib Login dan Role Admin)
+  if (url.pathname.startsWith('/admin')) {
+    if (!context.locals.user) {
+      return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
+    }
+    if (context.locals.user.role !== 'admin') {
+      return context.redirect('/dashboard?error=unauthorized_admin');
     }
   }
 

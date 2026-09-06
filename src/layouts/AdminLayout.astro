@@ -1,0 +1,340 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  activeSection?: 'overview' | 'users' | 'courses' | 'moderation' | 'audit';
+}
+
+const { title, activeSection = 'overview' } = Astro.props;
+const user = Astro.locals.user;
+
+if (!user || user.role !== 'admin') {
+  return Astro.redirect('/dashboard?error=unauthorized_admin');
+}
+
+const navLinks = [
+  { id: 'overview', href: '/admin', label: 'Ringkasan Platform', icon: 'dashboard' },
+  { id: 'users', href: '/admin/users', label: 'Manajemen Pengguna', icon: 'group' },
+  { id: 'courses', href: '/admin/courses', label: 'Status & Kursus', icon: 'school' },
+  { id: 'moderation', href: '/admin/moderation', label: 'Moderasi Komunitas', icon: 'gavel' },
+  { id: 'audit', href: '/admin/audit', label: 'Log Audit', icon: 'receipt_long' },
+];
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | Panel Administrator Phinisi Learn</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <!-- Admin Sidebar -->
+      <aside class="admin-sidebar" aria-label="Navigasi Administrator">
+        <div class="sidebar-top">
+          <a href="/admin" class="admin-brand">
+            <img src="/Logo Phinisi Learn.png" alt="Phinisi Learn" width="138" height="46" />
+            <span class="admin-tag">ADMIN</span>
+          </a>
+        </div>
+
+        <nav class="admin-nav">
+          <span class="nav-section-title">MENU UTAMA</span>
+          {navLinks.map((item) => (
+            <a
+              href={item.href}
+              class:list={['admin-nav-item', { active: activeSection === item.id }]}
+            >
+              <span class="material-symbols-outlined nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          ))}
+
+          <hr class="nav-divider" />
+
+          <span class="nav-section-title">INTEGRASI KONTEN</span>
+          <a href="/keystatic" class="admin-nav-item" target="_blank" rel="noopener noreferrer">
+            <span class="material-symbols-outlined nav-icon">edit_note</span>
+            <span>Keystatic CMS ↗</span>
+          </a>
+          <a href="/dashboard" class="admin-nav-item">
+            <span class="material-symbols-outlined nav-icon">school</span>
+            <span>Portal Siswa</span>
+          </a>
+          <a href="/" class="admin-nav-item">
+            <span class="material-symbols-outlined nav-icon">home</span>
+            <span>Beranda Web</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="admin-user-info">
+            <div class="admin-avatar">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} width="36" height="36" />
+              ) : (
+                <span>{user.full_name.slice(0, 1).toUpperCase()}</span>
+              )}
+            </div>
+            <div class="admin-details">
+              <strong class="admin-name">{user.full_name}</strong>
+              <span class="admin-email">{user.email}</span>
+            </div>
+          </div>
+          <a href="/api/auth/signout" class="admin-logout-btn" title="Keluar">
+            <span class="material-symbols-outlined">logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main Admin Content Area -->
+      <div class="admin-main-wrap">
+        <header class="admin-topbar">
+          <h1 class="topbar-title">{title}</h1>
+          <div class="topbar-actions">
+            <span class="superadmin-indicator">Superadmin Mode</span>
+            <a href="/community" class="topbar-link">Komunitas</a>
+          </div>
+        </header>
+
+        <main class="admin-content">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style>
+  .admin-body {
+    margin: 0;
+    padding: 0;
+    background: #f8fafc;
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    min-height: 100vh;
+  }
+  .admin-shell {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .admin-sidebar {
+    width: 260px;
+    background: #ffffff;
+    border-right: 1px solid var(--color-line);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .sidebar-top {
+    padding: 1.25rem 1.25rem 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  .admin-brand img {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+  }
+  .admin-tag {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.35rem;
+  }
+  .admin-nav {
+    flex: 1;
+    padding: 1rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+  }
+  .nav-section-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    padding: 0.5rem 0.65rem 0.2rem 0.65rem;
+  }
+  .admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.65rem;
+    color: var(--color-ink);
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .admin-nav-item:hover {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+  .admin-nav-item.active {
+    background: var(--color-phinisi-100);
+    color: var(--color-phinisi-700);
+    font-weight: 700;
+  }
+  .nav-icon {
+    font-size: 1.2rem;
+    color: var(--color-muted);
+  }
+  .admin-nav-item.active .nav-icon {
+    color: var(--color-phinisi-700);
+  }
+  .nav-divider {
+    border: none;
+    border-top: 1px solid var(--color-line);
+    margin: 0.75rem 0;
+  }
+  .sidebar-bottom {
+    padding: 0.85rem 1rem;
+    border-top: 1px solid var(--color-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .admin-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    overflow: hidden;
+  }
+  .admin-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    flex-shrink: 0;
+  }
+  .admin-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .admin-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .admin-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .admin-email {
+    font-size: 0.68rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .admin-logout-btn {
+    color: var(--color-muted);
+    display: grid;
+    place-items: center;
+    padding: 0.35rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+  }
+  .admin-logout-btn:hover {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  /* Main Wrap */
+  .admin-main-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .admin-topbar {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--color-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+  }
+  .topbar-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .superadmin-indicator {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #047857;
+    background: #d1fae5;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+  .topbar-link {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .topbar-link:hover {
+    color: var(--color-phinisi-700);
+  }
+  .admin-content {
+    flex: 1;
+    padding: 2rem;
+  }
+
+  @media (max-width: 900px) {
+    .admin-shell {
+      flex-direction: column;
+    }
+    .admin-sidebar {
+      width: 100%;
+      height: auto;
+      position: static;
+    }
+  }
+</style>

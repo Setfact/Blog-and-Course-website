@@ -1,0 +1,897 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getChannels, getPosts, getTopLearners } from '../../lib/community';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/community');
+}
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const currentChannel = Astro.url.searchParams.get('channel') || 'all';
+const currentSort = (Astro.url.searchParams.get('sort') === 'popular' ? 'popular' : 'newest') as 'newest' | 'popular';
+
+const channels = await getChannels(supabase);
+const posts = await getPosts(supabase, {
+  channelId: currentChannel,
+  sort: currentSort,
+  currentUserId: user.id,
+});
+const topLearners = await getTopLearners(supabase, 5);
+
+const activeChannelInfo = channels.find((c) => c.id === currentChannel);
+---
+
+<BaseLayout
+  title="Komunitas Siswa"
+  description="Diskusikan konfigurasi Cisco, topologi lab, scripting otomatisasi, dan saling berbagi kemajuan belajar."
+>
+  <div class="page-shell community-layout">
+    <!-- Community Top Header -->
+    <header class="community-header">
+      <div class="header-text">
+        <span class="header-kicker">RUANG DISKUSI TEKNIS & SOSIAL</span>
+        <h1 class="header-title">Komunitas Phinisi Learn</h1>
+        <p class="header-sub">Berbagi hasil lab, konsultasi konfigurasi jaringan, dan saling merayakan pencapaian belajar.</p>
+      </div>
+      <div class="user-greeting">
+        <span class="greeting-text">Masuk sebagai <strong>{user.full_name}</strong></span>
+        <span class="greeting-xp">{user.xp} XP</span>
+      </div>
+    </header>
+
+    <div class="community-grid">
+      <!-- Left Column: Channel Navigation -->
+      <aside class="channels-sidebar" aria-label="Daftar Saluran Komunitas">
+        <div class="sidebar-box">
+          <h2 class="sidebar-title">Saluran Diskusi</h2>
+          <nav class="channel-nav">
+            <a
+              href={`/community?sort=${currentSort}`}
+              class:list={['channel-link', { active: currentChannel === 'all' }]}
+            >
+              <span class="material-symbols-outlined channel-icon">dashboard</span>
+              <div class="channel-info">
+                <span class="channel-name">Semua Saluran</span>
+                <span class="channel-desc">Seluruh feed komunitas</span>
+              </div>
+            </a>
+
+            {channels.map((ch) => (
+              <a
+                href={`/community?channel=${ch.id}&sort=${currentSort}`}
+                class:list={['channel-link', { active: currentChannel === ch.id }]}
+              >
+                <span class="material-symbols-outlined channel-icon">{ch.icon_name}</span>
+                <div class="channel-info">
+                  <span class="channel-name">{ch.name}</span>
+                  <span class="channel-desc">{ch.description}</span>
+                </div>
+              </a>
+            ))}
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Center Column: Post Composer & Posts Feed -->
+      <main class="feed-main">
+        <!-- Post Composer Box -->
+        <section class="composer-card">
+          <h2 class="composer-heading">Buat Postingan Baru</h2>
+          <form action="/api/community/posts" method="POST" class="composer-form">
+            <div class="form-row">
+              <input
+                type="text"
+                name="title"
+                placeholder="Judul topik atau pertanyaan Anda..."
+                required
+                class="input-title"
+                maxlength="150"
+              />
+              <select name="channel_id" class="select-channel" required aria-label="Pilih Saluran">
+                {channels.map((ch) => (
+                  <option value={ch.id} selected={currentChannel === ch.id}>
+                    {ch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <textarea
+              name="content"
+              placeholder="Tulis penjelasan, output CLI Cisco IOS, atau kode skrip (gunakan ``` untuk blok kode)..."
+              required
+              rows="4"
+              class="textarea-content"
+            ></textarea>
+
+            <div class="composer-footer">
+              <span class="markdown-hint">Mendukung blok kode format Markdown</span>
+              <button type="submit" class="submit-btn">Kirim Postingan</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Feed Filter & Header -->
+        <div class="feed-filter-bar">
+          <div class="active-filter-label">
+            <strong class="label-text">
+              {activeChannelInfo ? activeChannelInfo.name : 'Semua Saluran'}
+            </strong>
+            <span class="post-count">({posts.length} kiriman)</span>
+          </div>
+
+          <div class="sort-tabs" role="tablist">
+            <a
+              href={`/community?channel=${currentChannel}&sort=newest`}
+              class:list={['sort-tab', { active: currentSort === 'newest' }]}
+            >
+              Terbaru
+            </a>
+            <a
+              href={`/community?channel=${currentChannel}&sort=popular`}
+              class:list={['sort-tab', { active: currentSort === 'popular' }]}
+            >
+              Populer
+            </a>
+          </div>
+        </div>
+
+        <!-- Posts List -->
+        {posts.length === 0 ? (
+          <div class="empty-feed">
+            <span class="material-symbols-outlined empty-icon">forum</span>
+            <p class="empty-title">Belum ada diskusi di saluran ini</p>
+            <p class="empty-desc">Jadilah orang pertama yang memulai topik di saluran ini!</p>
+          </div>
+        ) : (
+          <div class="posts-list">
+            {posts.map((post) => (
+              <article class:list={['post-card', { pinned: post.is_pinned }]}>
+                {post.is_pinned && (
+                  <div class="pinned-badge">
+                    <span class="material-symbols-outlined icon-pin">push_pin</span>
+                    <span>Disematkan oleh Admin</span>
+                  </div>
+                )}
+
+                <header class="post-card-header">
+                  <div class="author-block">
+                    <div class="author-avatar">
+                      {post.author?.avatar_url ? (
+                        <img src={post.author.avatar_url} alt={post.author.full_name} width="38" height="38" />
+                      ) : (
+                        <span>{(post.author?.full_name || 'U').slice(0, 1).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div class="author-info">
+                      <div class="author-name-line">
+                        <strong class="author-name">{post.author?.full_name || 'Siswa Phinisi'}</strong>
+                        {post.author?.role === 'admin' && <span class="badge-role-admin">Admin</span>}
+                      </div>
+                      <span class="post-time">
+                        {new Date(post.created_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span class="post-channel-tag">{post.channel?.name || post.channel_id}</span>
+                </header>
+
+                <div class="post-card-body">
+                  <h3 class="post-title">
+                    <a href={`/community/${post.id}`}>{post.title}</a>
+                  </h3>
+                  <div class="post-content-preview">
+                    <p>{post.content}</p>
+                  </div>
+                </div>
+
+                <footer class="post-card-footer">
+                  <div class="actions-group">
+                    <button
+                      type="button"
+                      class:list={['upvote-btn', { active: post.has_upvoted }]}
+                      data-post-id={post.id}
+                      data-upvoted={post.has_upvoted ? 'true' : 'false'}
+                    >
+                      <span class="material-symbols-outlined">thumb_up</span>
+                      <span class="upvote-count">{post.upvotes_count}</span>
+                    </button>
+
+                    <a href={`/community/${post.id}`} class="comments-link">
+                      <span class="material-symbols-outlined">mode_comment</span>
+                      <span>{post.comments_count} balasan</span>
+                    </a>
+                  </div>
+
+                  <a href={`/community/${post.id}`} class="read-more-link">Lihat Diskusi →</a>
+                </footer>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <!-- Right Column: Weekly Leaderboard & Guidelines -->
+      <aside class="meta-sidebar" aria-label="Papan Peringkat & Pedoman">
+        <!-- Weekly XP Leaderboard -->
+        <div class="sidebar-box">
+          <div class="box-header">
+            <span class="material-symbols-outlined box-icon">military_tech</span>
+            <h2 class="sidebar-title">Top Pembelajar</h2>
+          </div>
+          <p class="leaderboard-subtitle">Siswa paling aktif mengumpulkan poin XP</p>
+
+          <ol class="leaderboard-list">
+            {topLearners.map((learner, idx) => (
+              <li class="leaderboard-item">
+                <span class:list={['rank-number', `rank-${idx + 1}`]}>{idx + 1}</span>
+                <div class="learner-info">
+                  <strong class="learner-name">{learner.full_name}</strong>
+                  <span class="learner-streak">{learner.streak} hari streak</span>
+                </div>
+                <strong class="learner-xp">{learner.xp} XP</strong>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <!-- Community Guidelines -->
+        <div class="sidebar-box guidelines-box">
+          <div class="box-header">
+            <span class="material-symbols-outlined box-icon">handshake</span>
+            <h2 class="sidebar-title">Pedoman Diskusi</h2>
+          </div>
+          <ul class="guidelines-list">
+            <li>Sertakan konfigurasi atau diagram jika menanyakan kendala lab.</li>
+            <li>Gunakan blok kode (Markdown) agar teks CLI mudah dibaca.</li>
+            <li>Jaga kesantunan dan saling bantu antar sesama pembelajar.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Interactive upvote handler
+    document.querySelectorAll('.upvote-btn').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const button = btn as HTMLButtonElement;
+        const postId = button.dataset.postId;
+        if (!postId) return;
+
+        button.disabled = true;
+        try {
+          const res = await fetch('/api/community/upvote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_id: postId }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            button.classList.toggle('active', data.hasUpvoted);
+            const countSpan = button.querySelector('.upvote-count');
+            if (countSpan) countSpan.textContent = String(data.count);
+          }
+        } catch (err) {
+          console.error('Gagal upvote:', err);
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
+</BaseLayout>
+
+<style>
+  .community-layout {
+    padding-block: 2.25rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+  .community-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1.75rem 2rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-section) 100%);
+  }
+  .header-kicker {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-phinisi-700);
+    margin-bottom: 0.25rem;
+  }
+  .header-title {
+    font-family: var(--font-heading);
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .header-sub {
+    margin: 0.35rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+  }
+  .user-greeting {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #ffffff;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    font-size: 0.82rem;
+  }
+  .greeting-text strong {
+    color: var(--color-navy);
+  }
+  .greeting-xp {
+    background: var(--color-gold-soft);
+    color: #92400e;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+  }
+
+  /* 3-Column Grid */
+  .community-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 1100px) {
+    .community-grid {
+      grid-template-columns: 240px 1fr;
+    }
+    .meta-sidebar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .community-grid {
+      grid-template-columns: 1fr;
+    }
+    .channels-sidebar {
+      display: none;
+    }
+  }
+
+  /* Sidebar boxes */
+  .sidebar-box {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .sidebar-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .box-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .box-icon {
+    font-size: 1.2rem;
+    color: var(--color-phinisi-600);
+  }
+
+  /* Channels */
+  .channel-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .channel-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.85rem;
+    text-decoration: none;
+    transition: all 150ms ease;
+  }
+  .channel-link:hover {
+    background: var(--color-phinisi-50);
+  }
+  .channel-link.active {
+    background: var(--color-phinisi-100);
+  }
+  .channel-icon {
+    font-size: 1.25rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .channel-link.active .channel-icon {
+    color: var(--color-phinisi-700);
+  }
+  .channel-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .channel-name {
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .channel-desc {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    line-height: 1.3;
+  }
+
+  /* Feed Main */
+  .feed-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* Composer */
+  .composer-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 16px rgba(8, 26, 58, 0.03);
+  }
+  .composer-heading {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0 0 0.85rem 0;
+  }
+  .composer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .form-row {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .input-title {
+    flex: 1;
+    min-height: 42px;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    outline: none;
+  }
+  .input-title:focus {
+    border-color: var(--color-phinisi-500);
+  }
+  .select-channel {
+    min-height: 42px;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    background: #ffffff;
+    outline: none;
+  }
+  .textarea-content {
+    width: 100%;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    outline: none;
+    resize: vertical;
+  }
+  .textarea-content:focus {
+    border-color: var(--color-phinisi-500);
+  }
+  .composer-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .markdown-hint {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+  .submit-btn {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.55rem 1.15rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  .submit-btn:hover {
+    background: var(--color-phinisi-700);
+  }
+
+  /* Filter bar */
+  .feed-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
+  }
+  .active-filter-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .label-text {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .post-count {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
+  .sort-tabs {
+    display: flex;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.2rem;
+  }
+  .sort-tab {
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.6rem;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .sort-tab.active {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+
+  /* Post Card */
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .post-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: box-shadow 150ms ease;
+  }
+  .post-card:hover {
+    box-shadow: 0 6px 20px rgba(8, 26, 58, 0.05);
+  }
+  .post-card.pinned {
+    border-color: var(--color-gold);
+    background: #fffdf9;
+  }
+  .pinned-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #b45309;
+    font-size: 0.74rem;
+    font-weight: 800;
+  }
+  .icon-pin {
+    font-size: 0.95rem;
+  }
+  .post-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .author-block {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .author-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .author-name-line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .author-name {
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .badge-role-admin {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+  }
+  .post-time {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+  .post-channel-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-phinisi-700);
+    background: var(--color-phinisi-50);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+  }
+  .post-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .post-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .post-title a:hover {
+    color: var(--color-phinisi-600);
+  }
+  .post-content-preview p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .post-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .upvote-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.6rem;
+    background: #ffffff;
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .upvote-btn:hover {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+  .upvote-btn.active {
+    background: var(--color-phinisi-100);
+    border-color: var(--color-phinisi-400);
+    color: var(--color-phinisi-700);
+  }
+  .upvote-btn .material-symbols-outlined {
+    font-size: 1.05rem;
+  }
+  .comments-link {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.6rem;
+    transition: background 120ms ease;
+  }
+  .comments-link:hover {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+  .comments-link .material-symbols-outlined {
+    font-size: 1.05rem;
+  }
+  .read-more-link {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-phinisi-600);
+    text-decoration: none;
+  }
+  .read-more-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Empty feed */
+  .empty-feed {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+  }
+  .empty-icon {
+    font-size: 2.5rem;
+    color: var(--color-muted);
+  }
+  .empty-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0.5rem 0 0.25rem 0;
+  }
+  .empty-desc {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+  }
+
+  /* Leaderboard */
+  .leaderboard-subtitle {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.75rem;
+  }
+  .leaderboard-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.75rem;
+    background: var(--color-section);
+  }
+  .rank-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #ffffff;
+    color: var(--color-navy);
+    flex-shrink: 0;
+  }
+  .rank-1 {
+    background: var(--color-gold);
+    color: #ffffff;
+  }
+  .rank-2 {
+    background: #cbd5e1;
+    color: #1e293b;
+  }
+  .rank-3 {
+    background: #d97706;
+    color: #ffffff;
+  }
+  .learner-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .learner-name {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .learner-streak {
+    font-size: 0.68rem;
+    color: var(--color-muted);
+  }
+  .learner-xp {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    flex-shrink: 0;
+  }
+
+  /* Guidelines */
+  .guidelines-box {
+    background: #fafcff;
+  }
+  .guidelines-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    color: var(--color-muted);
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+</style>

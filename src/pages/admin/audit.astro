@@ -1,0 +1,194 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getAuditLogs } from '../../lib/admin';
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const logs = await getAuditLogs(supabase, 50);
+---
+
+<AdminLayout title="Log Audit" activeSection="audit">
+  <div class="audit-container">
+    <div class="audit-header-card">
+      <div>
+        <h2 class="audit-title">Rekam Jejak Aktivitas (Audit Trail)</h2>
+        <p class="audit-desc">Log kronologis tindakan administratif untuk akuntabilitas dan keamanan platform.</p>
+      </div>
+      <span class="log-count-tag">{logs.length} catatan aktivitas</span>
+    </div>
+
+    <section class="audit-table-card">
+      <div class="table-responsive">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Aksi</th>
+              <th>Administrator</th>
+              <th>Tipe Target</th>
+              <th>ID Target</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.length === 0 ? (
+              <tr>
+                <td colspan="6" class="empty-cell">Belum ada aktivitas audit yang tercatat.</td>
+              </tr>
+            ) : (
+              logs.map((log) => (
+                <tr>
+                  <td>
+                    <span class="time-text">
+                      {new Date(log.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="action-tag">{log.action}</span>
+                  </td>
+                  <td>
+                    <strong class="admin-actor">{log.admin?.full_name || log.admin_id}</strong>
+                  </td>
+                  <td>
+                    <span class="type-badge">{log.target_type}</span>
+                  </td>
+                  <td>
+                    <code class="target-id">{log.target_id}</code>
+                  </td>
+                  <td>
+                    <pre class="details-json">{JSON.stringify(log.details, null, 2)}</pre>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</AdminLayout>
+
+<style>
+  .audit-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .audit-header-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .audit-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .audit-desc {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.84rem;
+  }
+  .log-count-tag {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    background: var(--color-section);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  .audit-table-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+  }
+  .table-responsive {
+    overflow-x: auto;
+  }
+  .audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .audit-table th {
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .audit-table td {
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .time-text {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+  .action-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--color-section);
+    color: var(--color-phinisi-800);
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.35rem;
+  }
+  .admin-actor {
+    color: var(--color-navy);
+    font-size: 0.82rem;
+  }
+  .type-badge {
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+  .target-id {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink);
+  }
+  .details-json {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .empty-cell {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--color-muted);
+  }
+</style>

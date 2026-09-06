@@ -1,0 +1,302 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { loadCourses } from '../../data/learning';
+
+const courses = await loadCourses();
+const totalLessons = courses.reduce((acc, c) => acc + (c.lessonCount || 0), 0);
+const publishedCount = courses.filter((c) => c.status === 'published').length;
+---
+
+<AdminLayout title="Status & Kursus" activeSection="courses">
+  <div class="courses-mgmt-container">
+    <!-- Top Stats -->
+    <section class="kpi-mini-row">
+      <div class="kpi-mini-card">
+        <span class="label">Total Kursus</span>
+        <strong class="val">{courses.length} Kursus</strong>
+      </div>
+      <div class="kpi-mini-card">
+        <span class="label">Kursus Publikasi</span>
+        <strong class="val val-success">{publishedCount} Aktif</strong>
+      </div>
+      <div class="kpi-mini-card">
+        <span class="label">Total Modul Materi</span>
+        <strong class="val">{totalLessons} Pelajaran</strong>
+      </div>
+    </section>
+
+    <!-- Header with Keystatic Bridge CTA -->
+    <div class="mgmt-header-card">
+      <div class="header-copy">
+        <h2 class="section-title">Kurikulum & Materi Teknis</h2>
+        <p class="section-desc">
+          Seluruh konten kursus dan materi MDX dikelola melalui Keystatic CMS. Klik tombol di kanan untuk menambah modul baru, mengubah urutan pelajaran, atau mengunggah diagram topologi.
+        </p>
+      </div>
+      <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-btn">
+        <span class="material-symbols-outlined">edit_square</span>
+        <span>Buka Editor Keystatic CMS</span>
+      </a>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="courses-grid">
+      {courses.map((course) => (
+        <div class="course-item-card">
+          <div class="course-card-top">
+            <span class="category-badge">{course.category.toUpperCase()}</span>
+            <span class:list={['pub-pill', course.status === 'published' ? 'pub-published' : 'pub-draft']}>
+              {course.status}
+            </span>
+          </div>
+
+          <h3 class="course-item-title">{course.title}</h3>
+          <p class="course-item-summary">{course.description.id}</p>
+
+          <div class="course-stats-bar">
+            <div class="stat-pill">
+              <span class="material-symbols-outlined icon-mini">menu_book</span>
+              <span>{course.lessonCount} materi</span>
+            </div>
+            <div class="stat-pill">
+              <span class="material-symbols-outlined icon-mini">signal_cellular_alt</span>
+              <span class="text-capitalize">{course.level}</span>
+            </div>
+          </div>
+
+          <div class="course-card-actions">
+            <a href={`/courses/${course.slug}`} class="action-btn-outline" target="_blank">
+              <span class="material-symbols-outlined icon-mini">visibility</span>
+              <span>Lihat di Web</span>
+            </a>
+            <a
+              href={`/keystatic/branch/main/collection/courses/item/${course.slug}`}
+              class="action-btn-primary"
+              target="_blank"
+            >
+              <span class="material-symbols-outlined icon-mini">edit</span>
+              <span>Edit Materi CMS</span>
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .courses-mgmt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Mini Stats */
+  .kpi-mini-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .kpi-mini-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .kpi-mini-card .label {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .kpi-mini-card .val {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--color-navy);
+  }
+  .val-success {
+    color: #047857 !important;
+  }
+
+  /* Header card */
+  .mgmt-header-card {
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-section) 100%);
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .header-copy {
+    max-width: 620px;
+  }
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .section-desc {
+    margin: 0.35rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+  .cms-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 150ms ease;
+  }
+  .cms-btn:hover {
+    background: var(--color-phinisi-700);
+  }
+  .cms-btn .material-symbols-outlined {
+    font-size: 1.15rem;
+  }
+
+  /* Grid */
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+  .course-item-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.03);
+  }
+  .course-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .category-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    background: var(--color-phinisi-50);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+  }
+  .pub-pill {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .pub-published {
+    background: #d1fae5;
+    color: #047857;
+  }
+  .pub-draft {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .course-item-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .course-item-summary {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .course-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.5rem;
+    border-top: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .icon-mini {
+    font-size: 1rem;
+  }
+  .text-capitalize {
+    text-transform: capitalize;
+  }
+  .course-card-actions {
+    display: flex;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+  }
+  .action-btn-outline {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    padding: 0.45rem;
+    color: var(--color-ink);
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .action-btn-outline:hover {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+  .action-btn-primary {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background: var(--color-phinisi-50);
+    border: 1px solid var(--color-phinisi-200);
+    border-radius: 0.65rem;
+    padding: 0.45rem;
+    color: var(--color-phinisi-700);
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .action-btn-primary:hover {
+    background: var(--color-phinisi-100);
+  }
+</style>

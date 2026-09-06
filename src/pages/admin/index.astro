@@ -1,0 +1,441 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getAdminKPIs, getAuditLogs } from '../../lib/admin';
+import { loadCourses } from '../../data/learning';
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const kpis = await getAdminKPIs(supabase);
+const recentLogs = await getAuditLogs(supabase, 5);
+const courses = await loadCourses();
+---
+
+<AdminLayout title="Ringkasan Platform" activeSection="overview">
+  <div class="overview-container">
+    <!-- Top KPI Grid -->
+    <section class="kpi-grid" aria-label="Metrik Utama Platform">
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-users">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-label">Total Pengguna Terdaftar</span>
+          <strong class="kpi-value">{kpis.totalUsers}</strong>
+          <span class="kpi-subtext">Akun siswa & staf</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-active">
+          <span class="material-symbols-outlined">trending_up</span>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-label">Siswa Aktif (7 Hari)</span>
+          <strong class="kpi-value">{kpis.activeUsers}</strong>
+          <span class="kpi-subtext">Aktivitas belajar mingguan</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-lessons">
+          <span class="material-symbols-outlined">task_alt</span>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-label">Materi Diselesaikan</span>
+          <strong class="kpi-value">{kpis.completedLessons}</strong>
+          <span class="kpi-subtext">Penyelesaian modul lab</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-xp">
+          <span class="material-symbols-outlined">bolt</span>
+        </div>
+        <div class="kpi-meta">
+          <span class="kpi-label">Total XP Beredar</span>
+          <strong class="kpi-value">{kpis.totalXpDistributed.toLocaleString('id-ID')}</strong>
+          <span class="kpi-subtext">Poin reward belajar</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content & Quick Links Grid -->
+    <div class="dashboard-columns">
+      <!-- Left Column: Courses Overview -->
+      <section class="admin-panel courses-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Status Kurikulum & Kursus</h2>
+            <p class="panel-subtitle">Ringkasan modul materi yang terpublikasi di website</p>
+          </div>
+          <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-bridge-btn">
+            <span class="material-symbols-outlined">edit_document</span>
+            <span>Edit di Keystatic CMS</span>
+          </a>
+        </div>
+
+        <div class="courses-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Judul Kursus</th>
+                <th>Kategori</th>
+                <th>Tingkat</th>
+                <th>Jumlah Pelajaran</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.map((course) => (
+                <tr>
+                  <td>
+                    <strong class="course-name">{course.title}</strong>
+                    <span class="course-slug">/{course.slug}</span>
+                  </td>
+                  <td><span class="badge-tag">{course.category}</span></td>
+                  <td class="text-capitalize">{course.level}</td>
+                  <td><strong>{course.lessonCount}</strong> materi</td>
+                  <td>
+                    <span class:list={['status-pill', course.status === 'published' ? 'pill-success' : 'pill-draft']}>
+                      {course.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right Column: Audit Logs & Quick Shortcuts -->
+      <aside class="side-panels">
+        <!-- Quick Action Shortcuts -->
+        <div class="admin-panel shortcuts-box">
+          <h2 class="panel-title">Tindakan Cepat</h2>
+          <div class="shortcuts-list">
+            <a href="/admin/users" class="shortcut-item">
+              <span class="material-symbols-outlined">manage_accounts</span>
+              <span>Kelola Akun Siswa & Role</span>
+            </a>
+            <a href="/admin/moderation" class="shortcut-item">
+              <span class="material-symbols-outlined">gavel</span>
+              <span>Tinjau Postingan Komunitas</span>
+            </a>
+            <a href="/admin/courses" class="shortcut-item">
+              <span class="material-symbols-outlined">school</span>
+              <span>Pantau Pendaftaran Materi</span>
+            </a>
+            <a href="/community" class="shortcut-item">
+              <span class="material-symbols-outlined">forum</span>
+              <span>Buka Feed Komunitas Siswa</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent Audit Log -->
+        <div class="admin-panel logs-box">
+          <div class="panel-header-mini">
+            <h2 class="panel-title">Aktivitas Administratif</h2>
+            <a href="/admin/audit" class="view-all-link">Lihat Semua</a>
+          </div>
+          <ul class="audit-list">
+            {recentLogs.map((log) => (
+              <li class="audit-item">
+                <div class="audit-dot"></div>
+                <div class="audit-content">
+                  <strong class="audit-action">{log.action.replace('_', ' ')}</strong>
+                  <span class="audit-target">Target: {log.target_id}</span>
+                  <span class="audit-time">
+                    {new Date(log.created_at).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .overview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.35rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.03);
+  }
+  .kpi-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 1rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .icon-users { background: var(--color-phinisi-100); color: var(--color-phinisi-700); }
+  .icon-active { background: #d1fae5; color: #047857; }
+  .icon-lessons { background: #e0e7ff; color: #4338ca; }
+  .icon-xp { background: var(--color-gold-soft); color: #b45309; }
+  .kpi-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  .kpi-label {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .kpi-value {
+    font-family: var(--font-heading);
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: var(--color-navy);
+  }
+  .kpi-subtext {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+
+  /* 2-column layout */
+  .dashboard-columns {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1050px) {
+    .dashboard-columns {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Panels */
+  .admin-panel {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .panel-header-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .panel-subtitle {
+    margin: 0.2rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
+  .cms-bridge-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+    border: 1px solid var(--color-phinisi-200);
+    border-radius: 0.65rem;
+    padding: 0.45rem 0.85rem;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .cms-bridge-btn:hover {
+    background: var(--color-phinisi-100);
+  }
+  .cms-bridge-btn .material-symbols-outlined {
+    font-size: 1rem;
+  }
+
+  /* Table */
+  .courses-table-wrap {
+    overflow-x: auto;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .admin-table th {
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .admin-table td {
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .course-name {
+    display: block;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+  }
+  .course-slug {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+  }
+  .badge-tag {
+    background: var(--color-section);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-phinisi-700);
+    text-transform: uppercase;
+  }
+  .text-capitalize {
+    text-transform: capitalize;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .pill-success {
+    background: #d1fae5;
+    color: #047857;
+  }
+  .pill-draft {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  /* Side panels */
+  .side-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
+    background: var(--color-section);
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .shortcut-item:hover {
+    background: var(--color-phinisi-100);
+    color: var(--color-phinisi-700);
+  }
+  .shortcut-item .material-symbols-outlined {
+    font-size: 1.2rem;
+    color: var(--color-phinisi-600);
+  }
+
+  /* Audit logs */
+  .view-all-link {
+    font-size: 0.74rem;
+    color: var(--color-phinisi-600);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .view-all-link:hover {
+    text-decoration: underline;
+  }
+  .audit-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .audit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .audit-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-phinisi-500);
+    margin-top: 0.35rem;
+    flex-shrink: 0;
+  }
+  .audit-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .audit-action {
+    font-size: 0.78rem;
+    color: var(--color-navy);
+  }
+  .audit-target {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+  .audit-time {
+    font-size: 0.65rem;
+    color: var(--color-muted);
+  }
+</style>

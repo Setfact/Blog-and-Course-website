@@ -1,0 +1,330 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getPosts } from '../../lib/community';
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const posts = await getPosts(supabase, { sort: 'newest' });
+---
+
+<AdminLayout title="Moderasi Komunitas" activeSection="moderation">
+  <div class="moderation-container">
+    <div class="mod-header-card">
+      <div>
+        <h2 class="mod-title">Kontrol & Moderasi Diskusi</h2>
+        <p class="mod-desc">Pantau isi diskusi siswa, sematkan (Pin) pengumuman penting, dan hapus konten yang melanggar ketentuan.</p>
+      </div>
+      <a href="/community" target="_blank" class="live-feed-btn">
+        <span class="material-symbols-outlined">visibility</span>
+        <span>Lihat Feed Publik ↗</span>
+      </a>
+    </div>
+
+    <section class="mod-table-card">
+      <div class="table-responsive">
+        <table class="mod-table">
+          <thead>
+            <tr>
+              <th>Status Pin</th>
+              <th>Judul Topik</th>
+              <th>Penulis</th>
+              <th>Saluran</th>
+              <th>Statistik</th>
+              <th>Waktu</th>
+              <th>Tindakan Moderasi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {posts.length === 0 ? (
+              <tr>
+                <td colspan="7" class="empty-cell">Tidak ada postingan komunitas.</td>
+              </tr>
+            ) : (
+              posts.map((post) => (
+                <tr data-post-id={post.id}>
+                  <td>
+                    {post.is_pinned ? (
+                      <span class="badge-pinned">Pinned</span>
+                    ) : (
+                      <span class="badge-unpinned">Normal</span>
+                    )}
+                  </td>
+                  <td>
+                    <strong class="post-table-title">{post.title}</strong>
+                    <a href={`/community/${post.id}`} target="_blank" class="view-post-link">Buka Diskusi ↗</a>
+                  </td>
+                  <td>
+                    <span class="author-name">{post.author?.full_name || 'Siswa'}</span>
+                  </td>
+                  <td>
+                    <span class="channel-pill">{post.channel?.name || post.channel_id}</span>
+                  </td>
+                  <td>
+                    <span class="stats-text">{post.upvotes_count} upvotes, {post.comments_count} balasan</span>
+                  </td>
+                  <td>
+                    <span class="date-text">
+                      {new Date(post.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions-row">
+                      <button
+                        type="button"
+                        class="btn-action btn-pin"
+                        data-post-id={post.id}
+                        data-pinned={post.is_pinned ? 'true' : 'false'}
+                      >
+                        {post.is_pinned ? 'Lepas Pin' : 'Sematkan'}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-action btn-delete"
+                        data-post-id={post.id}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Pin handler
+    document.querySelectorAll('.btn-pin').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const button = btn as HTMLButtonElement;
+        const postId = button.dataset.postId;
+        if (!postId) return;
+
+        button.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/posts/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'pin' }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Gagal mengubah status pin');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan');
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+
+    // Delete handler
+    document.querySelectorAll('.btn-delete').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const button = btn as HTMLButtonElement;
+        const postId = button.dataset.postId;
+        if (!postId) return;
+
+        if (!confirm('Apakah Anda yakin ingin menghapus postingan ini secara permanen?')) return;
+
+        button.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/posts/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete' }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Gagal menghapus postingan');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan');
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
+</AdminLayout>
+
+<style>
+  .moderation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .mod-header-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .mod-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .mod-desc {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.84rem;
+  }
+  .live-feed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+    border: 1px solid var(--color-phinisi-200);
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.95rem;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .live-feed-btn:hover {
+    background: var(--color-phinisi-100);
+  }
+  .live-feed-btn .material-symbols-outlined {
+    font-size: 1.05rem;
+  }
+
+  .mod-table-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+  }
+  .table-responsive {
+    overflow-x: auto;
+  }
+  .mod-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .mod-table th {
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .mod-table td {
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .badge-pinned {
+    background: var(--color-gold-soft);
+    color: #92400e;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .badge-unpinned {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .post-table-title {
+    display: block;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+  }
+  .view-post-link {
+    font-size: 0.72rem;
+    color: var(--color-phinisi-600);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .view-post-link:hover {
+    text-decoration: underline;
+  }
+  .channel-pill {
+    background: var(--color-section);
+    color: var(--color-phinisi-700);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .stats-text {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+  }
+  .date-text {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+  }
+  .actions-row {
+    display: flex;
+    gap: 0.45rem;
+  }
+  .btn-action {
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-pin {
+    background: var(--color-section);
+    color: var(--color-navy);
+  }
+  .btn-pin:hover {
+    background: var(--color-phinisi-100);
+  }
+  .btn-delete {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  .btn-delete:hover {
+    background: #fecaca;
+  }
+  .empty-cell {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-muted);
+  }
+</style>

@@ -9,6 +9,7 @@ export const ui = {
   id: {
     'nav.courses': 'Kursus',
     'nav.learningPath': 'Alur Belajar',
+    'nav.community': 'Komunitas',
     'nav.blog': 'Blog',
     'nav.about': 'Tentang',
     'nav.signIn': 'Masuk',
@@ -33,6 +34,7 @@ export const ui = {
   en: {
     'nav.courses': 'Courses',
     'nav.learningPath': 'Learning Path',
+    'nav.community': 'Community',
     'nav.blog': 'Blog',
     'nav.about': 'About',
     'nav.signIn': 'Sign In',

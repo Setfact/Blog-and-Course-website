@@ -1,0 +1,447 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getUsersList } from '../../lib/admin';
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const search = Astro.url.searchParams.get('search') || '';
+const role = Astro.url.searchParams.get('role') || 'all';
+const status = Astro.url.searchParams.get('status') || 'all';
+
+const users = await getUsersList(supabase, { search, role, status });
+---
+
+<AdminLayout title="Manajemen Pengguna" activeSection="users">
+  <div class="users-container">
+    <!-- Filter and Search Header -->
+    <section class="filter-card">
+      <form method="GET" class="filter-form">
+        <div class="search-field">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input
+            type="search"
+            name="search"
+            value={search}
+            placeholder="Cari berdasarkan nama atau email..."
+            class="search-input"
+          />
+        </div>
+
+        <div class="select-group">
+          <select name="role" class="filter-select" aria-label="Filter Peran">
+            <option value="all" selected={role === 'all'}>Semua Role</option>
+            <option value="student" selected={role === 'student'}>Siswa</option>
+            <option value="moderator" selected={role === 'moderator'}>Moderator</option>
+            <option value="admin" selected={role === 'admin'}>Administrator</option>
+          </select>
+
+          <select name="status" class="filter-select" aria-label="Filter Status">
+            <option value="all" selected={status === 'all'}>Semua Status</option>
+            <option value="active" selected={status === 'active'}>Aktif</option>
+            <option value="suspended" selected={status === 'suspended'}>Ditangguhkan (Suspended)</option>
+          </select>
+
+          <button type="submit" class="apply-filter-btn">Terapkan Filter</button>
+          {(search || role !== 'all' || status !== 'all') && (
+            <a href="/admin/users" class="reset-filter-btn">Reset</a>
+          )}
+        </div>
+      </form>
+    </section>
+
+    <!-- Users Table Card -->
+    <section class="table-card">
+      <div class="table-meta">
+        <strong class="table-title">Daftar Pengguna Terdaftar</strong>
+        <span class="count-badge">{users.length} pengguna ditemukan</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Pengguna</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Poin XP</th>
+              <th>Streak</th>
+              <th>Bergabung</th>
+              <th>Tindakan Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr>
+                <td colspan="7" class="empty-cell">Tidak ada pengguna yang cocok dengan kriteria pencarian.</td>
+              </tr>
+            ) : (
+              users.map((u) => (
+                <tr data-user-id={u.id}>
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar">
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt={u.full_name} width="36" height="36" />
+                        ) : (
+                          <span>{(u.full_name || 'U').slice(0, 1).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div class="user-names">
+                        <strong class="full-name">{u.full_name}</strong>
+                        <span class="email-sub">{u.email}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class:list={['role-pill', `role-${u.role}`]}>{u.role}</span>
+                  </td>
+                  <td>
+                    <span class:list={['status-pill', u.status === 'active' ? 'status-active' : 'status-suspended']}>
+                      {u.status}
+                    </span>
+                  </td>
+                  <td><strong>{u.xp}</strong> XP</td>
+                  <td>{u.streak} hari</td>
+                  <td>
+                    <span class="date-text">
+                      {new Date(u.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions-cell">
+                      <select class="role-selector" data-uid={u.id} aria-label="Ubah Role">
+                        <option value="student" selected={u.role === 'student'}>Siswa</option>
+                        <option value="moderator" selected={u.role === 'moderator'}>Moderator</option>
+                        <option value="admin" selected={u.role === 'admin'}>Admin</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        class:list={['toggle-status-btn', u.status === 'active' ? 'btn-suspend' : 'btn-activate']}
+                        data-uid={u.id}
+                        data-next-status={u.status === 'active' ? 'suspended' : 'active'}
+                      >
+                        {u.status === 'active' ? 'Suspend' : 'Aktifkan'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Role change listener
+    document.querySelectorAll('.role-selector').forEach((sel) => {
+      sel.addEventListener('change', async (e) => {
+        const select = e.target as HTMLSelectElement;
+        const uid = select.dataset.uid;
+        const newRole = select.value;
+        if (!uid) return;
+
+        select.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/users/${uid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Gagal mengubah role pengguna');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan');
+        } finally {
+          select.disabled = false;
+        }
+      });
+    });
+
+    // Toggle status listener
+    document.querySelectorAll('.toggle-status-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const button = btn as HTMLButtonElement;
+        const uid = button.dataset.uid;
+        const nextStatus = button.dataset.nextStatus;
+        if (!uid || !nextStatus) return;
+
+        if (!confirm(`Konfirmasi ubah status akun menjadi ${nextStatus}?`)) return;
+
+        button.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/users/${uid}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: nextStatus }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Gagal mengubah status akun');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan');
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
+</AdminLayout>
+
+<style>
+  .users-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Filter Card */
+  .filter-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .search-field {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+  }
+  .search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    font-size: 1.2rem;
+  }
+  .search-input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-size: 0.84rem;
+    outline: none;
+  }
+  .search-input:focus {
+    border-color: var(--color-phinisi-500);
+  }
+  .select-group {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .filter-select {
+    min-height: 42px;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-size: 0.82rem;
+    background: #ffffff;
+    outline: none;
+  }
+  .apply-filter-btn {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.55rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  .apply-filter-btn:hover {
+    background: var(--color-phinisi-700);
+  }
+  .reset-filter-btn {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem;
+  }
+  .reset-filter-btn:hover {
+    color: var(--color-danger);
+  }
+
+  /* Table Card */
+  .table-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .table-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .count-badge {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+  }
+  .table-responsive {
+    overflow-x: auto;
+  }
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .users-table th {
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .users-table td {
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .user-names {
+    display: flex;
+    flex-direction: column;
+  }
+  .full-name {
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+  }
+  .email-sub {
+    color: var(--color-muted);
+    font-size: 0.72rem;
+  }
+  .role-pill {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .role-admin { background: #fee2e2; color: #991b1b; }
+  .role-moderator { background: #e0e7ff; color: #3730a3; }
+  .role-student { background: var(--color-phinisi-50); color: var(--color-phinisi-700); }
+  .status-pill {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .status-active { background: #d1fae5; color: #047857; }
+  .status-suspended { background: #ffe4e6; color: #9f1239; }
+  .date-text {
+    color: var(--color-muted);
+    font-size: 0.76rem;
+  }
+  .actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .role-selector {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    font-size: 0.76rem;
+    background: #ffffff;
+    outline: none;
+  }
+  .toggle-status-btn {
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-suspend {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  .btn-suspend:hover {
+    background: #fecaca;
+  }
+  .btn-activate {
+    background: #d1fae5;
+    color: #047857;
+  }
+  .btn-activate:hover {
+    background: #a7f3d0;
+  }
+  .empty-cell {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--color-muted);
+  }
+</style>

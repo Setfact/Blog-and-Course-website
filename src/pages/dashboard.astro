@@ -1,0 +1,426 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import { loadCourses } from '../data/learning';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/dashboard');
+}
+
+const courses = await loadCourses();
+const featuredCourses = courses.slice(0, 3);
+---
+
+<BaseLayout title="Dashboard Siswa" description="Pantau progres belajar jaringan, koleksi XP, dan lencana pencapaian Anda.">
+  <div class="dashboard-container page-shell">
+    <!-- User Profile Header -->
+    <header class="profile-hero">
+      <div class="profile-info">
+        <div class="avatar-wrap">
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt={user.full_name} class="avatar-img" width="84" height="84" />
+          ) : (
+            <div class="avatar-fallback">{user.full_name.slice(0, 2).toUpperCase()}</div>
+          )}
+        </div>
+        <div class="user-meta">
+          <div class="user-name-row">
+            <h1 class="user-name">{user.full_name}</h1>
+            {user.role === 'admin' ? (
+              <span class="role-badge role-admin">Administrator</span>
+            ) : (
+              <span class="role-badge role-student">Siswa</span>
+            )}
+          </div>
+          <p class="user-email">{user.email}</p>
+          {user.bio && <p class="user-bio">{user.bio}</p>}
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        {user.role === 'admin' && (
+          <Button href="/admin" variant="primary" size="sm" class="admin-cta-btn">
+            <span class="material-symbols-outlined icon-inline">admin_panel_settings</span>
+            <span>Buka Panel Admin</span>
+          </Button>
+        )}
+        <Button href="/community" variant="secondary" size="sm">
+          <span class="material-symbols-outlined icon-inline">forum</span>
+          <span>Komunitas Siswa</span>
+        </Button>
+        <a href="/api/auth/signout" class="signout-link">Keluar</a>
+      </div>
+    </header>
+
+    <!-- Stats Row -->
+    <section class="stats-grid" aria-label="Statistik Belajar">
+      <div class="stat-card">
+        <div class="stat-icon stat-xp">
+          <span class="material-symbols-outlined">bolt</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Pengalaman</span>
+          <strong class="stat-value">{user.xp} XP</strong>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-streak">
+          <span class="material-symbols-outlined">local_fire_department</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Hari Streak</span>
+          <strong class="stat-value">{user.streak} Hari</strong>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-role">
+          <span class="material-symbols-outlined">verified_user</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Status Akun</span>
+          <strong class="stat-value text-capitalize">{user.status}</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin Banner If Admin -->
+    {user.role === 'admin' && (
+      <section class="admin-banner">
+        <div class="banner-icon">
+          <span class="material-symbols-outlined">shield</span>
+        </div>
+        <div class="banner-body">
+          <strong>Hak Akses Superadmin Aktif</strong>
+          <p>Anda memiliki wewenang penuh untuk memantau data pengguna, kurikulum kursus, dan memoderasi komunitas.</p>
+        </div>
+        <Button href="/admin" size="sm">Kelola Platform</Button>
+      </section>
+    )}
+
+    <!-- Courses Continue Section -->
+    <section class="learning-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Lanjutkan Pembelajaran</h2>
+          <p class="section-desc">Pilih modul materi dan selesaikan tantangan untuk menambah poin XP Anda.</p>
+        </div>
+        <Button href="/courses" variant="secondary" size="sm">Lihat Semua Kursus</Button>
+      </div>
+
+      <div class="courses-preview-grid">
+        {featuredCourses.map((c) => (
+          <div class="course-mini-card">
+            <div class="course-mini-header">
+              <span class="course-category-tag">{c.category.toUpperCase()}</span>
+              <span class="course-level-tag">{c.level}</span>
+            </div>
+            <h3 class="course-mini-title">{c.title}</h3>
+            <p class="course-mini-desc">{c.description.id}</p>
+            <div class="course-mini-footer">
+              <span class="lesson-count-badge">
+                <span class="material-symbols-outlined icon-xs">menu_book</span>
+                <span>{c.lessonCount} materi</span>
+              </span>
+              <Button href={`/courses/${c.slug}`} size="sm">Buka Kursus</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .dashboard-container {
+    padding-block: 2.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .profile-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.5rem;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
+  }
+  .profile-info {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .avatar-wrap {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    border: 3px solid var(--color-phinisi-200);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .avatar-fallback {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+  }
+  .user-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .user-name {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .role-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .role-admin {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .role-student {
+    background: var(--color-phinisi-100);
+    color: var(--color-phinisi-800);
+  }
+  .user-email {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+  }
+  .user-bio {
+    margin: 0.4rem 0 0 0;
+    color: var(--color-ink);
+    font-size: 0.85rem;
+  }
+  .profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .icon-inline {
+    font-size: 1.1rem;
+    margin-right: 0.35rem;
+  }
+  .signout-link {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--color-danger);
+    text-decoration: none;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.65rem;
+    transition: background 150ms ease;
+  }
+  .signout-link:hover {
+    background: var(--color-danger-soft);
+  }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: #ffffff;
+  }
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 1rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .stat-xp {
+    background: var(--color-gold-soft);
+    color: #b45309;
+  }
+  .stat-streak {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+  .stat-role {
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-700);
+  }
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .stat-value {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .text-capitalize {
+    text-transform: capitalize;
+  }
+
+  /* Admin Banner */
+  .admin-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 1.25rem;
+    background: #fff8eb;
+    border: 1px solid #fde68a;
+  }
+  .banner-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.85rem;
+    background: #fef3c7;
+    color: #92400e;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .banner-body {
+    flex: 1;
+  }
+  .banner-body strong {
+    display: block;
+    color: #92400e;
+    font-size: 0.95rem;
+  }
+  .banner-body p {
+    margin: 0.2rem 0 0 0;
+    color: #78350f;
+    font-size: 0.82rem;
+  }
+
+  /* Learning preview */
+  .learning-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .section-desc {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+  }
+  .courses-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+  .course-mini-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.35rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: #ffffff;
+    gap: 0.75rem;
+  }
+  .course-mini-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .course-category-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    background: var(--color-phinisi-50);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+  }
+  .course-level-tag {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+    text-transform: capitalize;
+  }
+  .course-mini-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .course-mini-desc {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .course-mini-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .lesson-count-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+  }
+  .icon-xs {
+    font-size: 0.95rem;
+  }
+</style>
