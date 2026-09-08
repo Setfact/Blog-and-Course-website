@@ -71,7 +71,12 @@ export const getOrCreateUserProfile = async (
       .maybeSingle();
 
     const email = authUser.email || '';
-    const isSuperAdmin = email.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
+    const adminEmails = [
+      SUPERADMIN_EMAIL.toLowerCase(),
+      'calvinadministrator@phinisilearn.web.id',
+      'calvinum26@gmail.com',
+    ];
+    const isSuperAdmin = adminEmails.includes(email.toLowerCase());
 
     if (existingProfile) {
       if (isSuperAdmin && existingProfile.role !== 'admin') {

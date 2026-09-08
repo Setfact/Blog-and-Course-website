@@ -17,14 +17,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const email = (body.email || '').trim();
+    let email = (body.email || '').trim();
     const password = body.password || '';
 
     if (!email || !password) {
-      return new Response(JSON.stringify({ error: 'Email dan kata sandi wajib diisi.' }), {
+      return new Response(JSON.stringify({ error: 'Email atau username dan kata sandi wajib diisi.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // Dukung login dengan username (misal: "calvinadministrator")
+    if (!email.includes('@')) {
+      if (email.toLowerCase() === 'calvinadministrator') {
+        email = 'calvinadministrator@phinisilearn.web.id';
+      } else {
+        email = `${email.toLowerCase()}@phinisilearn.web.id`;
+      }
     }
 
     let { data, error } = await supabase.auth.signInWithPassword({
