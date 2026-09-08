@@ -12,6 +12,9 @@ import node from '@astrojs/node';
 export default defineConfig({
   site: 'https://phinisilearn.web.id',
   output: 'server',
+  security: {
+    checkOrigin: true,
+  },
   devToolbar: {
     enabled: false
   },

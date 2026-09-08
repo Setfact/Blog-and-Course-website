@@ -95,7 +95,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Validasi Origin untuk request mutatif non-GET/HEAD/OPTIONS
   if (!['GET', 'HEAD', 'OPTIONS'].includes(context.request.method)) {
     const origin = context.request.headers.get('origin');
-    if (origin && origin !== url.origin) {
+    const allowedOrigins = new Set([
+      'https://phinisilearn.web.id',
+      'https://www.phinisilearn.web.id',
+      url.origin,
+    ]);
+    if (origin && !allowedOrigins.has(origin)) {
       return new Response('Origin tidak diizinkan.', { status: 403 });
     }
   }
