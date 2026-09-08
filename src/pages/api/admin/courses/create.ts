@@ -303,7 +303,7 @@ ${sanitizedBody}
         courseSlug,
         title,
         totalLessonsCreated,
-        keystaticUrl: `/keystatic/branch/main/collection/courses/item/${courseSlug}`,
+        keystaticUrl: `/keystatic/collection/courses/item/${courseSlug}`,
         previewUrl: `/courses/${courseSlug}`,
         learnUrl: `/learn/${courseSlug}`,
       }),

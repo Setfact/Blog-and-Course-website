@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-import { loadCourses } from '../../data/learning';
+import { loadAllCourses } from '../../data/learning';
 import { createSupabaseServerClient } from '../../lib/supabase';
 import { getCourseAnalytics, getActiveAnnouncement } from '../../lib/admin';
 
@@ -9,9 +9,12 @@ const supabase = createSupabaseServerClient({
   cookies: Astro.cookies,
 });
 
-const courses = await loadCourses();
+const courses = await loadAllCourses();
 const totalLessons = courses.reduce((acc, c) => acc + (c.lessonCount || 0), 0);
 const publishedCount = courses.filter((c) => c.status === 'published').length;
+const plannedCount = courses.filter((c) => c.status === 'planned').length;
+const draftCount = courses.filter((c) => c.status === 'draft').length;
+const archivedCount = courses.filter((c) => c.status === 'archived').length;
 
 const analytics = await getCourseAnalytics(supabase);
 const announcement = await getActiveAnnouncement(supabase);
@@ -30,8 +33,12 @@ const announcement = await getActiveAnnouncement(supabase);
         <strong class="val val-success">{publishedCount} Aktif</strong>
       </div>
       <div class="kpi-mini-card">
-        <span class="label">Total Modul Materi</span>
-        <strong class="val">{totalLessons} Pelajaran</strong>
+        <span class="label">Segera Hadir (Planned)</span>
+        <strong class="val val-info">{plannedCount} Rencana</strong>
+      </div>
+      <div class="kpi-mini-card">
+        <span class="label">Draf & Modul Materi</span>
+        <strong class="val val-warning">{draftCount} Draf · {totalLessons} Pelajaran</strong>
       </div>
     </section>
 
@@ -106,17 +113,39 @@ const announcement = await getActiveAnnouncement(supabase);
       </div>
     </div>
 
+    <!-- Filter Tabs Row -->
+    <div class="courses-filter-row">
+      <div class="filter-tabs" role="tablist">
+        <button type="button" class="tab-pill active" data-filter="all">Semua ({courses.length})</button>
+        <button type="button" class="tab-pill" data-filter="published">Terpublikasi ({publishedCount})</button>
+        <button type="button" class="tab-pill" data-filter="planned">Segera Hadir ({plannedCount})</button>
+        <button type="button" class="tab-pill" data-filter="draft">Draf ({draftCount})</button>
+        {archivedCount > 0 && <button type="button" class="tab-pill" data-filter="archived">Arsip ({archivedCount})</button>}
+      </div>
+    </div>
+
     <!-- Courses Grid with Real Analytics -->
-    <div class="courses-grid">
+    <div class="courses-grid" id="courses-grid">
       {courses.map((course) => {
         const courseData = analytics[course.slug] || { enrolledStudentsCount: 0, totalCompletionsCount: 0 };
         return (
-          <div class="course-item-card">
+          <div class="course-item-card" data-slug={course.slug} data-status={course.status}>
             <div class="course-card-top">
               <span class="category-badge">{course.category.toUpperCase()}</span>
-              <span class:list={['pub-pill', course.status === 'published' ? 'pub-published' : 'pub-draft']}>
-                {course.status}
-              </span>
+
+              <div class="status-selector-wrap">
+                <select
+                  class="course-status-select"
+                  data-slug={course.slug}
+                  aria-label={`Ubah status kursus ${course.title}`}
+                >
+                  <option value="published" selected={course.status === 'published'}>Terpublikasi</option>
+                  <option value="planned" selected={course.status === 'planned'}>Segera Hadir (Planned)</option>
+                  <option value="draft" selected={course.status === 'draft'}>Draf</option>
+                  <option value="archived" selected={course.status === 'archived'}>Arsip</option>
+                </select>
+                <span class="status-sync-indicator" id={`sync-${course.slug}`}></span>
+              </div>
             </div>
 
             <h3 class="course-item-title">{course.title}</h3>
@@ -151,7 +180,7 @@ const announcement = await getActiveAnnouncement(supabase);
                 <span>Lihat di Web</span>
               </a>
               <a
-                href={`/keystatic/branch/main/collection/courses/item/${course.slug}`}
+                href={`/keystatic/collection/courses/item/${course.slug}`}
                 class="action-btn-primary"
                 target="_blank"
               >
@@ -203,6 +232,95 @@ const announcement = await getActiveAnnouncement(supabase);
         }
       });
     }
+
+    // Status Selector AJAX Handler
+    function applyStatusColor(select: HTMLSelectElement) {
+      const val = select.value;
+      if (val === 'published') {
+        select.style.borderColor = '#059669';
+        select.style.color = '#047857';
+        select.style.background = '#ecfdf5';
+      } else if (val === 'planned') {
+        select.style.borderColor = '#3b82f6';
+        select.style.color = '#1d4ed8';
+        select.style.background = '#eff6ff';
+      } else if (val === 'draft') {
+        select.style.borderColor = '#f59e0b';
+        select.style.color = '#b45309';
+        select.style.background = '#fffbeb';
+      } else {
+        select.style.borderColor = '#94a3b8';
+        select.style.color = '#475569';
+        select.style.background = '#f8fafc';
+      }
+    }
+
+    const statusSelects = document.querySelectorAll<HTMLSelectElement>('.course-status-select');
+    statusSelects.forEach((select) => {
+      applyStatusColor(select);
+
+      select.addEventListener('change', async () => {
+        const slug = select.dataset.slug;
+        const newStatus = select.value;
+        const indicator = document.getElementById(`sync-${slug}`);
+        if (!slug) return;
+
+        applyStatusColor(select);
+        if (indicator) {
+          indicator.textContent = 'Menyimpan...';
+          indicator.style.color = '#3b82f6';
+        }
+
+        try {
+          const res = await fetch('/api/admin/courses/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, status: newStatus }),
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            const card = select.closest<HTMLElement>('.course-item-card');
+            if (card) {
+              card.dataset.status = newStatus;
+            }
+            if (indicator) {
+              indicator.textContent = 'Tersinkron';
+              indicator.style.color = '#059669';
+              setTimeout(() => {
+                indicator.textContent = '';
+              }, 2500);
+            }
+          } else {
+            alert(data.error || 'Gagal mengubah status kursus.');
+            if (indicator) indicator.textContent = 'Gagal';
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan saat menyimpan status.');
+          if (indicator) indicator.textContent = 'Gagal';
+        }
+      });
+    });
+
+    // Client-side Filter Tabs Handler
+    const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-pill');
+    const courseCards = document.querySelectorAll<HTMLElement>('.course-item-card');
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter || 'all';
+        courseCards.forEach((card) => {
+          if (filter === 'all' || card.dataset.status === filter) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
   </script>
 </AdminLayout>
 
@@ -241,6 +359,12 @@ const announcement = await getActiveAnnouncement(supabase);
   }
   .val-success {
     color: #059669 !important;
+  }
+  .val-info {
+    color: #2563eb !important;
+  }
+  .val-warning {
+    color: #d97706 !important;
   }
 
   /* Announcement Manager */
@@ -462,15 +586,65 @@ const announcement = await getActiveAnnouncement(supabase);
     color: var(--color-phinisi-700);
     letter-spacing: 0.04em;
   }
-  .pub-pill {
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
+  /* Filter Tabs */
+  .courses-filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
   }
-  .pub-published { background: #d1fae5; color: #047857; }
-  .pub-draft { background: #f1f5f9; color: #475569; }
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .tab-pill {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all 150ms ease;
+    font-family: var(--font-heading);
+  }
+  .tab-pill:hover {
+    color: var(--color-navy);
+    border-color: var(--color-phinisi-400);
+  }
+  .tab-pill.active {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(20, 91, 215, 0.25);
+  }
+
+  /* Status Selector */
+  .status-selector-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .course-status-select {
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+    outline: none;
+    transition: all 150ms ease;
+    font-family: var(--font-heading);
+  }
+  .status-sync-indicator {
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
 
   .course-item-title {
     font-family: var(--font-heading);
