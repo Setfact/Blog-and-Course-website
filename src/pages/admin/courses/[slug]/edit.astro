@@ -211,6 +211,7 @@ const initialCourseData = {
 };
 
 const queryLesson = Astro.url.searchParams.get('lesson') || '';
+const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.url.searchParams.get('created') === 'true';
 ---
 
 <AdminLayout title={`Studio Editor: ${initialCourseData.title}`} activeSection="courses">
@@ -251,7 +252,12 @@ const queryLesson = Astro.url.searchParams.get('lesson') || '';
     </header>
 
     <!-- Alert / Toast Banner -->
-    <div id="studio-alert-banner" class="studio-banner hidden"></div>
+    <div
+      id="studio-alert-banner"
+      class:list={['studio-banner', isNewlyCreated ? 'banner-success' : 'hidden']}
+    >
+      {isNewlyCreated ? 'Kursus baru berhasil dibuat dan disimpan. Anda sekarang berada di Studio Editor untuk melanjutkan penulisan dan penyempurnaan materi.' : ''}
+    </div>
 
     <!-- Main Studio Split View -->
     <div class="studio-workspace">

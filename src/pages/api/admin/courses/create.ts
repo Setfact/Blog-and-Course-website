@@ -52,6 +52,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       tools = ['Cisco IOS', 'Cisco Packet Tracer'],
       outcomes = [],
       status = 'draft',
+      overviewTitle,
+      overviewDuration = 5,
+      overviewContent,
       modules = [],
     } = body;
 
@@ -136,15 +139,11 @@ Selamat datang di kursus **${title}**. Selesaikan seluruh modul materi dan prakt
     // 2. Tulis Berkas Overview Lesson (src/content/docs/{courseSlug}/index.mdx)
     // PENTING: Jangan berikan properti module pada overview agar sistem mengenali sebagai root course player
     const overviewFilePath = path.join(docsCourseDir, 'index.mdx');
-    const overviewContent = `---
-title: ${JSON.stringify(`Pengantar: ${title}`)}
-course: ${JSON.stringify(courseSlug)}
-language: id
-order: 0
-durationMinutes: 5
-description: ${JSON.stringify(`Pengantar dan silabus lengkap kursus ${title}.`)}
----
-<Callout type="info" title="Selamat Datang di Kursus Ini!">
+    const finalOverviewTitle = overviewTitle && String(overviewTitle).trim() ? String(overviewTitle).trim() : `Pengantar: ${title}`;
+    const finalOverviewDuration = Number(overviewDuration) || 5;
+    let finalOverviewBody = overviewContent && String(overviewContent).trim()
+      ? sanitizeMdxContent(String(overviewContent).trim())
+      : `<Callout type="info" title="Selamat Datang di Kursus Ini!">
   Selamat datang di kursus **${title}**. Pelajari setiap bab materi secara bertahap, kerjakan kuis evaluasi, dan unduh berkas praktik Cisco Packet Tracer untuk mendapatkan poin XP serta menaikkan jenjang pangkat maritim Anda.
 </Callout>
 
@@ -152,10 +151,20 @@ description: ${JSON.stringify(`Pengantar dan silabus lengkap kursus ${title}.`)}
 Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modul dilengkapi dengan teori terarah, contoh perintah terminal Cisco, serta evaluasi interaktif.
 
 ## Prasyarat Belajar
-Pastikan Anda telah memasang aplikasi **Cisco Packet Tracer** di komputer Anda untuk menjalankan berkas-berkas praktik laboratorium yang disediakan di modul-modul berikutnya.
+Pastikan Anda telah memasang aplikasi **Cisco Packet Tracer** di komputer Anda untuk menjalankan berkas-berkas praktik laboratorium yang disediakan di modul-modul berikutnya.`;
+
+    const finalOverviewFileContent = `---
+title: ${JSON.stringify(finalOverviewTitle)}
+course: ${JSON.stringify(courseSlug)}
+language: id
+order: 0
+durationMinutes: ${finalOverviewDuration}
+description: ${JSON.stringify(`Pengantar dan silabus lengkap kursus ${title}.`)}
+---
+${finalOverviewBody}
 `;
 
-    await fs.writeFile(overviewFilePath, overviewContent, 'utf-8');
+    await fs.writeFile(overviewFilePath, finalOverviewFileContent, 'utf-8');
 
     let totalLessonsCreated = 1; // Termasuk overview
 
