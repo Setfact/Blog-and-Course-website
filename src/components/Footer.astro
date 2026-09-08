@@ -1,16 +1,11 @@
 ---
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const prefix = lang === 'id' ? '' : `/${lang}`;
 const currentYear = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
   <div class="footer-inner page-shell">
     <div class="footer-brand">
-      <a href={`${prefix}/`} class="brand" aria-label="Phinisi Learn — halaman utama">
+      <a href="/" class="brand" aria-label="Phinisi Learn — halaman utama">
         <img src="/Logo-Putih-Transparent.png" alt="Phinisi Learn" width="2170" height="725" />
       </a>
       <p>Tempat kamu berlayar dari rasa penasaran menuju skill IT yang siap bersaing di dunia industri.</p>
@@ -18,20 +13,21 @@ const currentYear = new Date().getFullYear();
 
     <div class="footer-links">
       <section>
-        <h2>{t('footer.links')}</h2>
-        <a href={`${prefix}/courses`}>{t('nav.courses')}</a>
-        <a href={`${prefix}/learning-path`}>{t('nav.learningPath')}</a>
-        <a href={`${prefix}/blog`}>{t('nav.blog')}</a>
+        <h2>Navigasi</h2>
+        <a href="/courses">Katalog Kursus</a>
+        <a href="/learning-path">Alur Belajar</a>
+        <a href="/community">Komunitas</a>
+        <a href="/blog">Artikel Blog</a>
       </section>
       <section>
-        <h2>{t('footer.legal')}</h2>
-        <a href={`${prefix}/privacy`}>{t('footer.privacy')}</a>
-        <a href={`${prefix}/terms`}>{t('footer.terms')}</a>
+        <h2>Legalitas</h2>
+        <a href="/privacy">Kebijakan Privasi</a>
+        <a href="/terms">Syarat & Ketentuan</a>
       </section>
     </div>
   </div>
   <div class="footer-bottom page-shell">
-    <p>&copy; {currentYear} Phinisi Learn. {t('footer.copyright')}</p>
+    <p>&copy; {currentYear} Phinisi Learn. Seluruh hak cipta dilindungi.</p>
   </div>
 </footer>
 

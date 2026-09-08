@@ -4,6 +4,12 @@ import { createSupabaseServerClient, getOrCreateUserProfile } from './lib/supaba
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
 
+  // Pengalihan otomatis seluruh rute /en ke versi Bahasa Indonesia
+  if (url.pathname === '/en' || url.pathname.startsWith('/en/')) {
+    const cleanPath = url.pathname.replace(/^\/en(\/|$)/, '/') || '/';
+    return context.redirect(cleanPath + url.search, 301);
+  }
+
   // Inisialisasi locals user
   context.locals.user = null;
 
