@@ -18,6 +18,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         context.locals.user = await getOrCreateUserProfile(supabase, authUser);
+        if (context.locals.user?.status === 'suspended' && url.pathname !== '/api/auth/signout') {
+          return new Response('Akun Anda sedang ditangguhkan.', { status: 403 });
+        }
       }
     } catch (err) {
       console.error('Middleware auth check error:', err);
@@ -89,5 +92,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  return next();
+  // Validasi Origin untuk request mutatif non-GET/HEAD/OPTIONS
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(context.request.method)) {
+    const origin = context.request.headers.get('origin');
+    if (origin && origin !== url.origin) {
+      return new Response('Origin tidak diizinkan.', { status: 403 });
+    }
+  }
+
+  const response = await next();
+  const headers = new Headers(response.headers);
+  if (!headers.has('X-Frame-Options')) headers.set('X-Frame-Options', 'DENY');
+  if (!headers.has('X-Content-Type-Options')) headers.set('X-Content-Type-Options', 'nosniff');
+  if (!headers.has('Referrer-Policy')) headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (url.protocol === 'https:' && !headers.has('Strict-Transport-Security')) {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 });

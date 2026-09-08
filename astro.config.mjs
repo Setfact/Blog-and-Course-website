@@ -24,7 +24,6 @@ export default defineConfig({
       allowedHosts: [
         'phinisilearn.web.id',
         'www.phinisilearn.web.id',
-        'phinisinetwork.calvinumboh.my.id',
       ],
     },
     optimizeDeps: {

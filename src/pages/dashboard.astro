@@ -36,7 +36,7 @@ if (supabase) {
     ]);
 
     if (progressRes.data) {
-      progressRes.data.forEach((r) => completedLessonsSet.add(`${r.course_slug}/${r.lesson_id}`));
+      progressRes.data.forEach((r: { course_slug: string; lesson_id: string }) => completedLessonsSet.add(`${r.course_slug}/${r.lesson_id}`));
     }
     if (announceRes.data) {
       activeAnnouncement = announceRes.data;

@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       supabase.from('profiles').select('xp, streak, last_study_date').eq('id', user.id).single(),
     ]);
 
-    const completedLessons = (progressRes.data || []).map((row) => `${row.course_slug}/${row.lesson_id}`);
+    const completedLessons = (progressRes.data || []).map((row: { course_slug: string; lesson_id: string }) => `${row.course_slug}/${row.lesson_id}`);
     const profile = profileRes.data || { xp: 0, streak: 0, last_study_date: null };
     const rankTier = getRankTier(profile.xp ?? 0);
 
