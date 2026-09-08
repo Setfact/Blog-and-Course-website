@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServerClient, getOrCreateUserProfile } from '../../../lib/supabase';
 import { translateAuthError } from '../../../lib/auth-errors';
-import { sanitizeRedirectPath } from '../../../lib/security';
+import { sanitizeRedirectPath, getPublicOrigin } from '../../../lib/security';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient({ request, cookies });
@@ -18,7 +18,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const email = (body.email || '').trim();
     const password = body.password || '';
     const targetRedirect = sanitizeRedirectPath(body.redirect || url.searchParams.get('redirect'), '/dashboard');
-    const emailRedirectTo = `${url.origin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
+    const publicOrigin = getPublicOrigin(request);
+    const emailRedirectTo = `${publicOrigin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: 'Email dan kata sandi wajib diisi.' }), {

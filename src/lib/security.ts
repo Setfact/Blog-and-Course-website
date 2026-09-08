@@ -47,3 +47,29 @@ export function sanitizeRedirectPath(target: unknown, fallback: string = '/dashb
     return fallback;
   }
 }
+
+/**
+ * Mendapatkan origin publik resmi aplikasi (selalu HTTPS di production).
+ * Mencegah protocol downgrade ke HTTP di balik reverse proxy / Cloudflare Tunnel
+ * yang dapat memicu deteksi "Deceptive site / Social Engineering" oleh Google Safe Browsing.
+ */
+export function getPublicOrigin(request?: Request): string {
+  const envUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL;
+  if (envUrl && envUrl.startsWith('http')) {
+    return envUrl.replace(/\/$/, '');
+  }
+
+  if (import.meta.env.DEV) {
+    if (request) {
+      try {
+        const url = new URL(request.url);
+        return url.origin;
+      } catch {
+        return 'http://localhost:3000';
+      }
+    }
+    return 'http://localhost:3000';
+  }
+
+  return 'https://phinisilearn.web.id';
+}
