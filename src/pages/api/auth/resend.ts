@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServerClient } from '../../../lib/supabase';
 import { translateAuthError } from '../../../lib/auth-errors';
+import { sanitizeRedirectPath } from '../../../lib/security';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient({ request, cookies });
@@ -15,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const url = new URL(request.url);
     const body = await request.json().catch(() => ({}));
     const email = (body.email || '').trim();
-    const targetRedirect = body.redirect || '/dashboard';
+    const targetRedirect = sanitizeRedirectPath(body.redirect, '/dashboard');
     const emailRedirectTo = `${url.origin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
 
     if (!email) {

@@ -11,6 +11,17 @@ const prefix = lang === 'id' ? '' : `/${lang}`;
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const showSearch = pathname.startsWith(prefix + '/docs') || pathname.startsWith(prefix + '/blog');
 
+// URLs untuk pengalih bahasa
+const currentPath = Astro.url.pathname;
+let targetIdPath = currentPath;
+let targetEnPath = currentPath;
+
+if (lang === 'en') {
+  targetIdPath = currentPath.replace(/^\/en(\/|$)/, '/') || '/';
+} else {
+  targetEnPath = currentPath === '/' ? '/en' : `/en${currentPath.startsWith('/') ? currentPath : `/${currentPath}`}`;
+}
+
 const navItems = [
   { href: `${prefix}/courses`, label: t('nav.courses') },
   { href: `${prefix}/learning-path`, label: t('nav.learningPath') },
@@ -39,6 +50,24 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
           <Search instance="search" className="pagefind-ui" searchboxOptions={{ showImages: false }} />
         </div>
       )}
+
+      <div class="lang-switcher" role="group" aria-label="Pilih Bahasa">
+        <a
+          href={targetIdPath}
+          class:list={['lang-btn', { active: lang === 'id' }]}
+          title="Bahasa Indonesia"
+        >
+          ID
+        </a>
+        <span class="lang-divider">/</span>
+        <a
+          href={targetEnPath}
+          class:list={['lang-btn', { active: lang === 'en' }]}
+          title="English"
+        >
+          EN
+        </a>
+      </div>
 
       {user ? (
         <div class="user-menu-wrap">
@@ -100,6 +129,14 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
         <summary aria-label="Buka menu"><span class="material-symbols-outlined">menu</span></summary>
         <nav aria-label="Navigasi mobile">
           {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
+          <div class="mobile-lang-row">
+            <span class="mobile-lang-title">Bahasa:</span>
+            <div class="mobile-lang-options">
+              <a href={targetIdPath} class:list={['mobile-lang-btn', { active: lang === 'id' }]}>Indonesia (ID)</a>
+              <span class="mobile-lang-divider">|</span>
+              <a href={targetEnPath} class:list={['mobile-lang-btn', { active: lang === 'en' }]}>English (EN)</a>
+            </div>
+          </div>
           <hr class="mobile-divider" />
           {user ? (
             <>
@@ -343,6 +380,73 @@ const isActive = (href: string) => pathname === href || (href !== '/' && pathnam
   .mobile-danger-link { color: var(--color-danger) !important; }
   .mobile-auth-links { display: flex; flex-direction: column; gap: 0.25rem; }
   .mobile-register-link { color: var(--color-phinisi-600) !important; font-weight: 800 !important; }
+
+  /* Language Switcher */
+  .lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.65rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+  .lang-btn {
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+  .lang-btn.active {
+    color: var(--color-phinisi-700);
+    font-weight: 800;
+  }
+  .lang-btn:hover {
+    color: var(--color-phinisi-600);
+  }
+  .lang-divider {
+    color: #cbd5e1;
+    font-size: 0.72rem;
+  }
+
+  .mobile-lang-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border-radius: 0.65rem;
+    margin-top: 0.25rem;
+  }
+  .mobile-lang-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    font-family: var(--font-heading);
+  }
+  .mobile-lang-options {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .mobile-lang-btn {
+    font-size: 0.8rem !important;
+    padding: 0.2rem 0.45rem !important;
+    border-radius: 0.4rem !important;
+    color: var(--color-muted) !important;
+    text-decoration: none;
+  }
+  .mobile-lang-btn.active {
+    background: var(--color-phinisi-100) !important;
+    color: var(--color-phinisi-700) !important;
+    font-weight: 800 !important;
+  }
+  .mobile-lang-divider {
+    color: #cbd5e1;
+    font-size: 0.75rem;
+  }
 
   :global(.search-wrap) { --pagefind-ui-scale: 0.72; --pagefind-ui-primary: #145bd7; --pagefind-ui-text: #5f6f89; --pagefind-ui-background: #f5f9ff; --pagefind-ui-border: #dce7f5; --pagefind-ui-border-width: 1px; --pagefind-ui-border-radius: 14px; --pagefind-ui-font: 'Inter', sans-serif; }
   :global(.search-wrap .pagefind-ui__search-input) { min-height: 44px !important; font-weight: 500 !important; box-shadow: none !important; }

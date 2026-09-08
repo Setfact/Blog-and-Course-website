@@ -2,13 +2,14 @@ import type { APIRoute } from 'astro';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createSupabaseServerClient, getOrCreateUserProfile } from '../../../lib/supabase';
 import { translateAuthError } from '../../../lib/auth-errors';
+import { sanitizeRedirectPath } from '../../../lib/security';
 
 export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const token_hash = requestUrl.searchParams.get('token_hash');
   const type = requestUrl.searchParams.get('type') as EmailOtpType | null;
-  const targetRedirect = requestUrl.searchParams.get('redirect') || '/dashboard';
+  const targetRedirect = sanitizeRedirectPath(requestUrl.searchParams.get('redirect'), '/dashboard');
 
   const supabase = createSupabaseServerClient({ request, cookies });
   if (!supabase) {
@@ -43,10 +44,9 @@ export const GET: APIRoute = async ({ request, cookies, redirect }) => {
       await getOrCreateUserProfile(supabase, authUser);
     }
 
-    const cleanRedirect = targetRedirect.startsWith('/') ? targetRedirect : `/${targetRedirect}`;
-    const destination = cleanRedirect.includes('?')
-      ? `${cleanRedirect}&verified=true`
-      : `${cleanRedirect}?verified=true`;
+    const destination = targetRedirect.includes('?')
+      ? `${targetRedirect}&verified=true`
+      : `${targetRedirect}?verified=true`;
 
     return redirect(destination);
   } catch (err: any) {

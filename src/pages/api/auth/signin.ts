@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServerClient, isSupabaseConfigured } from '../../../lib/supabase';
+import { sanitizeRedirectPath } from '../../../lib/security';
 
 export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   const requestUrl = new URL(request.url);
-  const redirectTo = requestUrl.searchParams.get('redirect') || '/dashboard';
+  const redirectTo = sanitizeRedirectPath(requestUrl.searchParams.get('redirect'), '/dashboard');
   const callbackUrl = `${requestUrl.origin}/api/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
 
   if (!isSupabaseConfigured()) {

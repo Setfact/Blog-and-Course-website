@@ -1,5 +1,7 @@
 ---
-const redirectParam = Astro.url.searchParams.get('redirect') || '/dashboard';
+import { sanitizeRedirectPath } from '../lib/security';
+
+const redirectParam = sanitizeRedirectPath(Astro.url.searchParams.get('redirect'), '/dashboard');
 const targetUrl = `/login?mode=register${redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : ''}`;
 return Astro.redirect(targetUrl);
 ---

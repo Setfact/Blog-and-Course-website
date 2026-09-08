@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { sanitizeRedirectPath } from '../lib/security';
 
 const user = Astro.locals.user;
-const redirectParam = Astro.url.searchParams.get('redirect') || '/dashboard';
+const redirectParam = sanitizeRedirectPath(Astro.url.searchParams.get('redirect'), '/dashboard');
 const errorParam = Astro.url.searchParams.get('error');
 const verifiedParam = Astro.url.searchParams.get('verified') === 'true';
 const initialMode = Astro.url.searchParams.get('mode') === 'register' ? 'register' : 'login';
@@ -315,7 +316,14 @@ if (redirectParam.startsWith('/community')) {
 
   <script>
     const root = document.getElementById('login-page-root');
-    const targetRedirect = root?.dataset.redirect || '/dashboard';
+    const rawRedirect = root?.dataset.redirect || '/dashboard';
+    const sanitizeClientRedirect = (path: string): string => {
+      if (!path || typeof path !== 'string') return '/dashboard';
+      const p = path.trim();
+      if (!p.startsWith('/') || p.startsWith('//') || p.startsWith('/\\')) return '/dashboard';
+      return p;
+    };
+    const targetRedirect = sanitizeClientRedirect(rawRedirect);
     let currentMode = root?.dataset.initialMode === 'register' ? 'register' : 'login';
 
     const tabBtnLogin = document.getElementById('tab-btn-login');

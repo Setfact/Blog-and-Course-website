@@ -4,7 +4,11 @@ import type { AstroCookies } from 'astro';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
 
-export const SUPERADMIN_EMAIL = 'calvinum26@gmail.com';
+export const SUPERADMIN_EMAIL = (
+  process.env.SUPERADMIN_EMAIL ||
+  import.meta.env.SUPERADMIN_EMAIL ||
+  'calvinum26@gmail.com'
+).trim();
 
 export const getSupabaseUrl = (): string => {
   return (
