@@ -32,6 +32,10 @@ const copy = isEnglish ? {
 };
 
 const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
+const isPublished = course.status === 'published';
+const isPlanned = course.status === 'planned';
+const isDraft = course.status === 'draft';
+const statusLabel = isPublished ? copy.available : isPlanned ? copy.planned : 'Draf';
 ---
 
 <main class="course-detail">
@@ -46,16 +50,16 @@ const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
           <div class="course-label">
             <span>{categoryLabels[course.category][language]}</span>
             <i aria-hidden="true">·</i>
-            <strong class:list={{ available: Boolean(materialHref) }}>{materialHref ? copy.available : copy.planned}</strong>
+            <strong class:list={{ available: isPublished, planned: isPlanned, draft: isDraft }}>{statusLabel}</strong>
           </div>
           <h1>{course.title}</h1>
           <p>{course.description[language]}</p>
           <div class="course-meta">{level} · {course.moduleCount} {copy.modules} · {course.lessonCount} {copy.lessons} · ±{course.durationHours} {copy.hours}</div>
           <div class="updated-at">{copy.updated}: {new Intl.DateTimeFormat(isEnglish ? 'en-US' : 'id-ID', { dateStyle: 'medium' }).format(new Date(course.updatedAt))}</div>
 
-          {materialHref && language === 'id' && <LearningStatus courseSlug={course.slug} totalLessons={course.lessonCount} />}
+          {isPublished && materialHref && language === 'id' && <LearningStatus courseSlug={course.slug} totalLessons={course.lessonCount} />}
 
-          {materialHref ? (
+          {isPublished && learningHref ? (
             <a
               class="primary-action"
               href={learningHref}
@@ -64,7 +68,10 @@ const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
               data-total-lessons={course.lessonCount}
             ><span data-course-start-label>{copy.start}</span> →</a>
           ) : (
-            <div class="preparing-note"><strong>{copy.preparingTitle}</strong><span>{copy.preparingDescription}</span></div>
+            <div class="preparing-note">
+              <strong>{isDraft ? 'Kursus Masih Berstatus Draf' : copy.preparingTitle}</strong>
+              <span>{isDraft ? 'Materi kursus ini dalam tahap penyusunan dan hanya dapat diakses oleh Administrator.' : copy.preparingDescription}</span>
+            </div>
           )}
         </div>
 
@@ -150,6 +157,8 @@ const level = course.level === 'beginner' ? copy.beginner : copy.intermediate;
   .course-label i { color: rgba(103, 232, 249, .4); font-style: normal; }
   .course-label strong { color: #cbd5e1; }
   .course-label strong.available { color: #34d399; }
+  .course-label strong.planned { color: #fbbf24; }
+  .course-label strong.draft { color: #94a3b8; }
   .hero-copy h1 { max-width: 740px; margin: 0.6rem 0 0; color: #ffffff; font-family: var(--font-heading); font-size: clamp(2.4rem, 4.8vw, 3.8rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
   .hero-copy > p { max-width: 670px; margin: 1rem 0 0; color: #d0edff; font-size: 1.02rem; line-height: 1.65; }
   .course-meta { margin-top: 1.25rem; color: #78e9ff; font-size: 0.82rem; font-weight: 700; }

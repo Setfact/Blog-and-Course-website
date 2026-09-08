@@ -31,7 +31,7 @@ const totalHours = pathCourses.reduce((total, course) => total + course.duration
 
       <ol class="course-route">
         {pathCourses.map((course, index) => {
-          const materialAvailable = Boolean(course.contentHref?.id);
+          const materialAvailable = course.status === 'published';
           return (
             <li>
               <span class="route-number">{String(index + 1).padStart(2, '0')}</span>

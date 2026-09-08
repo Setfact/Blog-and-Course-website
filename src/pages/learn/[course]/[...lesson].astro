@@ -12,49 +12,61 @@ import KnowledgeCheck from '../../../components/KnowledgeCheck.astro';
 import LessonQuiz from '../../../components/LessonQuiz.astro';
 import CommandOrder from '../../../components/CommandOrder.astro';
 import PacketTracerLab from '../../../components/PacketTracerLab.astro';
-import { getCourseBySlug, loadCourses } from '../../../data/learning';
+import { getCourseBySlug } from '../../../data/learning';
 
-export const prerender = true;
+const { course: courseSlug, lesson: lessonParam } = Astro.params;
+const user = Astro.locals.user;
+const isAdmin = user?.role === 'admin';
 
-export async function getStaticPaths() {
-  const [allDocs, courses] = await Promise.all([getCollection('lessons'), loadCourses()]);
-  const roots = allDocs.filter(entry => (
-    entry.data.draft !== true
-    && entry.data.language === 'id'
-    && Boolean(entry.data.course)
-    && Boolean(courses.find((course) => course.slug === entry.data.course)?.learningHref?.id)
-    && (entry.id === entry.id.split('/')[0] || entry.id.endsWith('/index'))
-  ));
-  const paths: any[] = [];
-
-  for (const root of roots) {
-    const courseSlug = root.data.course!;
-    const category = root.id.split('/')[0];
-    const courseEntries = allDocs
-      .filter(entry => entry.data.draft !== true && entry.data.language === 'id' && (entry.id === category || entry.id.startsWith(`${category}/`)))
-      .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
-
-    for (const entry of courseEntries) {
-      const isOverview = entry.id === category || entry.id === `${category}/index`;
-      paths.push({
-        params: {
-          course: courseSlug,
-          lesson: isOverview ? undefined : entry.id.replace(`${category}/`, ''),
-        },
-        props: { entry, courseEntries, courseSlug },
-      });
-    }
-  }
-
-  return paths;
+const course = await getCourseBySlug(courseSlug ?? '', { includeDrafts: isAdmin });
+if (!course) {
+  return Astro.redirect('/courses');
 }
 
-const { entry, courseEntries, courseSlug } = Astro.props;
-const course = await getCourseBySlug(courseSlug);
-if (!course) throw new Error(`Course ${courseSlug} tidak ditemukan.`);
-const { Content } = await render(entry);
+// Hanya kursus yang sudah dipublikasi yang dapat diakses oleh siswa.
+// Administrator tetap diizinkan untuk melihat pratinjau draf dan kursus segera hadir.
+if (course.status !== 'published' && !isAdmin) {
+  return Astro.redirect(`/courses/${course.slug}`);
+}
+
+const allDocs = await getCollection('lessons');
+const root = allDocs.find(entry => (
+  entry.data.course === course.slug
+  && entry.data.language === 'id'
+  && (isAdmin || entry.data.draft !== true)
+  && (entry.id === entry.id.split('/')[0] || entry.id.endsWith('/index'))
+));
+
+const category = root ? root.id.split('/')[0] : course.slug;
+const courseEntries = allDocs
+  .filter(entry => (
+    entry.data.language === 'id'
+    && (isAdmin || entry.data.draft !== true)
+    && (entry.data.course === course.slug || entry.id === category || entry.id.startsWith(`${category}/`))
+  ))
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+
+if (courseEntries.length === 0) {
+  return Astro.redirect(`/courses/${course.slug}`);
+}
+
+let currentEntry = undefined;
+if (!lessonParam) {
+  currentEntry = courseEntries.find(entry => entry.id === category || entry.id === `${category}/index` || !entry.data.module) ?? courseEntries[0];
+} else {
+  currentEntry = courseEntries.find(entry => {
+    const sub = entry.id.replace(`${category}/`, '');
+    return sub === lessonParam || entry.id === lessonParam;
+  });
+}
+
+if (!currentEntry) {
+  return Astro.redirect(`/learn/${course.slug}`);
+}
+
+const { Content } = await render(currentEntry);
 ---
 
-<LearningPlayerLayout entry={entry} course={course} courseEntries={courseEntries}>
+<LearningPlayerLayout entry={currentEntry} course={course} courseEntries={courseEntries}>
   <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder, PacketTracerLab }} />
 </LearningPlayerLayout>

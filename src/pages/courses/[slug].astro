@@ -1,17 +1,22 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CourseDetail from '../../components/CourseDetail.astro';
-import { loadCourses, type Course } from '../../data/learning';
+import { getCourseBySlug } from '../../data/learning';
 
-export const prerender = true;
+const { slug } = Astro.params;
+const user = Astro.locals.user;
+const isAdmin = user?.role === 'admin';
 
-export async function getStaticPaths() {
-  const courses = await loadCourses();
-  return courses.map(course => ({ params: { slug: course.slug }, props: { course } }));
+const course = await getCourseBySlug(slug ?? '', { includeDrafts: isAdmin });
+
+if (!course) {
+  return Astro.redirect('/courses');
 }
 
-interface Props { course: Course; }
-const { course } = Astro.props;
+// Jika kursus berstatus draf dan pengunjung bukan admin, tolak akses publik
+if (course.status === 'draft' && !isAdmin) {
+  return Astro.redirect('/courses');
+}
 ---
 
 <BaseLayout title={course.title} description={course.description.id}>

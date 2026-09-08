@@ -356,6 +356,9 @@ if (anyCourseFinished) earnedBadges.add('course-finisher');
               <div class="course-mini-header">
                 <span class="course-category-tag">{c.category.toUpperCase()}</span>
                 <span class="course-level-tag">{c.level}</span>
+                {c.status === 'planned' && (
+                  <span class="course-status-pill planned">Segera Hadir</span>
+                )}
               </div>
               <h3 class="course-mini-title">{c.title}</h3>
               <p class="course-mini-desc">{c.description.id}</p>
@@ -376,8 +379,8 @@ if (anyCourseFinished) earnedBadges.add('course-finisher');
                   <span class="material-symbols-outlined icon-xs">menu_book</span>
                   <span>{c.lessonCount} materi</span>
                 </span>
-                <Button href={`/courses/${c.slug}`} size="sm">
-                  {coursePercent > 0 ? 'Lanjutkan Belajar' : 'Mulai Kursus'}
+                <Button href={`/courses/${c.slug}`} size="sm" variant={c.status === 'planned' ? 'secondary' : 'primary'}>
+                  {c.status === 'planned' ? 'Detail Kursus' : coursePercent > 0 ? 'Lanjutkan Belajar' : 'Mulai Kursus'}
                 </Button>
               </div>
             </div>
@@ -1206,6 +1209,16 @@ if (anyCourseFinished) earnedBadges.add('course-finisher');
     font-size: 0.72rem;
     color: var(--color-muted);
     text-transform: capitalize;
+  }
+  .course-status-pill.planned {
+    font-size: 0.68rem;
+    font-weight: 750;
+    color: #b45309;
+    background: #fef3c7;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
   }
   .course-mini-title {
     font-family: var(--font-heading);

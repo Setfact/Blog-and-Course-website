@@ -13,27 +13,27 @@ import LessonQuiz from '../../components/LessonQuiz.astro';
 import CommandOrder from '../../components/CommandOrder.astro';
 import PacketTracerLab from '../../components/PacketTracerLab.astro';
 
-export const prerender = true;
+const slugParam = Astro.params.slug;
+const user = Astro.locals.user;
+const isAdmin = user?.role === 'admin';
 
-export async function getStaticPaths() {
-  const allDocs = await getCollection('lessons');
-  const publishedDocs = allDocs.filter(doc => doc.data.draft !== true && doc.data.language === 'id');
-  return publishedDocs.map(entry => {
-    // Strip trailing 'index' so that e.g. 'network/index' becomes 'network'
-    let slug = entry.id;
-    if (slug.endsWith('/index')) {
-      slug = slug.replace(/\/index$/, '');
-    } else if (slug === 'index') {
-      slug = undefined as any;
-    }
-    return {
-      params: { slug },
-      props: { entry },
-    };
-  });
+const allDocs = await getCollection('lessons');
+const entry = allDocs.find(doc => {
+  const isLangOk = doc.data.language === 'id';
+  const isDraftOk = isAdmin || doc.data.draft !== true;
+  if (!isLangOk || !isDraftOk) return false;
+
+  const cleanId = doc.id.endsWith('/index') ? doc.id.replace(/\/index$/, '') : doc.id;
+  if (!slugParam) {
+    return cleanId === 'index' || doc.id === 'index';
+  }
+  return cleanId === slugParam || doc.id === slugParam;
+});
+
+if (!entry) {
+  return Astro.redirect('/courses');
 }
 
-const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 ---
 

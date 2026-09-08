@@ -6,18 +6,21 @@ import Callout from '../../components/Callout.astro';
 import Tabs from '../../components/Tabs.astro';
 import TabItem from '../../components/TabItem.astro';
 
-export const prerender = true;
+const slugParam = Astro.params.slug;
+const user = Astro.locals.user;
+const isAdmin = user?.role === 'admin';
 
-export async function getStaticPaths() {
-  const allPosts = await getCollection('blog');
-  const publishedPosts = allPosts.filter(post => post.data.draft !== true && post.data.language === 'id');
-  return publishedPosts.map(entry => ({
-    params: { slug: entry.id },
-    props: { entry },
-  }));
+const allPosts = await getCollection('blog');
+const entry = allPosts.find(post => {
+  const isLangOk = post.data.language === 'id';
+  const isDraftOk = isAdmin || post.data.draft !== true;
+  return isLangOk && isDraftOk && (post.id === slugParam || post.id === `${slugParam}/index`);
+});
+
+if (!entry) {
+  return Astro.redirect('/blog');
 }
 
-const { entry } = Astro.props;
 const { Content } = await render(entry);
 ---
 

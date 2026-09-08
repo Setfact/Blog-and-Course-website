@@ -229,7 +229,10 @@ export async function loadLearningData(options: { includeAll?: boolean } = {}): 
 export async function loadCourses(): Promise<Course[]> { return (await loadLearningData({ includeAll: false })).courses; }
 export async function loadAllCourses(): Promise<Course[]> { return (await loadLearningData({ includeAll: true })).courses; }
 export async function loadLearningPaths(): Promise<LearningPath[]> { return (await loadLearningData()).paths; }
-export async function getCourseBySlug(slug: string): Promise<Course | undefined> { return (await loadCourses()).find((course) => course.slug === slug); }
+export async function getCourseBySlug(slug: string, options: { includeDrafts?: boolean } = {}): Promise<Course | undefined> {
+  const courses = options.includeDrafts ? await loadAllCourses() : await loadCourses();
+  return courses.find((course) => course.slug === slug);
+}
 export async function getPathBySlug(slug: string): Promise<LearningPath | undefined> { return (await loadLearningPaths()).find((path) => path.slug === slug); }
 
 export function getCoursesForPath(path: LearningPath, courses: Course[]): Course[] {
