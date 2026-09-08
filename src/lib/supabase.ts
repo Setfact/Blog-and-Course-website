@@ -1,4 +1,5 @@
 import { createServerClient, parseCookieHeader } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import type { AstroCookies } from 'astro';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
@@ -125,3 +126,52 @@ export const getOrCreateUserProfile = async (
     return null;
   }
 };
+
+export const getSupabaseAdminClient = () => {
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+};
+
+export const autoConfirmUserEmail = async (email: string): Promise<boolean> => {
+  try {
+    const adminClient = getSupabaseAdminClient();
+    if (!adminClient) return false;
+
+    const { data: usersData, error: listError } = await adminClient.auth.admin.listUsers();
+    if (listError || !usersData?.users) {
+      return false;
+    }
+
+    const targetUser = usersData.users.find(
+      (u) => u.email?.toLowerCase() === email.trim().toLowerCase()
+    );
+
+    if (!targetUser) return false;
+
+    if (targetUser.email_confirmed_at) {
+      return true;
+    }
+
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(targetUser.id, {
+      email_confirm: true,
+    });
+
+    if (updateError) {
+      console.error('Peringatan autoConfirmUserEmail error:', updateError.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Error autoConfirmUserEmail:', err);
+    return false;
+  }
+};
+

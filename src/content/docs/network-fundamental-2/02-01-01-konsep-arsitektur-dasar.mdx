@@ -1,0 +1,381 @@
+---
+title: "01. Fondasi Komunikasi Data"
+course: "network-fundamental-2"
+module: "network-fundamental-2-02-modul-02-fondasi-komunikasi-data"
+order: 1
+durationMinutes: 10
+language: id
+description: "Materi pelajaran mengenai 01. Fondasi Komunikasi Data."
+---
+# Modul 02: Fondasi Komunikasi Data — Bagaimana Dua Komputer Berbicara?
+
+**Platform:** Phinisi Learn  
+**Kurikulum Acuan:** Cisco Networking Academy — CCNA 1: Introduction to Networks (ITN v7.02)  
+**Tingkat:** Pemula (*Zero Knowledge*)  
+**Estimasi Waktu Baca:** 12–15 Menit  
+
+---
+
+> [!NOTE]
+> ### Target Pembelajaran Modul 02
+> Di akhir modul ini, kamu diharapkan mampu:
+> 1. Memahami aturan dasar komunikasi data (*Rules of Communication*) menggunakan analogi bahasa manusia.
+> 2. Menjelaskan 3 elemen utama pengiriman pesan: **Message Source**, **Channel**, dan **Message Destination**.
+> 3. Membedakan mode transmisi pengalamatan: **Unicast**, **Multicast**, dan **Broadcast**.
+> 4. Memahami fungsi protokol jaringan: *Message Encoding*, *Formatting & Encapsulation*, *Size*, *Timing*, dan *Delivery Options*.
+> 5. Mensimulasikan komunikasi 2 PC langsung menggunakan kabel *Cross-over* / *Straight-through* di Cisco Packet Tracer.
+
+---
+
+## 2.1 Menara Babel Digital: Kenapa Komputer Butuh Aturan?
+
+Bayangkan skenario ini:  
+Kamu orang Indonesia yang hanya bisa bahasa Indonesia, pergi ke sebuah desa terpencil di pedalaman Prancis. Di sana, kamu bertemu warga lokal yang hanya bisa bahasa Prancis. Kamu ingin memesan segelas air putih. 
+
+Kamu bicara bahasa Indonesia, dia membalas dengan bahasa Prancis. Hasilnya? **Komunikasi gagal total.**
+
+Kondisi yang sama persis terjadi pada komputer. Komputer pada dasarnya adalah kumpulan sirkuit elektronik mati. Laptop buatan Apple (macOS), server buatan Dell (Linux Ubuntu), dan PC rakitan (Windows 11) memiliki bahasa sistem internal yang berbeda-beda.
+
+Agar mereka bisa saling mengirim file tanpa salah paham, mereka membutuhkan **Protokol (*Protocol*)**.
+
+> [!NOTE]
+> **Definisi Simpel:**  
+> **Protokol** adalah kesepakatan aturan resmi yang menentukan bagaimana data diformat, dikirim, diterima, dan diterjemahkan antar-perangkat jaringan.
+
+---
+
+## 2.2 Tiga Elemen Dasar Komunikasi
+
+Sebelum masuk ke teknis jaringan yang lebih rumit, setiap komunikasi—baik percakapan tatap muka antar-manusia maupun streaming video antar-benua—selalu memiliki 3 elemen utama:
+1. **Message Source (Sumber Pesan):** Pihak yang membuat pesan (misal: laptopmu yang ingin meminta file gambar).
+    
+2. **Channel / Media:** Jalur fisik yang dilalui sinyal pesan (kabel tembaga UTP, serat optik, atau gelombang radio Wi-Fi).
+    
+3. **Message Destination (Tujuan Pesan):** Perangkat yang dituju dan menerima pesan tersebut (misal: web server Phinisi Learn).
+    
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_three_elements_communication.png]**
+> 
+> _Deskripsi Visual:_ Diagram yang menunjukkan analogi dua manusia berbicara melalui udara vs dua komputer mengirimkan sinyal data biner melalui kabel jaringan.
+
+## 2.3 Aturan Komunikasi Data (_The Rules of Communication_)
+
+Agar pesan dari _Source_ bisa dipahami sempurna oleh _Destination_, protokol jaringan menetapkan 5 aturan dasar:
+
+### 1. Message Encoding (Penerjemahan Sinyal)
+
+Pikiran manusia harus diubah menjadi getaran suara pita suara lewat udara agar bisa didengar orang lain.
+
+Di jaringan komputer:
+
+- Huruf, teks, dan gambar di laptop diubah menjadi angka biner: deretan `0` dan `1`.
+    
+- Deretan biner tersebut kemudian **di-encode (dikodekan)** menjadi sinyal fisik:
+    
+    - Arus voltase listrik di kabel tembaga LAN.
+        
+    - Kedipan sinyal optik inframerah di kabel fiber optik.
+        
+    - Frekuensi gelombang radio pada jaringan Wi-Fi.
+        
+
+Penerima di ujung kabel akan melakukan proses sebaliknya (**decode**) dari sinyal fisik kembali menjadi biner, lalu menjadi gambar atau teks.
+
+### 2. Message Formatting and Encapsulation (Format Amplop Surat)
+
+Saat kamu mengirim surat lewat pos, kamu tidak bisa melemparkan selembar kertas kosong begitu saja ke kurir. Kamu wajib memasukkannya ke dalam **amplop**, lalu menuliskan:
+
+- **Alamat Penerima:** Ke mana surat harus diantar?
+    
+- **Alamat Pengirim:** Siapa yang mengirim jika surat gagal terkirim?
+    
+- **Isi Surat:** Pesan intinya.
+    
+
+Di jaringan komputer, proses memasukkan data ke dalam wadah berlabel ini disebut **Enkapsulasi (_Encapsulation_)**. Format wadah di jaringan lokal disebut **Frame**.
+
+Plaintext
+
+```
++---------------------+-------------------+---------------------+------------------+
+| Alamat MAC Penerima | Alamat MAC Sumber | Data Asli (Payload) | Pengecek Error   |
+| (Destination MAC)   | (Source MAC)      | (Teks/Gambar)       | (Trailer FCS)    |
++---------------------+-------------------+---------------------+------------------+
+|<───────────────── Header ──────────────>|                     |<─── Trailer ────>|
+```
+
+> [!NOTE]
+> **Catatan:**
+> 
+> Alamat fisik perangkat pengirim dan penerima ini disebut **MAC Address**. Kita akan mengupas tuntas cara kerja MAC Address di **Modul 04**.
+
+### 3. Message Size (Ukuran Pesan)
+
+Jika seorang dosen berbicara tanpa jeda dan tanpa napas selama 30 menit tanpa henti, mahasiswanya pasti tidak akan mampu menangkap isi kuliahnya.
+
+Di jaringan komputer, komputer tidak mengirim berkas video 1 GB sekaligus dalam satu gelondongan besar. Berkas raksasa tersebut **dipotong-potong menjadi pecahan kecil (_chunks / segments_)** berukuran sekitar 1.500 byte. Jika ada satu pecahan yang rusak di jalan, komputer hanya perlu meminta kirim ulang pecahan kecil itu saja, bukan mengulang berkas 1 GB dari awal!
+
+### 4. Message Timing (Aturan Waktu dan Irama)
+
+Mengatur ritme pengiriman data agar penerima tidak kewalahan:
+
+- **Flow Control (Kontrol Aliran):** Memastikan komputer server yang sangat cepat tidak mengirim data terlalu membludak sampai membuat laptop penerima yang lambat mengalami kehabisan memori (_buffer overflow_).
+    
+- **Response Timeout:** Batas waktu tunggu balasan. Jika laptopmu mengirim data ke server dan server tidak membalas dalam kurun waktu tertentu (misal 5 detik), laptopmu menganggap paket hilang dan memunculkan notifikasi _Request Timed Out_.
+    
+
+### 5. Message Delivery Options (Opsi Target Pengiriman)
+
+Bagaimana cara pesan disampaikan kepada audiens jaringan? Ada 3 mode resmi:
+
+Plaintext
+
+```
+1. Unicast   : Satu ke Satu (Private Message)
+   [ Host A ] ──────────────► [ Host B ]
+
+2. Multicast : Satu ke Grup Tertentu (Group Meeting)
+   [ Host A ] ──────────────► [ Host B, Host C ]  (Host D tidak menerima)
+
+3. Broadcast : Satu ke SEMUA Orang di Jaringan (Pengumuman Paging)
+   [ Host A ] ──────────────► [ SEMUA HOST DI LAN ]
+```
+
+- **Unicast:** Pengiriman data dari **satu pengirim ke satu penerima spesifik**. Contoh: Kamu membuka web pribadi atau transfer file antar dua komputer.
+    
+- **Multicast:** Pengiriman data dari **satu pengirim ke sekelompok perangkat tertentu** yang telah bergabung ke dalam grup. Contoh: Siaran video streaming interaktif atau update tabel routing antar-router.
+    
+- **Broadcast:** Pengiriman data dari **satu pengirim ke SELURUH perangkat** yang berada di segmen jaringan lokal yang sama. Contoh: Komputer yang baru menyala berteriak mencari server DHCP untuk meminta jatah IP address.
+    
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_unicast_multicast_broadcast.png]**
+> 
+> _Deskripsi Visual:_ Diagram 3 kolom yang membandingkan Unicast (panah 1-ke-1), Multicast (panah 1-ke-beberapa host hijau), dan Broadcast (panah 1-ke-semua host di dalam switch).
+
+## 2.4 Menghubungkan 2 PC: Kabel Straight-Through vs Cross-Over
+
+Zaman dulu, menghubungkan dua komputer secara langsung tanpa alat bantu router atau switch memerlukan jenis kabel khusus. Memahami konsep ini adalah fondasi penting untuk mengerti cara kerja port kartu jaringan (_Network Interface Card / NIC_).
+
+Kabel LAN tembaga (UTP Cat5e/Cat6) memiliki 8 pin kawat tembaga berwarna di dalamnya. Standar urutan warna kawat internasional diatur oleh asosiasi **TIA/EIA-568A** dan **TIA/EIA-568B**.
+
+Plaintext
+
+```
+Pin 1 ──► Transmit + (TX+)       Pin 3 ──► Receive + (RX+)
+Pin 2 ──► Transmit - (TX-)       Pin 6 ──► Receive - (RX-)
+```
+
+Dua pin bertugas untuk **Mengirim data (Transmit / TX)**, dan dua pin bertugas untuk **Menerima data (Receive / RX)**.
+
+### Logika Sederhana Kabel:
+
+- Pin Mengirim (TX) di Komputer A **wajib** bertemu dengan Pin Menerima (RX) di Komputer B.
+    
+- Jika Pin TX bertemu Pin TX, data tabrakan dan kedua komputer tidak akan bisa berbicara!
+    
+
+Maka muncullah dua jenis kabel:
+
+|**Jenis Kabel**|**Konfigurasi Ujung Kabel**|**Digunakan Untuk Menghubungkan?**|
+|---|---|---|
+|**Straight-Through Cable**|Ujung 1: Standar B<br /><br />  <br /><br />Ujung 2: Standar B|**Perangkat yang BERBEDA jenis**:<br /><br />  <br /><br />- PC ke Switch<br /><br />  <br /><br />- Router ke Switch|
+|**Cross-Over Cable**|Ujung 1: Standar A<br /><br />  <br /><br />Ujung 2: Standar B (Pin TX & RX ditukar silang)|**Perangkat yang SEJENIS**:<br /><br />  <br /><br />- PC langsung ke PC<br /><br />  <br /><br />- Switch ke Switch<br /><br />  <br /><br />- Router langsung ke PC|
+
+> [!NOTE]
+> **Kabar Baik di Era Modern: Fitur Auto-MDIX!**
+> 
+> Di perangkat jaringan modern hari ini, kartu jaringan (NIC) sudah dilengkapi chip pintar bernama **Auto-MDIX (_Automatic Medium-Dependent Interface Crossover_)**. Port secara otomatis mendeteksi kawat kabel dan menukar jalur TX/RX secara digital di dalam chip. Jadi, colok kabel jenis apa pun zaman sekarang hampir selalu otomatis menyala!
+> 
+> _Namun, untuk ujian sertifikasi CCNA dan simulator Packet Tracer, logika kapan memakai Straight vs Crossover tetap wajib kamu kuasai._
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_crossover_vs_straight_pinout.png]**
+> 
+> _Deskripsi Visual:_ Diagram kawat kabel LAN yang memperlihatkan jalur pin Straight-through (pin 1 ke 1, 2 ke 2) vs Cross-over (pin 1 silang ke 3, pin 2 silang ke 6).
+
+## 2.5 Hands-on Lab: Menghubungkan 2 PC Pertama di Cisco Packet Tracer
+
+Saatnya beralih dari teori ke simulasi nyata! Kita akan menghubungkan dua komputer dan membuat mereka saling bertukar sinyal menggunakan **Cisco Packet Tracer**.
+
+### Skenario Lab:
+
+- **PC-A:** Diberi nama IP `192.168.1.1`
+    
+- **PC-B:** Diberi nama IP `192.168.1.2`
+    
+- Menghubungkan keduanya langsung menggunakan kabel _Cross-over_.
+    
+
+Plaintext
+
+```
+[ PC-A ]  ──────────────── (Kabel Copper Cross-Over) ────────────────  [ PC-B ]
+Fa0: 192.168.1.1                                                      Fa0: 192.168.1.2
+Subnet: 255.255.255.0                                                 Subnet: 255.255.255.0
+```
+
+### Langkah demi Langkah:
+
+#### 1. Menaruh Perangkat ke Lembar Kerja
+
+1. Buka Cisco Packet Tracer.
+    
+2. Di pojok kiri bawah, klik kategori **End Devices** (ikon PC).
+    
+3. Klik ikon **PC**, lalu klik pada lembar kerja putih dua kali untuk memunculkan **PC0** dan **PC1**.
+    
+4. Klik teks nama di bawah PC untuk mengubah namanya menjadi **PC-A** dan **PC-B**.
+    
+
+#### 2. Menghubungkan Kabel
+
+1. Klik kategori **Connections** (ikon petir oranye di kiri bawah).
+    
+2. Pilih kabel bergambar garis putus-putus hitam: **Copper Cross-Over**.
+    
+3. Klik pada **PC-A**, pilih port **FastEthernet0**.
+    
+4. Tarik garis ke **PC-B**, klik dan pilih port **FastEthernet0**.
+    
+5. Perhatikan lampu indikator segitiga di kedua ujung kabel: jika berubah dari merah menjadi **hijau**, artinya koneksi fisik (Layer 1) sudah terhubung!
+    
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_lab_packet_tracer_topology.png]**
+> 
+> _Deskripsi Visual:_ Screenshot lembar kerja Cisco Packet Tracer dengan 2 PC (PC-A dan PC-B) terhubung kabel putus-putus hijau (_Copper Cross-over_).
+
+#### 3. Memberikan Alamat Identitas Logis (IP Address)
+
+Komputer butuh alamat logis agar tahu siapa yang diajak bicara:
+
+1. Klik pada **PC-A** $\rightarrow$ Masuk ke tab **Desktop** $\rightarrow$ Klik menu **IP Configuration**.
+    
+2. Masukkan parameter berikut:
+    
+    - **IPv4 Address:** `192.168.1.1`
+        
+    - **Subnet Mask:** `255.255.255.0` (akan terisi otomatis saat diklik).
+        
+3. Tutup jendela konfigurasi PC-A.
+    
+4. Ulangi langkah yang sama pada **PC-B**:
+    
+    - **IPv4 Address:** `192.168.1.2`
+        
+    - **Subnet Mask:** `255.255.255.0`
+        
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_lab_ip_configuration_pca.png]**
+> 
+> _Deskripsi Visual:_ Screenshot jendela pengaturan "IP Configuration" di Packet Tracer pada PC-A dengan IP 192.168.1.1 dan Subnet Mask 255.255.255.0 terisi.
+
+#### 4. Uji Komunikasi via Terminal Simulasi (`ping`)
+
+Sekarang kita suruh PC-A mengetuk pintu PC-B:
+
+1. Masih di jendela **PC-A**, tab **Desktop** $\rightarrow$ Pilih **Command Prompt**.
+    
+2. Ketik perintah:
+    
+    DOS
+    
+    ```
+    ping 192.168.1.2
+    ```
+    
+3. Tekan `Enter`, dan perhatikan outputnya:
+    
+    Plaintext
+    
+    ```
+    Pinging 192.168.1.2 with 32 bytes of data:
+    
+    Reply from 192.168.1.2: bytes=32 time<1ms TTL=128
+    Reply from 192.168.1.2: bytes=32 time<1ms TTL=128
+    Reply from 192.168.1.2: bytes=32 time<1ms TTL=128
+    Reply from 192.168.1.2: bytes=32 time<1ms TTL=128
+    
+    Ping statistics for 192.168.1.2:
+        Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)
+    ```
+    
+
+**Selamat!** Kamu baru saja berhasil membangun jaringan komputer fungsional pertamamu dari nol. Kedua komputer tersebut telah bertukar pesan biner, memvalidasi frame, dan merespons tanpa ada data yang hilang (_0% loss_).
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul02_lab_ping_success.png]**
+> 
+> _Deskripsi Visual:_ Screenshot Command Prompt PC-A di dalam Packet Tracer yang menunjukkan hasil Ping berhasil (_Reply from 192.168.1.2... Lost = 0_).
+
+## 2.6 Uji Pemahaman Mandiri (Kuis Modul 02)
+
+Uji pemahamanmu sebelum melangkah ke model jaringan yang lebih komprehensif:
+
+**1. Sebuah laptop memutar video live streaming webinar yang ditonton oleh 20 mahasiswa terpilih dalam satu kelas kampus, sementara mahasiswa lain di luar kelas tidak menerima kiriman data video tersebut. Mode transmisi pengiriman data apakah yang sedang digunakan?**
+
+A. Unicast
+
+B. Broadcast
+
+C. Multicast
+
+D. Anycast
+
+**2. Di dalam komunikasi jaringan, proses membungkus potongan data aplikasi dengan menambahkan label alamat tujuan dan alamat asal (seperti menaruh surat ke dalam amplop) disebut:**
+
+A. Encoding
+
+B. Enkapsulasi (_Encapsulation_)
+
+C. Dekripsi
+
+D. Multiplexing
+
+**3. Berdasarkan kaidah kabel jaringan klasik TIA/EIA, jenis kabel apakah yang secara tepat digunakan untuk menghubungkan sebuah PC langsung ke port LAN PC lainnya tanpa melalui switch?**
+
+A. Straight-Through Cable
+
+B. Serial Console Cable
+
+C. Cross-Over Cable
+
+D. Fiber Optic Single-Mode
+
+**4. Fitur pada kartu jaringan modern yang secara otomatis mendeteksi susunan pin kabel tembaga dan menukar fungsi pin Transmit/Receive secara internal disebut:**
+
+A. Auto-MDIX
+
+B. Auto-Negotiation
+
+C. Full-Duplex
+
+D. Flow Control
+
+> [!TIP]
+> 
+> ### Kunci Jawaban & Penjelasan Singkat
+> 
+> 1. **C (Multicast)** — Pengiriman dari satu sumber ke sekelompok penerima spesifik di jaringan.
+>     
+> 2. **B (Enkapsulasi)** — Proses pemberian header alamat pada data sebelum dikirimkan melintasi media fisik.
+>     
+> 3. **C (Cross-Over Cable)** — Digunakan untuk menghubungkan dua perangkat sejenis (PC-ke-PC) agar pin pengirim (TX) menyilang ke pin penerima (RX).
+>     
+> 4. **A (Auto-MDIX)** — Teknologi cerdas yang membuat port modern bisa memakai kabel straight maupun cross-over secara bebas.
+>     
+
+## Rangkuman Konsep Kunci Modul 02
+
+1. **Aturan Bersama:** Protokol menyatukan sistem operasi dan perangkat yang berbeda agar dapat berbicara dalam format data yang sama.
+    
+2. **3 Elemen Komunikasi:** Setiap percakapan data melibatkan _Source_ (pengirim), _Channel_ (kabel/nirkabel), dan _Destination_ (penerima).
+    
+3. **Pemberian Amplop (Enkapsulasi):** Data dipotong-potong menjadi ukuran kecil, lalu dibungkus dengan header alamat asal dan tujuan sebelum ditransmisikan.
+    
+4. **3 Mode Kirim:** _Unicast_ (satu-ke-satu), _Multicast_ (satu-ke-grup), dan _Broadcast_ (satu-ke-semua perangkat lokal).
+    
+5. **Simulasi Nyata:** Dua PC dapat berkomunikasi langsung hanya dengan modal kabel LAN dan konfigurasi IP address yang berada dalam satu segmen yang sama.

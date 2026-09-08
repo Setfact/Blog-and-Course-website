@@ -43,7 +43,6 @@ const copy = isEnglish ? {
         const available = course.status === 'published';
         return (
           <li>
-            <span class="course-number">{String(index + 1).padStart(2, '0')}</span>
             <article
               data-path-course
               data-course={course.slug}
@@ -104,9 +103,8 @@ const copy = isEnglish ? {
   .path-courses > header { max-width: 680px; margin-bottom: 2rem; }
   .path-courses h2 { margin: 0; color: var(--color-navy); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -.02em; }
   .path-courses > header p { margin: .7rem 0 0; color: var(--color-muted); line-height: 1.65; }
-  ol { display: grid; max-width: 960px; gap: 1rem; margin: 0; padding: 0; list-style: none; }
-  li { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 1rem; }
-  .course-number { padding-top: 1.1rem; color: var(--color-primary); font-family: var(--font-mono); font-size: .78rem; font-weight: 700; }
+  ol { display: grid; max-width: 960px; gap: 1.25rem; margin: 0; padding: 0; list-style: none; }
+  li { display: block; width: 100%; }
   article { display: grid; grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr); overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: #fff; }
   article > img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; }
   .course-copy { padding: 1.35rem; }
@@ -119,5 +117,5 @@ const copy = isEnglish ? {
   .course-progress { display: grid; gap: .35rem; margin-top: .8rem; }.course-progress[hidden] { display: none; }
   .course-progress span { height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-phinisi-100); }.course-progress i { display: block; width: 0; height: 100%; background: var(--color-primary); }
   .course-progress b { color: var(--color-muted); font-size: .7rem; font-weight: 550; }
-  @media (max-width: 760px) { .hero-grid, article { grid-template-columns: 1fr; } .path-hero img { max-width: 640px; } li { grid-template-columns: 1fr; }.course-number { padding: 0; } article > img { min-height: 0; aspect-ratio: 16/9; } }
+  @media (max-width: 760px) { .hero-grid, article { grid-template-columns: 1fr; } .path-hero img { max-width: 640px; } article > img { min-height: 0; aspect-ratio: 16/9; } }
 </style>

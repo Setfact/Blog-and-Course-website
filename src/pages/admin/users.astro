@@ -56,8 +56,14 @@ const users = await getUsersList(supabase, { search, role, status });
     <!-- Users Table Card -->
     <section class="table-card">
       <div class="table-meta">
-        <strong class="table-title">Daftar Pengguna Terdaftar</strong>
-        <span class="count-badge">{users.length} pengguna ditemukan</span>
+        <div>
+          <strong class="table-title">Daftar Pengguna Terdaftar</strong>
+          <span class="count-badge">{users.length} pengguna ditemukan</span>
+        </div>
+        <a href="/api/admin/users/export" class="export-csv-btn">
+          <span class="material-symbols-outlined icon-mini">download</span>
+          <span>Ekspor Data CSV</span>
+        </a>
       </div>
 
       <div class="table-responsive">
@@ -117,6 +123,20 @@ const users = await getUsersList(supabase, { search, role, status });
                   </td>
                   <td>
                     <div class="actions-cell">
+                      <button
+                        type="button"
+                        class="btn-detail-user"
+                        data-uid={u.id}
+                        data-name={u.full_name}
+                        data-email={u.email}
+                        data-xp={u.xp}
+                        data-streak={u.streak}
+                        title="Lihat Progres Belajar & Detail"
+                      >
+                        <span class="material-symbols-outlined icon-mini">visibility</span>
+                        <span>Detail</span>
+                      </button>
+
                       <select class="role-selector" data-uid={u.id} aria-label="Ubah Role">
                         <option value="student" selected={u.role === 'student'}>Siswa</option>
                         <option value="moderator" selected={u.role === 'moderator'}>Moderator</option>
@@ -141,6 +161,57 @@ const users = await getUsersList(supabase, { search, role, status });
       </div>
     </section>
   </div>
+
+  <!-- Modal Detail Siswa & Riwayat Progres -->
+  <dialog id="user-detail-modal" class="detail-dialog">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="dialog-kicker">Inspeksi Pengguna</span>
+          <h3 class="dialog-title" id="modal-user-name">Detail Pengguna</h3>
+          <span class="dialog-email" id="modal-user-email">email@example.com</span>
+        </div>
+        <button type="button" class="dialog-close-btn" id="close-detail-modal-btn">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="user-stats-strip">
+          <div class="strip-item">
+            <span class="strip-label">Total XP</span>
+            <strong class="strip-val" id="modal-user-xp">0 XP</strong>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Streak Belajar</span>
+            <strong class="strip-val" id="modal-user-streak">0 Hari</strong>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Materi Selesai</span>
+            <strong class="strip-val" id="modal-user-completed">0 Modul</strong>
+          </div>
+        </div>
+
+        <div class="lessons-history-section">
+          <h4 class="history-title">Riwayat Modul yang Telah Diselesaikan</h4>
+          <div id="lessons-loading" class="history-loading">Memuat riwayat materi...</div>
+          <ul id="lessons-list" class="lessons-list hidden"></ul>
+          <div id="lessons-empty" class="history-empty hidden">Pengguna ini belum menyelesaikan modul materi apapun.</div>
+        </div>
+
+        <div class="admin-danger-zone">
+          <div class="danger-info">
+            <strong>Reset Progres Belajar Siswa</strong>
+            <p>Tindakan ini akan menghapus seluruh catatan materi yang diselesaikan dan mengembalikan XP serta streak ke 0.</p>
+          </div>
+          <button type="button" class="btn-reset-progress" id="btn-reset-progress">
+            <span class="material-symbols-outlined icon-mini">restart_alt</span>
+            <span>Reset Progres</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
   <script>
     // Role change listener
@@ -202,6 +273,122 @@ const users = await getUsersList(supabase, { search, role, status });
         }
       });
     });
+
+    // Modal User Detail & Progress Listener
+    const detailModal = document.getElementById('user-detail-modal') as HTMLDialogElement | null;
+    const closeModalBtn = document.getElementById('close-detail-modal-btn');
+    const modalUserName = document.getElementById('modal-user-name');
+    const modalUserEmail = document.getElementById('modal-user-email');
+    const modalUserXp = document.getElementById('modal-user-xp');
+    const modalUserStreak = document.getElementById('modal-user-streak');
+    const modalUserCompleted = document.getElementById('modal-user-completed');
+    const lessonsLoading = document.getElementById('lessons-loading');
+    const lessonsList = document.getElementById('lessons-list');
+    const lessonsEmpty = document.getElementById('lessons-empty');
+    const resetBtn = document.getElementById('btn-reset-progress') as HTMLButtonElement | null;
+
+    let activeSelectedUserId: string | null = null;
+
+    if (closeModalBtn && detailModal) {
+      closeModalBtn.addEventListener('click', () => detailModal.close());
+    }
+
+    document.querySelectorAll('.btn-detail-user').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const button = btn as HTMLElement;
+        const uid = button.dataset.uid;
+        const name = button.dataset.name || 'Pengguna';
+        const email = button.dataset.email || '';
+        const xp = button.dataset.xp || '0';
+        const streak = button.dataset.streak || '0';
+
+        if (!uid || !detailModal) return;
+        activeSelectedUserId = uid;
+
+        if (modalUserName) modalUserName.textContent = name;
+        if (modalUserEmail) modalUserEmail.textContent = email;
+        if (modalUserXp) modalUserXp.textContent = `${xp} XP`;
+        if (modalUserStreak) modalUserStreak.textContent = `${streak} Hari`;
+        if (modalUserCompleted) modalUserCompleted.textContent = 'Memuat...';
+
+        if (lessonsLoading) lessonsLoading.classList.remove('hidden');
+        if (lessonsList) {
+          lessonsList.classList.add('hidden');
+          lessonsList.innerHTML = '';
+        }
+        if (lessonsEmpty) lessonsEmpty.classList.add('hidden');
+
+        detailModal.showModal();
+
+        try {
+          const res = await fetch(`/api/admin/users/${uid}/progress`);
+          const data = await res.json();
+
+          if (lessonsLoading) lessonsLoading.classList.add('hidden');
+
+          if (modalUserCompleted) {
+            modalUserCompleted.textContent = `${data.totalCompleted || 0} Modul`;
+          }
+
+          if (data.completedLessons && data.completedLessons.length > 0) {
+            if (lessonsList) {
+              lessonsList.innerHTML = data.completedLessons
+                .map((item: any) => {
+                  const dateStr = new Date(item.completed_at).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  return `
+                    <li class="lesson-history-item">
+                      <span class="material-symbols-outlined icon-check">check_circle</span>
+                      <div class="lesson-history-meta">
+                        <strong>${item.course_slug} / ${item.lesson_id}</strong>
+                        <span>Diselesaikan pada ${dateStr}</span>
+                      </div>
+                    </li>
+                  `;
+                })
+                .join('');
+              lessonsList.classList.remove('hidden');
+            }
+          } else {
+            if (lessonsEmpty) lessonsEmpty.classList.remove('hidden');
+          }
+        } catch {
+          if (lessonsLoading) lessonsLoading.textContent = 'Gagal memuat riwayat progres.';
+        }
+      });
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async () => {
+        if (!activeSelectedUserId) return;
+        if (!confirm('Peringatan: Seluruh progres dan XP siswa ini akan direset kembali ke 0. Lanjutkan?')) return;
+
+        resetBtn.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/users/${activeSelectedUserId}/progress`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reset' }),
+          });
+          const result = await res.json();
+          if (result.success) {
+            alert('Progres siswa berhasil di-reset.');
+            window.location.reload();
+          } else {
+            alert(result.error || 'Gagal mereset progres.');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan.');
+        } finally {
+          resetBtn.disabled = false;
+        }
+      });
+    }
   </script>
 </AdminLayout>
 
@@ -306,6 +493,8 @@ const users = await getUsersList(supabase, { search, role, status });
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
   .table-title {
     font-family: var(--font-heading);
@@ -316,7 +505,28 @@ const users = await getUsersList(supabase, { search, role, status });
   .count-badge {
     font-size: 0.76rem;
     color: var(--color-muted);
+    margin-left: 0.5rem;
   }
+  .export-csv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+  .export-csv-btn:hover {
+    background: var(--color-phinisi-100);
+    border-color: var(--color-phinisi-300);
+  }
+
   .table-responsive {
     overflow-x: auto;
   }
@@ -406,7 +616,30 @@ const users = await getUsersList(supabase, { search, role, status });
   .actions-cell {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .btn-detail-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .btn-detail-user:hover {
+    background: var(--color-section);
+    border-color: var(--color-phinisi-300);
+  }
+  .icon-mini {
+    font-size: 1rem;
   }
   .role-selector {
     padding: 0.35rem 0.6rem;
@@ -443,5 +676,197 @@ const users = await getUsersList(supabase, { search, role, status });
     text-align: center;
     padding: 2.5rem;
     color: var(--color-muted);
+  }
+
+  /* Modal Detail */
+  .detail-dialog {
+    border: none;
+    border-radius: 1.5rem;
+    padding: 0;
+    background: transparent;
+    max-width: 580px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  }
+  .detail-dialog::backdrop {
+    background: rgba(9, 26, 58, 0.6);
+    backdrop-filter: blur(4px);
+  }
+  .dialog-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .dialog-kicker {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-muted);
+    letter-spacing: 0.04em;
+  }
+  .dialog-title {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0.15rem 0 0 0;
+  }
+  .dialog-email {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+  .dialog-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    display: grid;
+    place-items: center;
+  }
+  .dialog-close-btn:hover {
+    background: var(--color-section);
+    color: var(--color-navy);
+  }
+  .dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .user-stats-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    background: var(--color-section);
+    padding: 0.85rem;
+    border-radius: 1rem;
+  }
+  .strip-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .strip-label {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .strip-val {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .lessons-history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .history-title {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .history-loading, .history-empty {
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+  }
+  .lessons-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .lesson-history-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: #f8fafc;
+    border-radius: 0.65rem;
+    border: 1px solid var(--color-line);
+  }
+  .icon-check {
+    color: #16a34a;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .lesson-history-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  .lesson-history-meta strong {
+    font-size: 0.82rem;
+    color: var(--color-navy);
+  }
+  .lesson-history-meta span {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+  .admin-danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 1rem;
+  }
+  .danger-info strong {
+    display: block;
+    font-size: 0.82rem;
+    color: #9f1239;
+  }
+  .danger-info p {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.72rem;
+    color: #be123c;
+  }
+  .btn-reset-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.85rem;
+    background: #e11d48;
+    color: #ffffff;
+    border: none;
+    border-radius: 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 120ms ease;
+  }
+  .btn-reset-progress:hover {
+    background: #be123c;
+  }
+  .btn-reset-progress:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .hidden {
+    display: none;
   }
 </style>

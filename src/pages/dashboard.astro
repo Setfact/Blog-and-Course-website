@@ -2,18 +2,104 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/ui/Button.astro';
 import { loadCourses } from '../data/learning';
+import { createSupabaseServerClient } from '../lib/supabase';
+import { getRankTier, BADGE_DEFINITIONS, TIERS } from '../lib/rank';
+import { getXpHistory } from '../lib/xp';
 
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/login?redirect=/dashboard');
 }
 
-const courses = await loadCourses();
-const featuredCourses = courses.slice(0, 3);
+const errorParam = Astro.url.searchParams.get('error');
+let errorNotice = '';
+if (errorParam === 'unauthorized_keystatic') {
+  errorNotice = 'Halaman Keystatic CMS dikhususkan untuk Administrator (Superadmin). Anda telah dialihkan ke Dasbor Siswa.';
+} else if (errorParam === 'unauthorized_admin') {
+  errorNotice = 'Halaman Administrator hanya dapat diakses oleh akun pengelola yang berwenang.';
+}
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+// Ambil progres belajar dan pengumuman dari database
+const completedLessonsSet = new Set<string>();
+let activeAnnouncement = null;
+
+if (supabase) {
+  try {
+    const [progressRes, announceRes] = await Promise.all([
+      supabase.from('user_lesson_progress').select('course_slug, lesson_id').eq('user_id', user.id),
+      supabase.from('platform_announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]);
+
+    if (progressRes.data) {
+      progressRes.data.forEach((r) => completedLessonsSet.add(`${r.course_slug}/${r.lesson_id}`));
+    }
+    if (announceRes.data) {
+      activeAnnouncement = announceRes.data;
+    }
+  } catch (err) {
+    console.error('Error fetching dashboard progress:', err);
+  }
+}
+
+const [courses, xpLedger] = await Promise.all([
+  loadCourses(),
+  getXpHistory(supabase, user.id, 6),
+]);
+const rankTier = getRankTier(user.xp);
+
+// Hitung lencana yang terbuka
+const earnedBadges = new Set<string>();
+if (completedLessonsSet.size >= 1) earnedBadges.add('langkah-pertama');
+const securityCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('security-fundamentals/')).length;
+if (securityCount >= 1) earnedBadges.add('security-starter');
+if (securityCount >= 5) earnedBadges.add('security-guardian');
+const ccnaCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('ccna-fundamentals/')).length;
+if (ccnaCount >= 1) earnedBadges.add('ccna-explorer');
+if (user.streak >= 3) earnedBadges.add('streak-3');
+if (user.xp >= 900) earnedBadges.add('fleet-commander-badge');
+if (xpLedger.some((entry) => entry.source === 'community_solution')) earnedBadges.add('community-solver');
+if (xpLedger.some((entry) => entry.source === 'quiz_pass')) earnedBadges.add('quiz-master');
+const anyCourseFinished = courses.some((c) => {
+  const count = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
+  return count >= (c.lessonCount || 1);
+});
+if (anyCourseFinished) earnedBadges.add('course-finisher');
 ---
 
 <BaseLayout title="Dashboard Siswa" description="Pantau progres belajar jaringan, koleksi XP, dan lencana pencapaian Anda.">
   <div class="dashboard-container page-shell">
+    
+    <!-- Platform Announcement Banner If Active -->
+    {activeAnnouncement && (
+      <aside class:list={['announcement-banner', `announce-${activeAnnouncement.type}`]}>
+        <div class="announce-icon-wrap">
+          <span class="material-symbols-outlined">campaign</span>
+        </div>
+        <div class="announce-content">
+          <strong>Pengumuman Platform</strong>
+          <p>{activeAnnouncement.message}</p>
+        </div>
+      </aside>
+    )}
+
+    <!-- Notice Banner If Redirected with Error -->
+    {errorNotice && (
+      <aside class="dashboard-notice-banner" role="alert">
+        <div class="notice-icon-wrap">
+          <span class="material-symbols-outlined">lock</span>
+        </div>
+        <div class="notice-content">
+          <strong>Akses Dibatasi</strong>
+          <p>{errorNotice}</p>
+        </div>
+      </aside>
+    )}
+
     <!-- User Profile Header -->
     <header class="profile-hero">
       <div class="profile-info">
@@ -26,19 +112,29 @@ const featuredCourses = courses.slice(0, 3);
         </div>
         <div class="user-meta">
           <div class="user-name-row">
-            <h1 class="user-name">{user.full_name}</h1>
+            <h1 class="user-name" id="display-user-name">{user.full_name}</h1>
             {user.role === 'admin' ? (
               <span class="role-badge role-admin">Administrator</span>
             ) : (
               <span class="role-badge role-student">Siswa</span>
             )}
+            <span class="tier-pill">
+              <span class="material-symbols-outlined tier-pill-icon">{rankTier.icon}</span>
+              <span>{rankTier.name}</span>
+            </span>
           </div>
           <p class="user-email">{user.email}</p>
-          {user.bio && <p class="user-bio">{user.bio}</p>}
+          <p class="user-bio" id="display-user-bio">
+            {user.bio || 'Belum ada bio. Klik tombol edit profil untuk menambahkan bio Anda.'}
+          </p>
         </div>
       </div>
 
       <div class="profile-actions">
+        <button type="button" class="edit-profile-trigger" id="open-edit-modal-btn">
+          <span class="material-symbols-outlined icon-inline">edit</span>
+          <span>Edit Profil</span>
+        </button>
         {user.role === 'admin' && (
           <Button href="/admin" variant="primary" size="sm" class="admin-cta-btn">
             <span class="material-symbols-outlined icon-inline">admin_panel_settings</span>
@@ -53,7 +149,75 @@ const featuredCourses = courses.slice(0, 3);
       </div>
     </header>
 
-    <!-- Stats Row -->
+    <!-- Nautical Rank Tier Card -->
+    <section class="rank-card" aria-label="Tingkatan Pangkat Belajar">
+      <div class="rank-card-header">
+        <div class="rank-title-group">
+          <div class="rank-icon-wrap" style={`background: ${rankTier.badgeColor};`}>
+            <span class="material-symbols-outlined">{rankTier.icon}</span>
+          </div>
+          <div class="rank-title-box">
+            <span class="rank-kicker">Tingkatan Pangkat Maritim</span>
+            <h2 class="rank-name">{rankTier.name}</h2>
+            <span class="rank-subtitle">{rankTier.title}</span>
+          </div>
+        </div>
+        <div class="rank-header-right">
+          <button type="button" class="btn-guide-modal" id="open-ranks-modal-btn" title="Buka panduan tingkatan pangkat dan hak istimewa siswa">
+            <span class="material-symbols-outlined icon-btn-sm">military_tech</span>
+            <span>Panduan Pangkat & Keuntungan</span>
+          </button>
+          <div class="rank-xp-badge">
+            <strong>{user.xp}</strong>
+            <span>Total XP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rank-progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" style={`width: ${rankTier.progressPercent}%; background: ${rankTier.badgeColor};`}></div>
+        </div>
+        <div class="progress-labels">
+          <span>{rankTier.minXp} XP ({rankTier.name})</span>
+          {rankTier.nextTierName ? (
+            <span>{rankTier.remainingXp} XP lagi menuju {rankTier.nextTierName} ({rankTier.maxXp} XP)</span>
+          ) : (
+            <span>Pangkat Tertinggi Tercapai!</span>
+          )}
+        </div>
+      </div>
+
+      <!-- Active Perks for Current Tier -->
+      <div class="active-perks-box">
+        <div class="perks-header-line">
+          <span class="material-symbols-outlined icon-perk-title">verified</span>
+          <strong class="perks-heading">Keuntungan Aktif Pangkat {rankTier.name}:</strong>
+        </div>
+        <ul class="perks-list">
+          {rankTier.perks.map((perk) => (
+            <li>
+              <span class="material-symbols-outlined icon-perk-check">check_circle</span>
+              <span>{perk}</span>
+            </li>
+          ))}
+        </ul>
+
+        {rankTier.downloadableAssets && rankTier.downloadableAssets.length > 0 && (
+          <div class="perks-downloads-row">
+            <span class="downloads-label">Aset Lab Terbuka:</span>
+            {rankTier.downloadableAssets.map((asset) => (
+              <span class="asset-pill" title={asset.description}>
+                <span class="material-symbols-outlined icon-asset">download</span>
+                <span>{asset.name} ({asset.type})</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- Stats Grid -->
     <section class="stats-grid" aria-label="Statistik Belajar">
       <div class="stat-card">
         <div class="stat-icon stat-xp">
@@ -70,8 +234,18 @@ const featuredCourses = courses.slice(0, 3);
           <span class="material-symbols-outlined">local_fire_department</span>
         </div>
         <div class="stat-content">
-          <span class="stat-label">Hari Streak</span>
+          <span class="stat-label">Hari Streak Belajar</span>
           <strong class="stat-value">{user.streak} Hari</strong>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-lessons">
+          <span class="material-symbols-outlined">task_alt</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Materi Diselesaikan</span>
+          <strong class="stat-value">{completedLessonsSet.size} Modul</strong>
         </div>
       </div>
 
@@ -86,52 +260,326 @@ const featuredCourses = courses.slice(0, 3);
       </div>
     </section>
 
-    <!-- Admin Banner If Admin -->
-    {user.role === 'admin' && (
-      <section class="admin-banner">
-        <div class="banner-icon">
-          <span class="material-symbols-outlined">shield</span>
-        </div>
-        <div class="banner-body">
-          <strong>Hak Akses Superadmin Aktif</strong>
-          <p>Anda memiliki wewenang penuh untuk memantau data pengguna, kurikulum kursus, dan memoderasi komunitas.</p>
-        </div>
-        <Button href="/admin" size="sm">Kelola Platform</Button>
-      </section>
-    )}
-
-    <!-- Courses Continue Section -->
-    <section class="learning-section">
+    <!-- XP Activity Ledger Section -->
+    <section class="ledger-section" aria-label="Riwayat Perolehan XP">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Lanjutkan Pembelajaran</h2>
-          <p class="section-desc">Pilih modul materi dan selesaikan tantangan untuk menambah poin XP Anda.</p>
+          <h2 class="section-title">Buku Besar Riwayat XP (Activity Ledger)</h2>
+          <p class="section-desc">Catatan perolehan poin pengalaman dari materi kurikulum, evaluasi kuis, dan kontribusi komunitas.</p>
         </div>
-        <Button href="/courses" variant="secondary" size="sm">Lihat Semua Kursus</Button>
+        <span class="ledger-count-pill">{xpLedger.length} Mutasi Terakhir</span>
       </div>
 
-      <div class="courses-preview-grid">
-        {featuredCourses.map((c) => (
-          <div class="course-mini-card">
-            <div class="course-mini-header">
-              <span class="course-category-tag">{c.category.toUpperCase()}</span>
-              <span class="course-level-tag">{c.level}</span>
-            </div>
-            <h3 class="course-mini-title">{c.title}</h3>
-            <p class="course-mini-desc">{c.description.id}</p>
-            <div class="course-mini-footer">
-              <span class="lesson-count-badge">
-                <span class="material-symbols-outlined icon-xs">menu_book</span>
-                <span>{c.lessonCount} materi</span>
+      <div class="ledger-list">
+        {xpLedger.map((entry) => (
+          <div class="ledger-item">
+            <div class:list={['ledger-badge', `source-${entry.source}`]}>
+              <span class="material-symbols-outlined icon-ledger">
+                {entry.source === 'community_solution'
+                  ? 'verified'
+                  : entry.source === 'course_completion'
+                    ? 'school'
+                    : entry.source === 'quiz_pass'
+                      ? 'psychology'
+                      : 'task_alt'}
               </span>
-              <Button href={`/courses/${c.slug}`} size="sm">Buka Kursus</Button>
+              <span>+{entry.amount} XP</span>
+            </div>
+            <div class="ledger-info">
+              <strong class="ledger-title">{entry.title}</strong>
+              <span class="ledger-time">
+                {new Date(entry.created_at).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
             </div>
           </div>
         ))}
       </div>
     </section>
+
+    <!-- Badges Showcase Section -->
+    <section class="badges-section" aria-label="Lencana Pencapaian">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Lencana Pencapaian Belajar</h2>
+          <p class="section-desc">Koleksi lencana yang diperoleh dari menyelesaikan materi dan tantangan lab teknis.</p>
+        </div>
+        <span class="badge-count-pill">{earnedBadges.size} dari {BADGE_DEFINITIONS.length} Terbuka</span>
+      </div>
+
+      <div class="badges-grid">
+        {BADGE_DEFINITIONS.map((badge) => {
+          const isUnlocked = earnedBadges.has(badge.id);
+          return (
+            <div class:list={['badge-card', isUnlocked ? 'badge-unlocked' : 'badge-locked']}>
+              <div class="badge-icon-box">
+                <span class="material-symbols-outlined">
+                  {isUnlocked ? badge.icon : 'lock'}
+                </span>
+              </div>
+              <div class="badge-info">
+                <strong class="badge-title">{badge.name}</strong>
+                <p class="badge-desc">{badge.description}</p>
+                <span class="badge-status-tag">
+                  {isUnlocked ? 'Tercapai' : 'Terkunci'}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- Courses Continue Section with Real Progress -->
+    <section class="learning-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Kurikulum Pembelajaran Anda</h2>
+          <p class="section-desc">Pilih modul materi dan selesaikan tantangan untuk menaikkan peringkat maritim Anda.</p>
+        </div>
+        <Button href="/courses" variant="secondary" size="sm">Lihat Katalog Lengkap</Button>
+      </div>
+
+      <div class="courses-preview-grid">
+        {courses.map((c) => {
+          const totalInCourse = c.lessonCount || 1;
+          const userCompletedInCourse = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
+          const coursePercent = Math.min(100, Math.round((userCompletedInCourse / totalInCourse) * 100));
+
+          return (
+            <div class="course-mini-card">
+              <div class="course-mini-header">
+                <span class="course-category-tag">{c.category.toUpperCase()}</span>
+                <span class="course-level-tag">{c.level}</span>
+              </div>
+              <h3 class="course-mini-title">{c.title}</h3>
+              <p class="course-mini-desc">{c.description.id}</p>
+              
+              <!-- Real Course Progress Bar -->
+              <div class="course-progress-block">
+                <div class="course-prog-meta">
+                  <span class="prog-label">Progres Kursus</span>
+                  <strong class="prog-val">{userCompletedInCourse}/{totalInCourse} materi ({coursePercent}%)</strong>
+                </div>
+                <div class="course-prog-track">
+                  <div class="course-prog-fill" style={`width: ${coursePercent}%;`}></div>
+                </div>
+              </div>
+
+              <div class="course-mini-footer">
+                <span class="lesson-count-badge">
+                  <span class="material-symbols-outlined icon-xs">menu_book</span>
+                  <span>{c.lessonCount} materi</span>
+                </span>
+                <Button href={`/courses/${c.slug}`} size="sm">
+                  {coursePercent > 0 ? 'Lanjutkan Belajar' : 'Mulai Kursus'}
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+
   </div>
+
+  <!-- Ranks & Perks Guide Modal Dialog -->
+  <dialog id="ranks-guide-modal" class="guide-modal">
+    <div class="guide-modal-card">
+      <div class="modal-header">
+        <div class="guide-title-box">
+          <span class="guide-kicker">SISTEM PANGKAT & HAK ISTIMEWA</span>
+          <h3 class="modal-title">Jenjang Pangkat Maritim & Keuntungan Siswa</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="close-ranks-modal-btn" aria-label="Tutup panduan">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="guide-tiers-list">
+        {TIERS.map((t) => {
+          const isCurrent = rankTier.id === t.id;
+          return (
+            <div class:list={['tier-card', { 'is-current-tier': isCurrent }]} style={`--tier-color: ${t.badgeColor};`}>
+              <div class="tier-card-header">
+                <div class="tier-icon-wrap" style={`background-color: ${t.badgeColor};`}>
+                  <span class="material-symbols-outlined">{t.icon}</span>
+                </div>
+                <div class="tier-title-wrap">
+                  <div class="tier-name-line">
+                    <strong class="tier-name">{t.name}</strong>
+                    {isCurrent && <span class="current-tier-tag">Pangkat Anda Saat Ini</span>}
+                  </div>
+                  <span class="tier-xp-range">{t.minXp} - {t.maxXp === Infinity ? '3000+' : t.maxXp} XP · {t.title}</span>
+                </div>
+              </div>
+              <ul class="tier-perks-list">
+                {t.perks.map((p) => (
+                  <li>
+                    <span class="material-symbols-outlined icon-tier-check">done</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Edit Profile Modal Dialog -->
+  <dialog id="edit-profile-modal" class="edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Perbarui Profil Anda</h3>
+        <button type="button" class="modal-close-btn" id="close-edit-modal-btn" aria-label="Tutup modal">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form id="edit-profile-form" class="modal-form">
+        <div class="form-field">
+          <label for="edit-fullname" class="field-label">Nama Lengkap</label>
+          <input
+            type="text"
+            id="edit-fullname"
+            name="full_name"
+            value={user.full_name}
+            required
+            maxlength="80"
+            class="text-input"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="edit-bio" class="field-label">Bio Singkat</label>
+          <textarea
+            id="edit-bio"
+            name="bio"
+            rows="3"
+            maxlength="300"
+            placeholder="Tuliskan minat belajar Anda, sertifikasi yang sedang dipersiapkan, atau fokus keahlian..."
+            class="textarea-input"
+          >{user.bio}</textarea>
+          <small class="field-hint">Maksimal 300 karakter.</small>
+        </div>
+
+        <div id="modal-error-msg" class="modal-error hidden"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-modal-btn" id="cancel-edit-btn">Batal</button>
+          <button type="submit" class="save-modal-btn" id="save-profile-btn">
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 </BaseLayout>
+
+<script>
+  // Modal Panduan Pangkat Script
+  const ranksModal = document.getElementById('ranks-guide-modal') as HTMLDialogElement | null;
+  const openRanksBtn = document.getElementById('open-ranks-modal-btn');
+  const closeRanksBtn = document.getElementById('close-ranks-modal-btn');
+
+  if (openRanksBtn && ranksModal) {
+    openRanksBtn.addEventListener('click', () => ranksModal.showModal());
+  }
+  if (closeRanksBtn && ranksModal) {
+    closeRanksBtn.addEventListener('click', () => ranksModal.close());
+  }
+  if (ranksModal) {
+    ranksModal.addEventListener('click', (e) => {
+      if (e.target === ranksModal) ranksModal.close();
+    });
+  }
+
+  // Modal Edit Profil Script
+  const modal = document.getElementById('edit-profile-modal') as HTMLDialogElement | null;
+  const openBtn = document.getElementById('open-edit-modal-btn');
+  const closeBtn = document.getElementById('close-edit-modal-btn');
+  const cancelBtn = document.getElementById('cancel-edit-btn');
+  const form = document.getElementById('edit-profile-form') as HTMLFormElement | null;
+  const errorMsg = document.getElementById('modal-error-msg');
+  const saveBtn = document.getElementById('save-profile-btn') as HTMLButtonElement | null;
+
+  if (openBtn && modal) {
+    openBtn.addEventListener('click', () => {
+      if (errorMsg) {
+        errorMsg.textContent = '';
+        errorMsg.classList.add('hidden');
+      }
+      modal.showModal();
+    });
+  }
+
+  const closeModal = () => {
+    if (modal) modal.close();
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!saveBtn) return;
+
+      const formData = new FormData(form);
+      const full_name = String(formData.get('full_name') || '').trim();
+      const bio = String(formData.get('bio') || '').trim();
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Menyimpan...';
+      if (errorMsg) {
+        errorMsg.textContent = '';
+        errorMsg.classList.add('hidden');
+      }
+
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ full_name, bio }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal menyimpan profil');
+        }
+
+        // Perbarui UI di layar
+        const nameEl = document.getElementById('display-user-name');
+        const bioEl = document.getElementById('display-user-bio');
+        if (nameEl) nameEl.textContent = data.full_name;
+        if (bioEl) bioEl.textContent = data.bio || 'Belum ada bio.';
+
+        window.dispatchEvent(
+          new CustomEvent('phinisi-toast', {
+            detail: { message: 'Profil Anda berhasil diperbarui', type: 'success' },
+          })
+        );
+
+        closeModal();
+      } catch (err: any) {
+        if (errorMsg) {
+          errorMsg.textContent = err.message || 'Terjadi kesalahan sistem';
+          errorMsg.classList.remove('hidden');
+        }
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan Perubahan';
+      }
+    });
+  }
+</script>
 
 <style>
   .dashboard-container {
@@ -140,6 +588,86 @@ const featuredCourses = courses.slice(0, 3);
     flex-direction: column;
     gap: 2rem;
   }
+
+  /* Announcement Banner */
+  .announcement-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.15rem 1.4rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.04);
+  }
+  .announce-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+  }
+  .announce-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #78350f;
+  }
+  .announce-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #14532d;
+  }
+  .announce-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 0.85rem;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    flex-shrink: 0;
+  }
+  .announce-content strong {
+    display: block;
+    font-size: 0.9rem;
+    font-family: var(--font-heading);
+    font-weight: 800;
+  }
+  .announce-content p {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.85rem;
+  }
+
+  /* Notice Banner */
+  .dashboard-notice-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.15rem 1.4rem;
+    border-radius: 1.25rem;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #78350f;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.04);
+  }
+  .notice-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 0.85rem;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    flex-shrink: 0;
+    color: #b45309;
+  }
+  .notice-content strong {
+    display: block;
+    font-size: 0.9rem;
+    font-family: var(--font-heading);
+    font-weight: 800;
+  }
+  .notice-content p {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  /* Profile Hero */
   .profile-hero {
     display: flex;
     flex-wrap: wrap;
@@ -208,6 +736,21 @@ const featuredCourses = courses.slice(0, 3);
     background: var(--color-phinisi-100);
     color: var(--color-phinisi-800);
   }
+  .tier-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+  .tier-pill-icon {
+    font-size: 0.95rem;
+  }
   .user-email {
     margin: 0.25rem 0 0 0;
     color: var(--color-muted);
@@ -217,6 +760,7 @@ const featuredCourses = courses.slice(0, 3);
     margin: 0.4rem 0 0 0;
     color: var(--color-ink);
     font-size: 0.85rem;
+    max-width: 600px;
   }
   .profile-actions {
     display: flex;
@@ -224,9 +768,27 @@ const featuredCourses = courses.slice(0, 3);
     gap: 0.75rem;
     flex-wrap: wrap;
   }
+  .edit-profile-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .edit-profile-trigger:hover {
+    background: var(--color-section);
+    border-color: var(--color-phinisi-300);
+  }
   .icon-inline {
-    font-size: 1.1rem;
-    margin-right: 0.35rem;
+    font-size: 1.05rem;
   }
   .signout-link {
     font-family: var(--font-heading);
@@ -242,7 +804,223 @@ const featuredCourses = courses.slice(0, 3);
     background: var(--color-danger-soft);
   }
 
-  /* Stats */
+  /* Nautical Rank Card */
+  .rank-card {
+    background: linear-gradient(135deg, #081a3a 0%, #0d2757 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1.5rem;
+    padding: 1.75rem 2rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    box-shadow: 0 10px 30px rgba(8, 26, 58, 0.15);
+  }
+  .rank-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .rank-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+  }
+  .rank-icon-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+    color: #fbbf24;
+    flex-shrink: 0;
+  }
+  .rank-icon-wrap .material-symbols-outlined {
+    font-size: 1.85rem;
+  }
+  .rank-title-box {
+    display: flex;
+    flex-direction: column;
+  }
+  .rank-kicker {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+  .rank-name {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0.15rem 0 0 0;
+    color: #ffffff;
+  }
+  .rank-xp-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .rank-xp-badge strong {
+    font-family: var(--font-heading);
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: #fbbf24;
+    line-height: 1;
+  }
+  .rank-xp-badge span {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+  }
+  .rank-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .progress-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #fbbf24);
+    border-radius: 999px;
+    transition: width 400ms ease;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .rank-subtitle {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin-top: 0.15rem;
+    font-weight: 500;
+  }
+  .rank-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .btn-guide-modal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .btn-guide-modal:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+  }
+  .icon-btn-sm {
+    font-size: 1.1rem;
+    color: #fbbf24;
+  }
+  .active-perks-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .perks-header-line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .icon-perk-title {
+    font-size: 1.1rem;
+    color: #38bdf8;
+  }
+  .perks-heading {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: 0.02em;
+  }
+  .perks-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.5rem 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .perks-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+  .icon-perk-check {
+    font-size: 1rem;
+    color: #4ade80;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .perks-downloads-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+  }
+  .downloads-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+  .downloads-badges-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .asset-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    color: #7dd3fc;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+  .icon-asset {
+    font-size: 0.95rem;
+  }
+
+  /* Stats Grid */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -265,18 +1043,10 @@ const featuredCourses = courses.slice(0, 3);
     place-items: center;
     flex-shrink: 0;
   }
-  .stat-xp {
-    background: var(--color-gold-soft);
-    color: #b45309;
-  }
-  .stat-streak {
-    background: #ffedd5;
-    color: #c2410c;
-  }
-  .stat-role {
-    background: var(--color-phinisi-50);
-    color: var(--color-phinisi-700);
-  }
+  .stat-xp { background: var(--color-gold-soft); color: #b45309; }
+  .stat-streak { background: #ffedd5; color: #c2410c; }
+  .stat-lessons { background: #e0e7ff; color: #4338ca; }
+  .stat-role { background: var(--color-phinisi-50); color: var(--color-phinisi-700); }
   .stat-content {
     display: flex;
     flex-direction: column;
@@ -296,41 +1066,91 @@ const featuredCourses = courses.slice(0, 3);
     text-transform: capitalize;
   }
 
-  /* Admin Banner */
-  .admin-banner {
+  /* Badges Section */
+  .badges-section {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 1.25rem;
-    padding: 1.25rem 1.5rem;
-    border-radius: 1.25rem;
-    background: #fff8eb;
-    border: 1px solid #fde68a;
   }
-  .banner-icon {
+  .badge-count-pill {
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .badge-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.95rem;
+    padding: 1.25rem;
+    border-radius: 1.15rem;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    transition: all 180ms ease;
+  }
+  .badge-card.badge-unlocked {
+    border-color: #fde68a;
+    background: #fffdf5;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+  }
+  .badge-card.badge-locked {
+    opacity: 0.65;
+    background: #f8fafc;
+  }
+  .badge-icon-box {
     width: 44px;
     height: 44px;
     border-radius: 0.85rem;
-    background: #fef3c7;
-    color: #92400e;
     display: grid;
     place-items: center;
     flex-shrink: 0;
   }
-  .banner-body {
-    flex: 1;
+  .badge-unlocked .badge-icon-box {
+    background: #fef3c7;
+    color: #b45309;
   }
-  .banner-body strong {
-    display: block;
-    color: #92400e;
-    font-size: 0.95rem;
+  .badge-locked .badge-icon-box {
+    background: #e2e8f0;
+    color: #64748b;
   }
-  .banner-body p {
-    margin: 0.2rem 0 0 0;
-    color: #78350f;
-    font-size: 0.82rem;
+  .badge-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
+  .badge-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .badge-desc {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.4;
+  }
+  .badge-status-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 0.35rem;
+    letter-spacing: 0.03em;
+  }
+  .badge-unlocked .badge-status-tag { color: #15803d; }
+  .badge-locked .badge-status-tag { color: #94a3b8; }
 
-  /* Learning preview */
+  /* Learning Section */
   .learning-section {
     display: flex;
     flex-direction: column;
@@ -405,6 +1225,46 @@ const featuredCourses = courses.slice(0, 3);
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Progress Bar Block */
+  .course-progress-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    background: var(--color-section);
+    padding: 0.75rem 0.95rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-line);
+  }
+  .course-prog-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+  }
+  .prog-label {
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .prog-val {
+    color: var(--color-navy);
+    font-weight: 700;
+  }
+  .course-prog-track {
+    width: 100%;
+    height: 8px;
+    background: #dce7f5;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .course-prog-fill {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 999px;
+    transition: width 300ms ease;
+  }
+
   .course-mini-footer {
     display: flex;
     align-items: center;
@@ -422,5 +1282,381 @@ const featuredCourses = courses.slice(0, 3);
   }
   .icon-xs {
     font-size: 0.95rem;
+  }
+
+  /* Modal Edit Profil */
+  .edit-modal {
+    border: none;
+    border-radius: 1.5rem;
+    padding: 0;
+    background: transparent;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  }
+  .edit-modal::backdrop {
+    background: rgba(9, 26, 58, 0.6);
+    backdrop-filter: blur(4px);
+  }
+  .modal-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-title {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    display: grid;
+    place-items: center;
+  }
+  .modal-close-btn:hover {
+    background: var(--color-section);
+    color: var(--color-navy);
+  }
+  .modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .field-label {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .text-input, .textarea-input {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    box-sizing: border-box;
+    transition: border-color 150ms ease;
+  }
+  .text-input:focus, .textarea-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+  .textarea-input {
+    resize: vertical;
+  }
+  .field-hint {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+  .modal-error {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.82rem;
+  }
+  .modal-error.hidden {
+    display: none;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .cancel-modal-btn {
+    padding: 0.65rem 1.15rem;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    color: var(--color-ink);
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cancel-modal-btn:hover {
+    background: var(--color-section);
+  }
+  .save-modal-btn {
+    padding: 0.65rem 1.25rem;
+    border: none;
+    background: var(--color-primary);
+    color: #ffffff;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  .save-modal-btn:hover {
+    background: #0e4ca9;
+  }
+  .save-modal-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  /* XP Ledger Section */
+  .ledger-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .ledger-count-pill {
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .ledger-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .ledger-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .ledger-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(8, 26, 58, 0.04);
+  }
+  .ledger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .source-course_completion {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+  .source-quiz_pass {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+  .source-community_solution {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .source-lesson_complete {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+  }
+  .icon-ledger {
+    font-size: 1.1rem;
+  }
+  .ledger-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+  }
+  .ledger-title {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .ledger-time {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+  }
+  .ledger-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    background: #ffffff;
+    border: 1px dashed var(--color-line);
+    border-radius: 1.25rem;
+    color: var(--color-muted);
+    text-align: center;
+    gap: 0.5rem;
+  }
+  .icon-ledger-empty {
+    font-size: 2.2rem;
+    color: var(--color-muted);
+    opacity: 0.7;
+  }
+  .ledger-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+    max-width: 480px;
+  }
+
+  /* Ranks Guide Modal */
+  .guide-modal {
+    border: none;
+    border-radius: 1.5rem;
+    padding: 0;
+    background: transparent;
+    max-width: 680px;
+    width: 92%;
+    box-shadow: 0 25px 50px -12px rgba(8, 26, 58, 0.35);
+  }
+  .guide-modal::backdrop {
+    background: rgba(9, 26, 58, 0.65);
+    backdrop-filter: blur(5px);
+  }
+  .guide-modal-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .guide-title-box {
+    display: flex;
+    flex-direction: column;
+  }
+  .guide-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    text-transform: uppercase;
+  }
+  .guide-tiers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .tier-card {
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 1.15rem 1.25rem;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: all 150ms ease;
+    position: relative;
+  }
+  .tier-card.is-current-tier {
+    border: 2px solid var(--tier-color, var(--color-primary));
+    background: #f8fafc;
+    box-shadow: 0 4px 16px rgba(8, 26, 58, 0.06);
+  }
+  .tier-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.95rem;
+  }
+  .tier-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.9rem;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+  .tier-icon-wrap .material-symbols-outlined {
+    font-size: 1.4rem;
+  }
+  .tier-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+  }
+  .tier-name-line {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .tier-name {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .current-tier-tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--color-primary);
+    color: #ffffff;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+  .tier-xp-range {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .tier-perks-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.4rem 0.85rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--color-line);
+    padding-top: 0.75rem;
+  }
+  .tier-perks-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--color-ink);
+    line-height: 1.4;
+  }
+  .icon-tier-check {
+    font-size: 1rem;
+    color: #16a34a;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
   }
 </style>

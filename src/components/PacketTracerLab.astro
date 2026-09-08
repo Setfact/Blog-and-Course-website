@@ -1,0 +1,418 @@
+---
+import { getPlatformDownloadUrl } from '../lib/drive';
+
+interface Props {
+  activityId?: string;
+  courseSlug?: string;
+  lessonId?: string;
+  title?: string;
+  // Berkas PKT / Simulasi
+  pktUrl?: string;
+  driveUrl?: string; // Kompatibilitas mundur
+  fileName?: string;
+  // Berkas Panduan Praktikum PDF
+  pdfUrl?: string;
+  pdfFileName?: string;
+  // Metadata & Opsi
+  fileSize?: string;
+  minVersion?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  durationMinutes?: number;
+  xp?: number;
+  description?: string;
+  tasks?: string[];
+}
+
+const {
+  courseSlug = '',
+  lessonId = '',
+  activityId = `lab-${courseSlug}-${lessonId}`,
+  title = 'Praktik Lab',
+  pktUrl,
+  driveUrl,
+  fileName = 'lab-praktik.pkt',
+  pdfUrl,
+  pdfFileName,
+  xp = 40,
+  description = '',
+  tasks = [],
+} = Astro.props;
+
+const effectivePktUrl = pktUrl || driveUrl || '';
+
+// Sanitasi nama berkas PKT
+let cleanPktName = (fileName || 'lab-praktik.pkt').trim();
+if (!cleanPktName.toLowerCase().endsWith('.pkt') && !cleanPktName.toLowerCase().endsWith('.pka')) {
+  cleanPktName += '.pkt';
+}
+
+// Sanitasi nama berkas PDF
+let cleanPdfName = (pdfFileName || `${cleanPktName.replace(/\.(pkt|pka)$/i, '')}-panduan.pdf`).trim();
+if (!cleanPdfName.toLowerCase().endsWith('.pdf')) {
+  cleanPdfName += '.pdf';
+}
+
+// Tentukan URL unduhan
+const pktDownloadUrl = effectivePktUrl.startsWith('/labs/')
+  ? effectivePktUrl
+  : getPlatformDownloadUrl(effectivePktUrl, cleanPktName);
+
+const pdfDownloadUrl = pdfUrl
+  ? (pdfUrl.startsWith('/labs/') ? pdfUrl : getPlatformDownloadUrl(pdfUrl, cleanPdfName))
+  : '';
+---
+
+<section
+  class="netacad-lab-wrapper"
+  data-packet-tracer-lab
+  data-activity-id={activityId}
+  data-course={courseSlug}
+  data-lesson={lessonId}
+  data-xp={xp}
+  data-download-url={pktDownloadUrl}
+>
+  {description && <p class="netacad-lab-desc">{description}</p>}
+
+  <!-- Baris Tombol Aksi Bersih Gaya Cisco NetAcad -->
+  <div class="netacad-actions-row">
+    {pdfUrl && (
+      <a
+        href={pdfDownloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="netacad-btn btn-pdf"
+        data-pdf-btn
+        title={`Buka atau Unduh Berkas PDF Panduan: ${cleanPdfName}`}
+      >
+        <span class="material-symbols-outlined netacad-icon" aria-hidden="true">description</span>
+        <span class="netacad-btn-text">{title}</span>
+      </a>
+    )}
+
+    {effectivePktUrl && (
+      <button
+        type="button"
+        class="netacad-btn btn-pkt"
+        data-download-btn
+        title={`Unduh Berkas Simulasi Packet Tracer: ${cleanPktName}`}
+      >
+        <span class="material-symbols-outlined netacad-icon" data-btn-icon aria-hidden="true">download</span>
+        <span class="netacad-btn-text" data-btn-label>{title}</span>
+        <span class="netacad-status-badge" data-status-bar hidden>
+          <span class="material-symbols-outlined icon-check" aria-hidden="true">check_circle</span>
+          <span class="badge-label">Tersimpan (+{xp} XP)</span>
+        </span>
+      </button>
+    )}
+  </div>
+
+  <!-- Checklist Langkah Target Praktikum (Opsional) -->
+  {tasks && tasks.length > 0 && (
+    <div class="netacad-tasks-card">
+      <div class="tasks-card-header">
+        <span class="material-symbols-outlined icon-task-header" aria-hidden="true">checklist</span>
+        <strong>Target & Checklist Konfigurasi:</strong>
+      </div>
+      <ul class="tasks-checklist">
+        {tasks.map((task, idx) => (
+          <li class="task-check-item">
+            <label class="task-label">
+              <input type="checkbox" class="task-check-input" data-task-index={idx} />
+              <span class="task-text">{task}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</section>
+
+<script>
+  import { getLearningState, completeActivity } from '../scripts/learning-store';
+
+  function initPacketTracerLab(root: HTMLElement) {
+    if (root.dataset.labReady === 'true') {
+      return;
+    }
+    root.dataset.labReady = 'true';
+
+    const activityId = root.dataset.activityId || '';
+    const courseSlug = root.dataset.course || '';
+    const lessonId = root.dataset.lesson || '';
+    const xp = Number(root.dataset.xp || 40);
+    const downloadUrl = root.dataset.downloadUrl || '#';
+
+    const downloadBtn = root.querySelector<HTMLButtonElement>('[data-download-btn]');
+    const btnIcon = root.querySelector<HTMLElement>('[data-btn-icon]');
+    const statusBar = root.querySelector<HTMLElement>('[data-status-bar]');
+
+    const activityKey = `${courseSlug}:${activityId}`;
+
+    const updateUiState = () => {
+      const state = getLearningState();
+      const isDownloaded = state.completedActivities.includes(activityKey);
+
+      if (isDownloaded) {
+        root.classList.add('is-completed');
+        if (downloadBtn) {
+          downloadBtn.classList.add('btn-downloaded');
+        }
+        if (btnIcon) {
+          btnIcon.textContent = 'download_done';
+        }
+        if (statusBar) {
+          statusBar.hidden = false;
+        }
+      }
+    };
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        // Picu unduhan berkas melalui tautan platform
+        const tempLink = document.createElement('a');
+        tempLink.href = downloadUrl;
+        tempLink.setAttribute('download', '');
+        tempLink.style.display = 'none';
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+
+        // Catat aktivitas ke learning store (tanpa auto-complete lesson agar LessonGate yang memvalidasi)
+        completeActivity({
+          activityId,
+          courseSlug,
+          lessonId,
+          xp,
+          completesLesson: false,
+        });
+
+        updateUiState();
+
+        // Informasikan kepada LessonGate bahwa prasyarat lab telah terpenuhi
+        window.dispatchEvent(
+          new CustomEvent('phinisi-lab-downloaded', {
+            detail: { activityId, courseSlug, lessonId },
+          })
+        );
+      });
+    }
+
+    // Tangani interaksi checklist tugas jika ada
+    const checkInputs = root.querySelectorAll<HTMLInputElement>('.task-check-input');
+    const storageKey = `phinisi-pkt-tasks-${activityKey}`;
+
+    // Muat centang yang tersimpan
+    try {
+      const savedTasks: number[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      checkInputs.forEach((input) => {
+        const idx = Number(input.dataset.taskIndex);
+        if (savedTasks.includes(idx)) input.checked = true;
+      });
+    } catch {
+      // Abaikan
+    }
+
+    checkInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const checkedIndices: number[] = [];
+        checkInputs.forEach((chk) => {
+          if (chk.checked) checkedIndices.push(Number(chk.dataset.taskIndex));
+        });
+        localStorage.setItem(storageKey, JSON.stringify(checkedIndices));
+      });
+    });
+
+    updateUiState();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-packet-tracer-lab]').forEach(initPacketTracerLab);
+  window.addEventListener('phinisi-progress-updated', () => {
+    document.querySelectorAll<HTMLElement>('[data-packet-tracer-lab]').forEach((root) => {
+      const activityKey = `${root.dataset.course || ''}:${root.dataset.activityId || ''}`;
+      const state = getLearningState();
+      if (state.completedActivities.includes(activityKey)) {
+        root.classList.add('is-completed');
+        const btn = root.querySelector<HTMLButtonElement>('[data-download-btn]');
+        if (btn) btn.classList.add('btn-downloaded');
+        const icon = root.querySelector<HTMLElement>('[data-btn-icon]');
+        if (icon) icon.textContent = 'download_done';
+        const bar = root.querySelector<HTMLElement>('[data-status-bar]');
+        if (bar) bar.hidden = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .netacad-lab-wrapper {
+    margin: 2.2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .netacad-lab-desc {
+    font-size: 0.96rem;
+    line-height: 1.68;
+    color: var(--color-ink, #1e293b);
+    margin: 0;
+  }
+
+  /* Baris Tombol Aksi Gaya NetAcad */
+  .netacad-actions-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .netacad-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.15rem 1.4rem;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.65rem;
+    color: #1e293b;
+    font-size: 0.94rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 180ms ease;
+    text-align: center;
+    min-height: 3.8rem;
+    position: relative;
+    user-select: none;
+  }
+
+  .netacad-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+    color: #0f172a;
+  }
+
+  .netacad-btn:active {
+    transform: translateY(0);
+  }
+
+  .netacad-icon {
+    font-size: 1.4rem;
+    color: #334155;
+    flex-shrink: 0;
+    transition: color 180ms ease;
+  }
+
+  .netacad-btn:hover .netacad-icon {
+    color: #0284c7;
+  }
+
+  .netacad-btn-text {
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Status Terunduh untuk Tombol PKT */
+  .netacad-btn.btn-pkt.btn-downloaded {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+  }
+
+  .netacad-btn.btn-pkt.btn-downloaded .netacad-icon {
+    color: #16a34a;
+  }
+
+  .netacad-status-badge {
+    position: absolute;
+    top: -0.5rem;
+    right: 0.75rem;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+  }
+
+  .netacad-status-badge .icon-check {
+    font-size: 0.85rem;
+  }
+
+  /* Checklist Target Lab (Opsional) */
+  .netacad-tasks-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .tasks-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #334155;
+    font-size: 0.85rem;
+  }
+
+  .icon-task-header {
+    font-size: 1.15rem;
+    color: #0284c7;
+  }
+
+  .tasks-checklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .task-check-item .task-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.86rem;
+    color: #334155;
+  }
+
+  .task-check-input {
+    width: 17px;
+    height: 17px;
+    accent-color: #0284c7;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .task-check-input:checked + .task-text {
+    text-decoration: line-through;
+    color: #94a3b8;
+  }
+
+  @media (max-width: 640px) {
+    .netacad-actions-row {
+      grid-template-columns: 1fr;
+    }
+    .netacad-btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 1rem 1.25rem;
+    }
+  }
+</style>

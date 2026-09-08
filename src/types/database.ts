@@ -32,7 +32,10 @@ export interface CommunityPost {
   post_type: PostType;
   title: string;
   content: string;
+  image_url?: string;
   is_pinned: boolean;
+  is_solved?: boolean;
+  solved_comment_id?: string | null;
   upvotes_count: number;
   comments_count: number;
   created_at: string;
@@ -41,6 +44,7 @@ export interface CommunityPost {
   channel?: CommunityChannel;
   has_upvoted?: boolean;
 }
+
 
 export interface CommunityComment {
   id: string;
@@ -75,3 +79,12 @@ export interface AdminAuditLog {
   created_at: string;
   admin?: Profile;
 }
+
+export interface PlatformAnnouncement {
+  id: string;
+  message: string;
+  type: 'info' | 'warning' | 'success';
+  is_active: boolean;
+  created_at: string;
+}
+

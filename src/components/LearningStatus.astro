@@ -4,17 +4,20 @@ const { courseSlug, totalLessons } = Astro.props;
 ---
 
 <aside class="learning-status" data-learning-status data-course={courseSlug} data-total-lessons={totalLessons} aria-label="Progress belajar lokal">
+  <div class="rank-status-row">
+    <span class="rank-badge-mini" data-rank-badge>Deck Cadet</span>
+    <span class="rank-xp-mini"><strong data-xp>0</strong> XP</span>
+  </div>
   <div class="status-heading">
     <strong><span data-completed-lessons>0</span>/{totalLessons} lesson</strong>
     <span data-progress-percent>0%</span>
   </div>
   <div class="progress-track" aria-hidden="true"><span data-progress-fill></span></div>
   <details class="activity-summary">
-    <summary>Aktivitas belajar</summary>
+    <summary>Aktivitas & Badge</summary>
     <div class="status-meta">
-      <span><strong data-xp>0</strong> XP</span>
       <span><strong data-streak>0</strong> hari streak</span>
-      <span><strong data-badges>0</strong> badge</span>
+      <span><strong data-badges>0</strong> lencana</span>
     </div>
     <ul class="badge-list" data-badge-list hidden aria-label="Badge yang diperoleh"></ul>
   </details>
@@ -22,12 +25,13 @@ const { courseSlug, totalLessons } = Astro.props;
 
 <script>
   import { getLearningState } from '../scripts/learning-store';
+  import { getRankTier } from '../lib/rank';
 
   const badgeLabels: Record<string, string> = {
-    'langkah-pertama': 'Langkah Pertama',
+    'langkah-pertama': 'First Step',
     'security-starter': 'Security Starter',
-    'security-guardian': 'Security Guardian',
-    'streak-3': 'Konsisten 3 Hari',
+    'security-guardian': 'Fortress Guardian',
+    'streak-3': 'Consistency Flame',
   };
 
   const renderLearningStatus = (root: HTMLElement) => {
@@ -37,6 +41,8 @@ const { courseSlug, totalLessons } = Astro.props;
     const completed = state.completedLessons.filter((lesson) => lesson.startsWith(courseSlug + '/')).length;
     const percent = totalLessons > 0 ? Math.min(100, Math.round((completed / totalLessons) * 100)) : 0;
 
+    const rankTier = getRankTier(state.xp);
+    const rankBadge = root.querySelector<HTMLElement>('[data-rank-badge]');
     const completedElement = root.querySelector<HTMLElement>('[data-completed-lessons]');
     const percentElement = root.querySelector<HTMLElement>('[data-progress-percent]');
     const fillElement = root.querySelector<HTMLElement>('[data-progress-fill]');
@@ -45,6 +51,10 @@ const { courseSlug, totalLessons } = Astro.props;
     const badgeElement = root.querySelector<HTMLElement>('[data-badges]');
     const badgeList = root.querySelector<HTMLUListElement>('[data-badge-list]');
 
+    if (rankBadge) {
+      rankBadge.textContent = rankTier.name;
+      rankBadge.style.backgroundColor = rankTier.badgeColor;
+    }
     if (completedElement) completedElement.textContent = String(completed);
     if (percentElement) percentElement.textContent = percent + '%';
     if (fillElement) fillElement.style.width = percent + '%';
@@ -69,6 +79,10 @@ const { courseSlug, totalLessons } = Astro.props;
 
 <style>
   .learning-status { margin: 1.25rem 0; border: 1px solid var(--color-line); border-radius: var(--radius-DEFAULT); padding: 0.85rem; background: #fff; }
+  .rank-status-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-line); }
+  .rank-badge-mini { display: inline-flex; align-items: center; padding: 0.2rem 0.55rem; border-radius: 999px; color: #ffffff; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.02em; }
+  .rank-xp-mini { font-size: 0.72rem; color: var(--color-muted); }
+  .rank-xp-mini strong { color: var(--color-navy); }
   .status-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--color-navy); font-size: 0.72rem; }
   .status-heading > span { color: var(--color-primary); font-weight: 900; }
   .progress-track { height: 0.45rem; overflow: hidden; margin-top: 0.55rem; border-radius: 999px; background: var(--color-phinisi-100); }

@@ -11,6 +11,7 @@ import PracticeCTA from '../../components/PracticeCTA.astro';
 import KnowledgeCheck from '../../components/KnowledgeCheck.astro';
 import LessonQuiz from '../../components/LessonQuiz.astro';
 import CommandOrder from '../../components/CommandOrder.astro';
+import PacketTracerLab from '../../components/PacketTracerLab.astro';
 
 export const prerender = true;
 
@@ -37,5 +38,5 @@ const { Content, headings } = await render(entry);
 ---
 
 <DocsLayout entry={entry} headings={headings}>
-  <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder }} />
+  <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder, PacketTracerLab }} />
 </DocsLayout>

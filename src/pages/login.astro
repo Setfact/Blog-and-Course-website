@@ -1,49 +1,95 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { isSupabaseConfigured, getSupabaseUrl, getSupabaseAnonKey } from '../lib/supabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 const user = Astro.locals.user;
 const redirectParam = Astro.url.searchParams.get('redirect') || '/dashboard';
 const errorParam = Astro.url.searchParams.get('error');
+const verifiedParam = Astro.url.searchParams.get('verified') === 'true';
+const initialMode = Astro.url.searchParams.get('mode') === 'register' ? 'register' : 'login';
 
 if (user) {
   return Astro.redirect(redirectParam);
 }
 
 const supabaseReady = isSupabaseConfigured();
-const supabaseUrl = getSupabaseUrl();
-const supabaseAnonKey = getSupabaseAnonKey();
 
 let bannerMessage = '';
 if (redirectParam.startsWith('/community')) {
-  bannerMessage = 'Silakan masuk dengan akun Google untuk bergabung ke Komunitas Siswa Phinisi Learn.';
+  bannerMessage = 'Silakan masuk atau daftar untuk bergabung ke Komunitas Siswa Phinisi Learn.';
 } else if (redirectParam.startsWith('/admin')) {
   bannerMessage = 'Halaman Administrator memerlukan login dengan akun berwenang.';
 }
 ---
 
-<BaseLayout title="Masuk" description="Masuk ke Phinisi Learn untuk mengakses komunitas, menyimpan progres belajar, dan meraih badge.">
+<BaseLayout
+  title={initialMode === 'register' ? 'Daftar Akun Baru' : 'Masuk ke Akun'}
+  description="Akses komunitas teknis, simpan progres belajar lintas perangkat, dan raih badge sertifikasi."
+>
   <div
     class="login-wrapper"
     id="login-page-root"
-    data-supabase-url={supabaseUrl}
-    data-supabase-key={supabaseAnonKey}
     data-redirect={redirectParam}
+    data-initial-mode={initialMode}
   >
     <div class="login-card">
       <div class="card-header">
         <a href="/" class="brand-link" aria-label="Kembali ke Beranda">
           <img src="/Logo Phinisi Learn.png" alt="Phinisi Learn" width="160" height="54" />
         </a>
-        <h1 class="login-title">Masuk ke Akun Anda</h1>
-        <p class="login-subtitle">Akses komunitas teknis, simpan progres belajar lintas perangkat, dan kumpulkan poin XP.</p>
+        <h1 class="login-title" id="auth-main-title">
+          {initialMode === 'register' ? 'Buat Akun Baru' : 'Masuk ke Akun Anda'}
+        </h1>
+        <p class="login-subtitle" id="auth-main-subtitle">
+          {initialMode === 'register'
+            ? 'Mulai perjalanan belajar networking, simpan capaian lab, dan raih sertifikat.'
+            : 'Akses komunitas teknis, simpan progres belajar, dan kumpulkan poin XP.'}
+        </p>
+      </div>
+
+      <!-- Mode Switcher Tabs (Masuk vs Daftar) -->
+      <div class="auth-tabs-bar" role="tablist">
+        <button
+          type="button"
+          class:list={['auth-tab-btn', { active: initialMode === 'login' }]}
+          id="tab-btn-login"
+          role="tab"
+          aria-selected={initialMode === 'login' ? 'true' : 'false'}
+        >
+          Masuk
+        </button>
+        <button
+          type="button"
+          class:list={['auth-tab-btn', { active: initialMode === 'register' }]}
+          id="tab-btn-register"
+          role="tab"
+          aria-selected={initialMode === 'register' ? 'true' : 'false'}
+        >
+          Daftar Akun Baru
+        </button>
       </div>
 
       <!-- Auth Processing Spinner -->
       <div id="auth-loading-state" class="loading-box" style="display: none;">
         <div class="spinner"></div>
-        <p>Memverifikasi sesi Google Anda, mohon tunggu...</p>
+        <p id="loading-text">Memproses autentikasi, mohon tunggu...</p>
       </div>
+
+      <!-- Dynamic Alert Message (Error / Success) -->
+      <div id="auth-alert-box" class="alert-box alert-error" style="display: none;" role="alert">
+        <span class="material-symbols-outlined alert-icon" id="alert-icon">error</span>
+        <p id="alert-message"></p>
+      </div>
+
+      {verifiedParam && (
+        <div class="success-alert" role="status">
+          <span class="material-symbols-outlined icon">check_circle</span>
+          <div>
+            <strong>Email Berhasil Diverifikasi</strong>
+            <p>Akun Anda kini telah aktif. Silakan masukkan kata sandi Anda untuk masuk ke sistem pembelajaran.</p>
+          </div>
+        </div>
+      )}
 
       {bannerMessage && (
         <div class="info-alert" role="status">
@@ -65,122 +111,574 @@ if (redirectParam.startsWith('/community')) {
           <div>
             <strong>Konfigurasi Diperlukan</strong>
             <p>Variabel <code>PUBLIC_SUPABASE_URL</code> dan <code>PUBLIC_SUPABASE_ANON_KEY</code> belum diisi pada file <code>.env</code>.</p>
-            <p class="helper-text">Isi kredensial Supabase Anda untuk mengaktifkan fitur Google OAuth.</p>
+            <p class="helper-text">Isi kredensial Supabase Anda untuk mengaktifkan autentikasi.</p>
           </div>
         </div>
       ) : (
-        <div class="action-wrap" id="login-actions">
-          <button type="button" id="btn-google-login" class="google-btn">
+        <div class="auth-forms-container" id="auth-forms-container">
+          <!-- Google OAuth Button (Redirect ke API Server) -->
+          <button type="button" id="btn-google-auth" class="google-btn">
             <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>Lanjutkan dengan Google</span>
+            <span id="google-btn-label">
+              {initialMode === 'register' ? 'Daftar Cepat dengan Google' : 'Lanjutkan dengan Google'}
+            </span>
           </button>
 
-          <p class="admin-hint">
-            <span class="material-symbols-outlined">shield_person</span>
-            <span>Akun Superadmin: <strong>calvinum26@gmail.com</strong></span>
+          <div class="auth-divider">
+            <span class="divider-line"></span>
+            <span class="divider-text">atau dengan email</span>
+            <span class="divider-line"></span>
+          </div>
+
+          <!-- Form 1: Masuk (Sign In) -->
+          <form id="form-login" class:list={['auth-form', { hidden: initialMode !== 'login' }]}>
+            <div class="form-group">
+              <input
+                type="email"
+                id="login-email"
+                name="email"
+                required
+                placeholder="Email"
+                class="form-input clean-input"
+                autocomplete="email"
+              />
+            </div>
+
+            <div class="form-group">
+              <div class="password-wrap">
+                <input
+                  type="password"
+                  id="login-password"
+                  name="password"
+                  required
+                  placeholder="Password"
+                  class="form-input clean-input"
+                  autocomplete="current-password"
+                />
+                <button type="button" class="btn-toggle-password" data-target="login-password" aria-label="Lihat kata sandi">
+                  <span class="material-symbols-outlined icon-eye">visibility</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-auth-btn" id="btn-submit-login">
+              <span>Masuk ke Akun</span>
+              <span class="material-symbols-outlined btn-arrow">arrow_forward</span>
+            </button>
+
+            <div class="form-switch-row">
+              <span>Belum memiliki akun?</span>
+              <button type="button" class="btn-text-switch" data-switch="register">Daftar sekarang</button>
+            </div>
+          </form>
+
+          <!-- Form 2: Daftar (Sign Up / Register) -->
+          <form id="form-register" class:list={['auth-form', { hidden: initialMode !== 'register' }]}>
+            <div class="form-group">
+              <input
+                type="email"
+                id="register-email"
+                name="email"
+                required
+                placeholder="Email"
+                class="form-input clean-input"
+                autocomplete="email"
+              />
+            </div>
+
+            <div class="form-group">
+              <div class="password-wrap">
+                <input
+                  type="password"
+                  id="register-password"
+                  name="password"
+                  required
+                  minlength="8"
+                  placeholder="Password (Minimal 8 Karakter)"
+                  class="form-input clean-input"
+                  autocomplete="new-password"
+                />
+                <button type="button" class="btn-toggle-password" data-target="register-password" aria-label="Lihat kata sandi">
+                  <span class="material-symbols-outlined icon-eye">visibility</span>
+                </button>
+              </div>
+
+              <!-- 5-segment password strength indicator -->
+              <div class="password-strength-meter" id="password-strength-meter" aria-hidden="true">
+                <span class="strength-bar" id="strength-bar-1"></span>
+                <span class="strength-bar" id="strength-bar-2"></span>
+                <span class="strength-bar" id="strength-bar-3"></span>
+                <span class="strength-bar" id="strength-bar-4"></span>
+                <span class="strength-bar" id="strength-bar-5"></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="password-wrap">
+                <input
+                  type="password"
+                  id="register-password-confirm"
+                  name="password_confirm"
+                  required
+                  minlength="8"
+                  placeholder="Konfirmasi Password"
+                  class="form-input clean-input"
+                  autocomplete="new-password"
+                />
+                <button type="button" class="btn-toggle-password" data-target="register-password-confirm" aria-label="Lihat kata sandi">
+                  <span class="material-symbols-outlined icon-eye">visibility</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-auth-btn" id="btn-submit-register">
+              <span>Buat Akun & Mulai Belajar</span>
+              <span class="material-symbols-outlined btn-arrow">arrow_forward</span>
+            </button>
+
+            <p class="register-terms-note">
+              Dengan mendaftar, kamu setuju dengan <a href="/terms" target="_blank">syarat dan ketentuan</a> kami
+            </p>
+
+            <div class="form-switch-row">
+              <span>Sudah memiliki akun?</span>
+              <button type="button" class="btn-text-switch" data-switch="login">Masuk di sini</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Card State 3: Verifikasi Email Terkirim -->
+        <div id="auth-verification-box" class="verification-box" style="display: none;">
+          <div class="verify-badge-icon-wrap">
+            <span class="material-symbols-outlined verify-badge-icon">mark_email_read</span>
+          </div>
+
+          <h2 class="verify-state-title">Verifikasi Email Terkirim</h2>
+          <p class="verify-state-desc">
+            Kami telah mengirimkan tautan konfirmasi pendaftaran ke alamat email Anda:
           </p>
+
+          <div class="target-email-pill">
+            <span class="material-symbols-outlined pill-icon">mail</span>
+            <strong id="verify-target-email" class="email-text">email@anda.com</strong>
+          </div>
+
+          <div class="verification-steps-card">
+            <div class="step-row">
+              <span class="step-circle">1</span>
+              <p>Buka pesan masuk dari <strong>Phinisi Learn</strong> di kotak masuk Gmail Anda.</p>
+            </div>
+            <div class="step-row">
+              <span class="step-circle">2</span>
+              <p>Klik tombol atau tautan <strong>"Confirm your mail"</strong> untuk memvalidasi akun.</p>
+            </div>
+            <div class="step-row">
+              <span class="step-circle">3</span>
+              <p class="helper-note">Jika belum terlihat dalam beberapa saat, mohon periksa folder <strong>Spam</strong> atau <strong>Promosi</strong>.</p>
+            </div>
+          </div>
+
+          <div class="verify-cta-actions">
+            <a
+              href="https://mail.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-open-mailbox"
+            >
+              <svg class="gmail-svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#EA4335" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
+                <path fill="#fff" d="M12 13L4 8V6l8 5 8-5v2l-8 5z"/>
+              </svg>
+              <span>Buka Gmail</span>
+              <span class="material-symbols-outlined icon-ext">open_in_new</span>
+            </a>
+
+            <button type="button" id="btn-resend-verification" class="btn-resend-verification">
+              <span class="material-symbols-outlined icon">sync</span>
+              <span id="resend-label">Kirim Ulang Email Verifikasi</span>
+            </button>
+          </div>
+
+          <div class="verify-footer-nav">
+            <span>Sudah melakukan verifikasi?</span>
+            <button type="button" class="btn-text-switch" id="btn-done-verify">Masuk ke Akun Sekarang</button>
+          </div>
         </div>
       )}
-
-      <div class="card-footer">
-        <p>Dengan masuk, Anda menyetujui <a href="/terms">Ketentuan Layanan</a> dan <a href="/privacy">Kebijakan Privasi</a> Phinisi Learn.</p>
-      </div>
     </div>
   </div>
 
   <script>
-    import { createBrowserClient } from '@supabase/ssr';
-
     const root = document.getElementById('login-page-root');
-    const supabaseUrl = root?.dataset.supabaseUrl;
-    const supabaseKey = root?.dataset.supabaseKey;
     const targetRedirect = root?.dataset.redirect || '/dashboard';
+    let currentMode = root?.dataset.initialMode === 'register' ? 'register' : 'login';
+
+    const tabBtnLogin = document.getElementById('tab-btn-login');
+    const tabBtnRegister = document.getElementById('tab-btn-register');
+    const authTabsBar = document.querySelector('.auth-tabs-bar') as HTMLElement | null;
+    const formLogin = document.getElementById('form-login') as HTMLFormElement | null;
+    const formRegister = document.getElementById('form-register') as HTMLFormElement | null;
+    const authTitle = document.getElementById('auth-main-title');
+    const authSubtitle = document.getElementById('auth-main-subtitle');
+    const googleBtnLabel = document.getElementById('google-btn-label');
+    const googleBtn = document.getElementById('btn-google-auth');
     const loadingBox = document.getElementById('auth-loading-state');
-    const actionsBox = document.getElementById('login-actions');
-    const googleBtn = document.getElementById('btn-google-login');
+    const loadingText = document.getElementById('loading-text');
+    const formsContainer = document.getElementById('auth-forms-container');
+    const verificationBox = document.getElementById('auth-verification-box');
+    const verifyTargetEmail = document.getElementById('verify-target-email');
+    const resendBtn = document.getElementById('btn-resend-verification') as HTMLButtonElement | null;
+    const resendLabel = document.getElementById('resend-label');
+    const doneVerifyBtn = document.getElementById('btn-done-verify');
+    const alertBox = document.getElementById('auth-alert-box');
+    const alertMessage = document.getElementById('alert-message');
+    const alertIcon = document.getElementById('alert-icon');
 
-    if (supabaseUrl && supabaseKey) {
-      const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+    let activeEmailForVerification = '';
+    let resendCooldownTimer: any = null;
 
-      // Fungsi untuk sinkronisasi token ke backend session
-      const syncSessionAndRedirect = async (accessToken: string, refreshToken: string) => {
-        if (loadingBox) loadingBox.style.display = 'flex';
-        if (actionsBox) actionsBox.style.display = 'none';
+    const showAlert = (message: string, type: 'error' | 'success' = 'error') => {
+      if (!alertBox || !alertMessage) return;
+      alertBox.className = `alert-box alert-${type}`;
+      alertMessage.textContent = message;
+      if (alertIcon) {
+        alertIcon.textContent = type === 'success' ? 'check_circle' : 'error';
+      }
+      alertBox.style.display = 'flex';
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    const hideAlert = () => {
+      if (alertBox) alertBox.style.display = 'none';
+    };
+
+    const startResendCooldown = (seconds: number) => {
+      if (!resendBtn || !resendLabel) return;
+      resendBtn.disabled = true;
+      let remaining = seconds;
+      resendLabel.textContent = `Kirim Ulang Email (${remaining}s)`;
+
+      if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+      resendCooldownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(resendCooldownTimer);
+          resendCooldownTimer = null;
+          resendBtn.disabled = false;
+          resendLabel.textContent = 'Kirim Ulang Email Verifikasi';
+        } else {
+          resendLabel.textContent = `Kirim Ulang Email (${remaining}s)`;
+        }
+      }, 1000);
+    };
+
+    const showVerificationState = (email: string) => {
+      activeEmailForVerification = email;
+      hideAlert();
+
+      if (authTabsBar) authTabsBar.style.display = 'none';
+      if (formsContainer) formsContainer.style.display = 'none';
+      if (verifyTargetEmail) verifyTargetEmail.textContent = email;
+      if (verificationBox) verificationBox.style.display = 'block';
+
+      if (authTitle) authTitle.textContent = 'Verifikasi Email Terkirim';
+      if (authSubtitle) authSubtitle.textContent = 'Tautan konfirmasi telah dikirim ke alamat email Anda. Ikuti petunjuk di bawah untuk mengaktifkan akun.';
+      document.title = 'Verifikasi Email | Phinisi Learn';
+
+      startResendCooldown(60);
+    };
+
+    const setMode = (mode: 'login' | 'register') => {
+      currentMode = mode;
+      hideAlert();
+
+      // Pastikan box verifikasi tertutup saat beralih mode form
+      if (verificationBox) verificationBox.style.display = 'none';
+      if (authTabsBar) authTabsBar.style.display = 'flex';
+      if (formsContainer) formsContainer.style.display = 'flex';
+
+      if (mode === 'register') {
+        tabBtnRegister?.classList.add('active');
+        tabBtnRegister?.setAttribute('aria-selected', 'true');
+        tabBtnLogin?.classList.remove('active');
+        tabBtnLogin?.setAttribute('aria-selected', 'false');
+
+        formRegister?.classList.remove('hidden');
+        formLogin?.classList.add('hidden');
+
+        if (authTitle) authTitle.textContent = 'Buat Akun Baru';
+        if (authSubtitle) authSubtitle.textContent = 'Mulai perjalanan belajar networking, simpan capaian lab, dan raih sertifikat.';
+        if (googleBtnLabel) googleBtnLabel.textContent = 'Daftar Cepat dengan Google';
+        document.title = 'Daftar Akun Baru | Phinisi Learn';
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('mode', 'register');
+        window.history.replaceState({}, '', url.toString());
+      } else {
+        tabBtnLogin?.classList.add('active');
+        tabBtnLogin?.setAttribute('aria-selected', 'true');
+        tabBtnRegister?.classList.remove('active');
+        tabBtnRegister?.setAttribute('aria-selected', 'false');
+
+        formLogin?.classList.remove('hidden');
+        formRegister?.classList.add('hidden');
+
+        if (authTitle) authTitle.textContent = 'Masuk ke Akun Anda';
+        if (authSubtitle) authSubtitle.textContent = 'Akses komunitas teknis, simpan progres belajar, dan kumpulkan poin XP.';
+        if (googleBtnLabel) googleBtnLabel.textContent = 'Lanjutkan dengan Google';
+        document.title = 'Masuk ke Akun | Phinisi Learn';
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete('mode');
+        window.history.replaceState({}, '', url.toString());
+      }
+    };
+
+    tabBtnLogin?.addEventListener('click', () => setMode('login'));
+    tabBtnRegister?.addEventListener('click', () => setMode('register'));
+    doneVerifyBtn?.addEventListener('click', () => setMode('login'));
+
+    document.querySelectorAll('.btn-text-switch').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const switchTarget = (btn as HTMLElement).dataset.switch as 'login' | 'register';
+        if (switchTarget) setMode(switchTarget);
+      });
+    });
+
+    // Tombol Kirim Ulang Email Verifikasi
+    if (resendBtn) {
+      resendBtn.addEventListener('click', async () => {
+        const email = activeEmailForVerification || (document.getElementById('register-email') as HTMLInputElement)?.value.trim() || (document.getElementById('login-email') as HTMLInputElement)?.value.trim();
+        if (!email) {
+          showAlert('Alamat email tidak ditemukan untuk mengirim ulang.');
+          return;
+        }
+
+        resendBtn.disabled = true;
+        if (resendLabel) resendLabel.textContent = 'Mengirim email...';
 
         try {
-          const res = await fetch('/api/auth/session', {
+          const res = await fetch('/api/auth/resend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            }),
+            body: JSON.stringify({ email, redirect: targetRedirect }),
           });
-          const data = await res.json();
-          if (data.success) {
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            showAlert(data.message || 'Tautan konfirmasi baru berhasil dikirim ke email Anda.', 'success');
+            startResendCooldown(60);
+          } else {
+            showAlert(data.error || 'Gagal mengirim ulang email konfirmasi.');
+            const match = (data.rawError || data.error || '').match(/after\s+(\d+)\s+seconds/i);
+            if (match) {
+              startResendCooldown(parseInt(match[1], 10));
+            } else {
+              startResendCooldown(30);
+            }
+          }
+        } catch (err) {
+          showAlert('Terjadi kesalahan jaringan saat mengirim ulang verifikasi.');
+          startResendCooldown(15);
+        }
+      });
+    }
+
+    // Password visibility toggle
+    document.querySelectorAll('.btn-toggle-password').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = (btn as HTMLElement).dataset.target;
+        if (!targetId) return;
+        const input = document.getElementById(targetId) as HTMLInputElement | null;
+        const icon = btn.querySelector('.icon-eye');
+        if (!input || !icon) return;
+
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.textContent = 'visibility_off';
+        } else {
+          input.type = 'password';
+          icon.textContent = 'visibility';
+        }
+      });
+    });
+
+    // Password strength indicator dynamic listener
+    const registerPasswordInput = document.getElementById('register-password') as HTMLInputElement | null;
+    const bar1 = document.getElementById('strength-bar-1');
+    const bar2 = document.getElementById('strength-bar-2');
+    const bar3 = document.getElementById('strength-bar-3');
+    const bar4 = document.getElementById('strength-bar-4');
+    const bar5 = document.getElementById('strength-bar-5');
+    const bars = [bar1, bar2, bar3, bar4, bar5];
+
+    if (registerPasswordInput) {
+      registerPasswordInput.addEventListener('input', () => {
+        const val = registerPasswordInput.value;
+        let score = 0;
+
+        if (val.length >= 8) score++;
+        if (val.length >= 10) score++;
+        if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
+        if (/\d/.test(val)) score++;
+        if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+        bars.forEach((bar, idx) => {
+          if (!bar) return;
+          bar.className = 'strength-bar';
+          if (idx < score) {
+            bar.classList.add(`bar-active-${score}`);
+          }
+        });
+      });
+    }
+
+    // 1. Tombol Google OAuth: Langsung alihkan ke server endpoint /api/auth/signin
+    if (googleBtn) {
+      googleBtn.addEventListener('click', () => {
+        hideAlert();
+        if (loadingBox) loadingBox.style.display = 'flex';
+        if (loadingText) loadingText.textContent = 'Membuka autentikasi Google, mohon tunggu...';
+        if (formsContainer) formsContainer.style.display = 'none';
+
+        window.location.href = `/api/auth/signin?redirect=${encodeURIComponent(targetRedirect)}`;
+      });
+    }
+
+    // 2. Listener Form Masuk (Email & Password via Server API)
+    if (formLogin) {
+      formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        const emailInput = document.getElementById('login-email') as HTMLInputElement | null;
+        const passwordInput = document.getElementById('login-password') as HTMLInputElement | null;
+        const submitBtn = document.getElementById('btn-submit-login') as HTMLButtonElement | null;
+
+        const email = emailInput?.value.trim();
+        const password = passwordInput?.value;
+
+        if (!email || !password) {
+          showAlert('Silakan masukkan alamat email dan kata sandi.');
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (loadingBox) loadingBox.style.display = 'flex';
+        if (loadingText) loadingText.textContent = 'Memverifikasi akun Anda...';
+        if (formsContainer) formsContainer.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.success) {
             window.location.replace(targetRedirect);
             return;
           }
-        } catch (err) {
-          console.error('Gagal sinkronisasi sesi:', err);
-        }
 
-        if (loadingBox) loadingBox.style.display = 'none';
-        if (actionsBox) actionsBox.style.display = 'flex';
-      };
-
-      // 1. Periksa apakah URL memuat access_token di fragment hash (#access_token=...)
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token=')) {
-        const params = new URLSearchParams(hash.replace(/^#/, ''));
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-
-        if (accessToken && refreshToken) {
-          syncSessionAndRedirect(accessToken, refreshToken);
-        }
-      } else {
-        // 2. Periksa apakah browser sudah memiliki sesi aktif
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.access_token && session?.refresh_token) {
-            syncSessionAndRedirect(session.access_token, session.refresh_token);
+          // Jika email belum diverifikasi, arahkan ke layar panduan verifikasi email
+          if (data.isEmailUnconfirmed) {
+            showVerificationState(email);
+            showAlert(data.error || 'Email Anda belum dikonfirmasi. Silakan buka Gmail atau kirim ulang tautan verifikasi.', 'error');
+            return;
           }
-        });
-      }
 
-      // 3. Listener tombol login Google
-      if (googleBtn) {
-        googleBtn.addEventListener('click', async () => {
-          if (googleBtn instanceof HTMLButtonElement) googleBtn.disabled = true;
-          if (loadingBox) loadingBox.style.display = 'flex';
-          if (actionsBox) actionsBox.style.display = 'none';
+          showAlert(data.error || 'Gagal masuk ke akun.');
+        } catch (err: any) {
+          console.error('Error saat login:', err);
+          showAlert('Terjadi kesalahan jaringan saat masuk. Silakan coba kembali.');
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+          if (loadingBox) loadingBox.style.display = 'none';
+          if (!activeEmailForVerification && formsContainer) {
+            formsContainer.style.display = 'flex';
+          }
+        }
+      });
+    }
 
-          const callbackUrl = `${window.location.origin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
+    // 3. Listener Form Daftar (Email, Password & Konfirmasi via Server API)
+    if (formRegister) {
+      formRegister.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
 
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: callbackUrl,
-              queryParams: {
-                access_type: 'offline',
-                prompt: 'consent',
-              },
-            },
+        const emailInput = document.getElementById('register-email') as HTMLInputElement | null;
+        const passwordInput = document.getElementById('register-password') as HTMLInputElement | null;
+        const confirmInput = document.getElementById('register-password-confirm') as HTMLInputElement | null;
+        const submitBtn = document.getElementById('btn-submit-register') as HTMLButtonElement | null;
+
+        const email = emailInput?.value.trim();
+        const password = passwordInput?.value;
+        const confirmPassword = confirmInput?.value;
+
+        if (!email || !password || !confirmPassword) {
+          showAlert('Silakan isi seluruh kolom pendaftaran.');
+          return;
+        }
+
+        if (password.length < 8) {
+          showAlert('Kata sandi harus terdiri dari minimal 8 karakter.');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          showAlert('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (loadingBox) loadingBox.style.display = 'flex';
+        if (loadingText) loadingText.textContent = 'Mendaftarkan akun baru Anda...';
+        if (formsContainer) formsContainer.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, redirect: targetRedirect }),
           });
 
-          if (error) {
-            alert('Gagal memulai login Google: ' + error.message);
-            if (googleBtn instanceof HTMLButtonElement) googleBtn.disabled = false;
-            if (loadingBox) loadingBox.style.display = 'none';
-            if (actionsBox) actionsBox.style.display = 'flex';
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.success) {
+            if (data.hasSession) {
+              window.location.replace(targetRedirect);
+              return;
+            } else if (data.requiresConfirmation) {
+              // Buka tampilan panduan verifikasi email yang jelas
+              showVerificationState(data.email || email);
+              return;
+            } else {
+              showAlert(data.message || 'Pendaftaran berhasil! Silakan masuk ke akun Anda.', 'success');
+              setMode('login');
+              return;
+            }
           }
-        });
-      }
+
+          showAlert(data.error || 'Gagal mendaftarkan akun.');
+        } catch (err: any) {
+          console.error('Error saat mendaftar:', err);
+          showAlert('Terjadi kesalahan jaringan saat mendaftar. Silakan coba kembali.');
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+          if (loadingBox) loadingBox.style.display = 'none';
+          if (!activeEmailForVerification && formsContainer) {
+            formsContainer.style.display = 'flex';
+          }
+        }
+      });
     }
   </script>
 </BaseLayout>
@@ -194,71 +692,176 @@ if (redirectParam.startsWith('/community')) {
     padding: 2.5rem 1.25rem;
     background: radial-gradient(circle at 50% 20%, var(--color-section) 0%, var(--color-canvas) 85%);
   }
+
   .login-card {
     width: 100%;
-    max-width: 460px;
+    max-width: 480px;
     border: 1px solid var(--color-line);
     border-radius: 1.5rem;
     background: #ffffff;
-    padding: 2.5rem 2rem;
+    padding: 2.5rem 2.25rem;
     box-shadow: 0 12px 35px -8px rgba(8, 26, 58, 0.08);
   }
+
   .card-header {
     text-align: center;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
   }
+
   .brand-link {
     display: inline-block;
     margin-bottom: 1.25rem;
   }
+
   .brand-link img {
     display: block;
     margin: 0 auto;
     object-fit: contain;
   }
+
   .login-title {
     font-family: var(--font-heading);
-    font-size: 1.5rem;
-    font-weight: 800;
+    font-size: 1.55rem;
+    font-weight: 900;
     color: var(--color-navy);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.45rem 0;
+    letter-spacing: -0.01em;
   }
+
   .login-subtitle {
     color: var(--color-muted);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     line-height: 1.5;
     margin: 0;
   }
+
+  /* Mode Switcher Tabs */
+  .auth-tabs-bar {
+    display: flex;
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 0.3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .auth-tab-btn {
+    flex: 1;
+    padding: 0.55rem 1rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .auth-tab-btn:hover {
+    color: var(--color-navy);
+  }
+
+  .auth-tab-btn.active {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(20, 91, 215, 0.25);
+  }
+
+  /* Loading State */
   .loading-box {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
     background: var(--color-phinisi-50);
     border: 1px solid var(--color-phinisi-200);
     border-radius: 1rem;
     margin-bottom: 1.5rem;
     text-align: center;
   }
+
   .loading-box p {
     margin: 0;
-    font-size: 0.84rem;
+    font-size: 0.85rem;
     color: var(--color-phinisi-800);
-    font-weight: 600;
+    font-weight: 700;
   }
+
   .spinner {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border: 3px solid var(--color-phinisi-200);
     border-top-color: var(--color-phinisi-600);
     border-radius: 50%;
     animation: spin 700ms linear infinite;
   }
+
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  /* Dynamic Alert Box */
+  .alert-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-bottom: 1.25rem;
+  }
+
+  .alert-box p {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+  }
+
+  .alert-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+  }
+
+  .alert-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .success-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 0.82rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .success-alert strong {
+    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .success-alert p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
   .info-alert {
     display: flex;
     align-items: flex-start;
@@ -269,8 +872,9 @@ if (redirectParam.startsWith('/community')) {
     border: 1px solid var(--color-phinisi-200);
     color: var(--color-phinisi-800);
     font-size: 0.82rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
+
   .error-alert {
     display: flex;
     align-items: flex-start;
@@ -281,8 +885,9 @@ if (redirectParam.startsWith('/community')) {
     border: 1px solid #f8b4b4;
     color: var(--color-danger);
     font-size: 0.82rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
+
   .config-alert {
     display: flex;
     gap: 0.75rem;
@@ -292,86 +897,466 @@ if (redirectParam.startsWith('/community')) {
     border: 1px solid #f6d28b;
     color: #7a5100;
     font-size: 0.82rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
+
   .config-alert strong {
     display: block;
     font-size: 0.88rem;
     margin-bottom: 0.25rem;
   }
+
   .config-alert code {
     background: rgba(0, 0, 0, 0.06);
     padding: 0.15rem 0.35rem;
     border-radius: 0.3rem;
     font-family: var(--font-mono);
   }
+
   .config-alert .helper-text {
     margin: 0.35rem 0 0 0;
     font-size: 0.76rem;
   }
+
   .icon {
     font-size: 1.25rem;
     flex-shrink: 0;
   }
-  .action-wrap {
+
+  /* Forms Container */
+  .auth-forms-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.75rem;
+    gap: 1.15rem;
   }
+
+  /* Google Button */
   .google-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.85rem;
+    gap: 0.75rem;
     width: 100%;
-    min-height: 48px;
-    padding: 0.75rem 1.25rem;
+    min-height: 46px;
+    padding: 0.7rem 1.25rem;
     border: 1px solid var(--color-line);
-    border-radius: 0.9rem;
+    border-radius: 0.85rem;
     background: #ffffff;
     color: var(--color-navy);
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     transition: all 150ms ease;
   }
+
   .google-btn:hover {
     background: var(--color-phinisi-50);
     border-color: var(--color-phinisi-300);
-    box-shadow: 0 4px 12px rgba(20, 91, 215, 0.12);
+    box-shadow: 0 4px 12px rgba(20, 91, 215, 0.1);
   }
+
   .google-icon {
     flex-shrink: 0;
   }
-  .admin-hint {
+
+  /* Divider */
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block: 0.25rem;
+  }
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--color-line);
+  }
+
+  .divider-text {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  /* Form Elements */
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .auth-form.hidden {
+    display: none;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  /* Clean Input Style matching user reference */
+  .clean-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    background: #f4f6f8;
+    border: 1px solid transparent;
+    border-radius: 0.65rem;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--color-navy);
+    outline: none;
+    transition: all 150ms ease;
+  }
+
+  .clean-input:focus {
+    background: #ffffff;
+    border-color: var(--color-phinisi-500);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.1);
+  }
+
+  .clean-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-wrap .clean-input {
+    padding-right: 2.75rem;
+  }
+
+  .btn-toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+
+  .btn-toggle-password:hover {
+    color: var(--color-navy);
+  }
+
+  .icon-eye {
+    font-size: 1.15rem;
+  }
+
+  /* 5-segment password strength meter */
+  .password-strength-meter {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
+  .strength-bar {
+    flex: 1;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    transition: background-color 200ms ease;
+  }
+
+  .strength-bar.bar-active-1 {
+    background-color: #ef4444;
+  }
+
+  .strength-bar.bar-active-2 {
+    background-color: #f97316;
+  }
+
+  .strength-bar.bar-active-3 {
+    background-color: #eab308;
+  }
+
+  .strength-bar.bar-active-4 {
+    background-color: #0284c7;
+  }
+
+  .strength-bar.bar-active-5 {
+    background-color: #16a34a;
+  }
+
+  .submit-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 0.35rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 0.85rem;
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(20, 91, 215, 0.25);
+    transition: all 150ms ease;
+  }
+
+  .submit-auth-btn:hover {
+    background: var(--color-phinisi-700);
+    box-shadow: 0 5px 15px rgba(20, 91, 215, 0.35);
+  }
+
+  .submit-auth-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 150ms ease;
+  }
+
+  .submit-auth-btn:hover .btn-arrow {
+    transform: translateX(3px);
+  }
+
+  .register-terms-note {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    margin: 0.35rem 0 0 0;
+    line-height: 1.5;
+  }
+
+  .register-terms-note a {
+    color: #0d9488;
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  .register-terms-note a:hover {
+    color: #0f766e;
+  }
+
+  .form-switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    padding-top: 0.25rem;
+  }
+
+  .btn-text-switch {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--color-phinisi-600);
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .btn-text-switch:hover {
+    color: var(--color-phinisi-700);
+  }
+
+  /* Verification Box Styles */
+  .verification-box {
+    text-align: center;
+    padding: 0.5rem 0;
+  }
+
+  .verify-badge-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #eff6ff;
+    border: 2px solid #bfdbfe;
+    margin-bottom: 1.25rem;
+  }
+
+  .verify-badge-icon {
+    font-size: 2.25rem;
+    color: var(--color-phinisi-600);
+  }
+
+  .verify-state-title {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .verify-state-desc {
+    font-size: 0.86rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+  }
+
+  .target-email-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    color: var(--color-navy);
+    margin-bottom: 1.25rem;
+    max-width: 100%;
+    word-break: break-all;
+  }
+
+  .pill-icon {
+    font-size: 1.1rem;
+    color: var(--color-phinisi-600);
+  }
+
+  .verification-steps-card {
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    padding: 1.1rem 1.25rem;
+    text-align: left;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .step-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .step-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .step-row p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  .step-row .helper-note {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+
+  .verify-cta-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-open-mailbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 46px;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.85rem;
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(20, 91, 215, 0.25);
+    transition: all 150ms ease;
+  }
+
+  .btn-open-mailbox:hover {
+    background: var(--color-phinisi-700);
+    box-shadow: 0 5px 15px rgba(20, 91, 215, 0.35);
+  }
+
+  .gmail-svg {
+    flex-shrink: 0;
+  }
+
+  .icon-ext {
+    font-size: 1rem;
+    opacity: 0.8;
+  }
+
+  .btn-resend-verification {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .btn-resend-verification:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: var(--color-phinisi-300);
+    color: var(--color-phinisi-600);
+  }
+
+  .btn-resend-verification:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f1f5f9;
+  }
+
+  .btn-resend-verification .icon {
+    font-size: 1.05rem;
+  }
+
+  .verify-footer-nav {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    margin: 0;
+    font-size: 0.82rem;
     color: var(--color-muted);
-    font-size: 0.75rem;
-  }
-  .admin-hint .material-symbols-outlined {
-    font-size: 1rem;
-    color: var(--color-phinisi-600);
-  }
-  .card-footer {
-    border-top: 1px solid var(--color-line);
-    padding-top: 1.25rem;
-    text-align: center;
-  }
-  .card-footer p {
-    margin: 0;
-    color: var(--color-muted);
-    font-size: 0.76rem;
-    line-height: 1.5;
-  }
-  .card-footer a {
-    color: var(--color-phinisi-700);
-    text-decoration: underline;
   }
 </style>

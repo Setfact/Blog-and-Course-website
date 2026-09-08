@@ -10,6 +10,7 @@ import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://phinisilearn.web.id',
   output: 'server',
   devToolbar: {
     enabled: false
@@ -20,8 +21,27 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: ['phinisinetwork.calvinumboh.my.id'],
-    }
+      allowedHosts: [
+        'phinisilearn.web.id',
+        'www.phinisilearn.web.id',
+        'phinisinetwork.calvinumboh.my.id',
+      ],
+    },
+    optimizeDeps: {
+      include: [
+        '@keystatic/core',
+        '@keystatic/astro',
+        '@keystatic/core/ui',
+        '@keystatic/astro/ui',
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+      ],
+    },
+    ssr: {
+      noExternal: ['@keystatic/astro', '@keystatic/core'],
+    },
   },
 
   i18n: {

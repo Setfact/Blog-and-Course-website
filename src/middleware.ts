@@ -26,6 +26,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Proteksi Keystatic CMS & API: Khusus Administrator
   if (url.pathname.startsWith('/keystatic') || url.pathname.startsWith('/api/keystatic')) {
+    const isLocalDevelopment = import.meta.env.DEV && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
+    if (isLocalDevelopment) {
+      return next();
+    }
+
     // 1. Izinkan jika user sudah login dan memiliki role admin
     if (context.locals.user && context.locals.user.role === 'admin') {
       return next();

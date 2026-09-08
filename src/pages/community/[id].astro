@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createSupabaseServerClient } from '../../lib/supabase';
 import { getPostById, getCommentsByPostId } from '../../lib/community';
+import { getRankTier } from '../../lib/rank';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -24,6 +25,9 @@ if (!post) {
 }
 
 const comments = await getCommentsByPostId(supabase, id);
+const canDelete = Boolean(user && (user.role === 'admin' || post.author_id === user.id));
+const isPostAdminMod = Boolean(user && user.role === 'admin' && post.author_id !== user.id);
+const canMarkSolution = Boolean(user && (user.role === 'admin' || post.author_id === user.id));
 ---
 
 <BaseLayout title={post.title} description={`Diskusi komunitas: ${post.title}`}>
@@ -41,6 +45,12 @@ const comments = await getCommentsByPostId(supabase, id);
           <div class="header-top-row">
             <span class="channel-pill">{post.channel?.name || post.channel_id}</span>
             {post.is_pinned && <span class="pinned-pill">Disematkan</span>}
+            {post.is_solved && (
+              <span class="post-solved-badge" title="Topik ini telah memiliki solusi / jawaban terbaik">
+                <span class="material-symbols-outlined icon-solved">check_circle</span>
+                <span>Terjawab</span>
+              </span>
+            )}
           </div>
 
           <h1 class="post-main-title">{post.title}</h1>
@@ -57,6 +67,15 @@ const comments = await getCommentsByPostId(supabase, id);
               <div class="name-row">
                 <strong class="author-name">{post.author?.full_name || 'Siswa Phinisi'}</strong>
                 {post.author?.role === 'admin' && <span class="role-admin-badge">Admin</span>}
+                {(() => {
+                  const postAuthorTier = getRankTier(post.author?.xp || 0);
+                  return (
+                    <span class="badge-rank-pill" style={`--tier-color: ${postAuthorTier.badgeColor};`} title={`Rank: ${postAuthorTier.name} (${post.author?.xp || 0} XP)`}>
+                      <span class="material-symbols-outlined icon-rank-micro">{postAuthorTier.icon}</span>
+                      <span>{postAuthorTier.name}</span>
+                    </span>
+                  );
+                })()}
               </div>
               <span class="post-date">
                 Diposting pada{' '}
@@ -76,22 +95,51 @@ const comments = await getCommentsByPostId(supabase, id);
           <pre class="content-text">{post.content}</pre>
         </div>
 
-        <footer class="post-main-footer">
-          <button
-            type="button"
-            class:list={['upvote-btn', { active: post.has_upvoted }]}
-            id="detail-upvote-btn"
-            data-post-id={post.id}
-          >
-            <span class="material-symbols-outlined">thumb_up</span>
-            <span id="detail-upvote-count">{post.upvotes_count}</span>
-            <span>Upvote</span>
-          </button>
+        {post.image_url && (
+          <div class="post-attached-image-wrap">
+            <a href={post.image_url} target="_blank" rel="noopener noreferrer" class="post-attached-image-link" title="Buka gambar ukuran penuh di tab baru">
+              <img src={post.image_url} alt={post.title} class="post-attached-img" />
+            </a>
+            <span class="image-caption">Lampiran Gambar (klik untuk membuka ukuran penuh)</span>
+          </div>
+        )}
 
-          <span class="comment-count-indicator">
-            <span class="material-symbols-outlined">mode_comment</span>
-            <span>{comments.length} Komentar</span>
-          </span>
+        <footer class="post-main-footer">
+          <div class="footer-left-actions">
+            <button
+              type="button"
+              class:list={['upvote-btn', { active: post.has_upvoted }]}
+              id="detail-upvote-btn"
+              data-post-id={post.id}
+            >
+              <span class="material-symbols-outlined">thumb_up</span>
+              <span id="detail-upvote-count">{post.upvotes_count}</span>
+              <span>Upvote</span>
+            </button>
+
+            <span class="comment-count-indicator">
+              <span class="material-symbols-outlined">mode_comment</span>
+              <span>{comments.length} Komentar</span>
+            </span>
+          </div>
+
+          {canDelete && (
+            <button
+              type="button"
+              class:list={['delete-post-btn', { 'admin-mod-btn': isPostAdminMod }]}
+              id="detail-delete-btn"
+              data-post-id={post.id}
+              data-is-admin-mod={isPostAdminMod ? 'true' : 'false'}
+              title={
+                isPostAdminMod
+                  ? 'Hapus postingan ini sebagai wewenang moderasi Admin'
+                  : 'Batalkan postingan buatan Anda'
+              }
+            >
+              <span class="material-symbols-outlined">delete</span>
+              <span>{isPostAdminMod ? 'Moderasi: Hapus' : 'Batalkan Postingan'}</span>
+            </button>
+          )}
         </footer>
       </article>
 
@@ -121,36 +169,99 @@ const comments = await getCommentsByPostId(supabase, id);
           </div>
         ) : (
           <div class="comments-list">
-            {comments.map((comment) => (
-              <div class="comment-item">
-                <div class="comment-avatar">
-                  {comment.author?.avatar_url ? (
-                    <img src={comment.author.avatar_url} alt={comment.author.full_name} width="34" height="34" />
-                  ) : (
-                    <span>{(comment.author?.full_name || 'U').slice(0, 1).toUpperCase()}</span>
-                  )}
-                </div>
-                <div class="comment-body">
-                  <div class="comment-header">
-                    <div class="comment-author-name">
-                      <strong>{comment.author?.full_name || 'Siswa Phinisi'}</strong>
-                      {comment.author?.role === 'admin' && <span class="role-admin-badge">Admin</span>}
+            {comments.map((comment) => {
+              const isThisSolution = Boolean(post.is_solved && post.solved_comment_id === comment.id);
+              const canDeleteComment = Boolean(user && (user.role === 'admin' || comment.author_id === user.id));
+              const isCommentAdminMod = Boolean(user && user.role === 'admin' && comment.author_id !== user.id);
+
+              return (
+                <div class:list={['comment-item', { 'is-solution': isThisSolution }]} id={`comment-${comment.id}`}>
+                  <div class="comment-avatar">
+                    {comment.author?.avatar_url ? (
+                      <img src={comment.author.avatar_url} alt={comment.author.full_name} width="34" height="34" />
+                    ) : (
+                      <span>{(comment.author?.full_name || 'U').slice(0, 1).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div class="comment-body">
+                    <div class="comment-header">
+                      <div class="comment-author-name">
+                        <strong>{comment.author?.full_name || 'Siswa Phinisi'}</strong>
+                        {comment.author?.role === 'admin' && <span class="role-admin-badge">Admin</span>}
+                        {(() => {
+                          const commentAuthorTier = getRankTier(comment.author?.xp || 0);
+                          return (
+                            <span class="badge-rank-pill" style={`--tier-color: ${commentAuthorTier.badgeColor};`} title={`Rank: ${commentAuthorTier.name} (${comment.author?.xp || 0} XP)`}>
+                              <span class="material-symbols-outlined icon-rank-micro">{commentAuthorTier.icon}</span>
+                              <span>{commentAuthorTier.name}</span>
+                            </span>
+                          );
+                        })()}
+                        {isThisSolution && (
+                          <span class="solution-badge" title="Telah ditandai sebagai solusi / jawaban terbaik (+50 XP)">
+                            <span class="material-symbols-outlined icon-badge-check">check_circle</span>
+                            <span>Jawaban Terbaik (+50 XP)</span>
+                          </span>
+                        )}
+                      </div>
+                      <div class="comment-header-meta">
+                        <span class="comment-time">
+                          {new Date(comment.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+
+                        <div class="comment-actions">
+                          {canMarkSolution && (
+                            <button
+                              type="button"
+                              class:list={['btn-action-solution', { 'is-active': isThisSolution }]}
+                              data-action="toggle-solution"
+                              data-post-id={post.id}
+                              data-comment-id={comment.id}
+                              title={
+                                isThisSolution
+                                  ? 'Batalkan tanda solusi dari balasan ini'
+                                  : 'Tandai balasan ini sebagai solusi terbaik (+50 XP untuk penjawab)'
+                              }
+                            >
+                              <span class="material-symbols-outlined icon-act">
+                                {isThisSolution ? 'check_circle' : 'task_alt'}
+                              </span>
+                              <span>{isThisSolution ? 'Solusi' : 'Tandai Solusi'}</span>
+                            </button>
+                          )}
+
+                          {canDeleteComment && (
+                            <button
+                              type="button"
+                              class:list={['btn-action-delete-comment', { 'admin-mod-btn': isCommentAdminMod }]}
+                              data-action="delete-comment"
+                              data-comment-id={comment.id}
+                              data-is-admin-mod={isCommentAdminMod ? 'true' : 'false'}
+                              title={
+                                isCommentAdminMod
+                                  ? 'Hapus komentar ini sebagai wewenang moderasi Admin'
+                                  : 'Hapus komentar Anda'
+                              }
+                            >
+                              <span class="material-symbols-outlined icon-act">delete</span>
+                              <span>{isCommentAdminMod ? 'Moderasi' : 'Hapus'}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span class="comment-time">
-                      {new Date(comment.created_at).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  <div class="comment-content">
-                    <pre class="comment-text">{comment.content}</pre>
+                    <div class="comment-content">
+                      <pre class="comment-text">{comment.content}</pre>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -182,6 +293,118 @@ const comments = await getCommentsByPostId(supabase, id);
         }
       });
     }
+
+    const deleteBtn = document.getElementById('detail-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        const postId = deleteBtn.dataset.postId;
+        if (!postId) return;
+
+        const isMod = deleteBtn.dataset.isAdminMod === 'true';
+        const confirmMsg = isMod
+          ? 'Apakah Anda yakin ingin menghapus postingan ini sebagai tindakan moderasi Admin? Tindakan ini tidak dapat dibatalkan.'
+          : 'Apakah Anda yakin ingin membatalkan dan menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.';
+
+        const confirmed = window.confirm(confirmMsg);
+        if (!confirmed) return;
+
+        deleteBtn.setAttribute('disabled', 'true');
+        deleteBtn.textContent = 'Menghapus...';
+
+        try {
+          const res = await fetch('/api/community/posts', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_id: postId }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            window.location.href = '/community';
+          } else {
+            alert(data.error || 'Gagal menghapus postingan. Silakan coba lagi.');
+            deleteBtn.removeAttribute('disabled');
+            deleteBtn.innerHTML = `<span class="material-symbols-outlined">delete</span><span>${isMod ? 'Moderasi: Hapus' : 'Batalkan Postingan'}</span>`;
+          }
+        } catch (err) {
+          console.error('Gagal menghapus postingan:', err);
+          alert('Terjadi kesalahan koneksi saat menghapus postingan.');
+          deleteBtn.removeAttribute('disabled');
+          deleteBtn.innerHTML = `<span class="material-symbols-outlined">delete</span><span>${isMod ? 'Moderasi: Hapus' : 'Batalkan Postingan'}</span>`;
+        }
+      });
+    }
+
+    // Toggle Solution
+    const solutionButtons = document.querySelectorAll('button[data-action="toggle-solution"]');
+    solutionButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const targetBtn = btn as HTMLButtonElement;
+        const postId = targetBtn.dataset.postId;
+        const commentId = targetBtn.dataset.commentId;
+        if (!postId || !commentId) return;
+
+        targetBtn.disabled = true;
+        try {
+          const res = await fetch('/api/community/solution', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_id: postId, comment_id: commentId }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            window.location.reload();
+          } else {
+            alert(data.error || 'Gagal memperbarui status solusi.');
+            targetBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('Gagal memperbarui status solusi:', err);
+          alert('Terjadi kesalahan koneksi saat memproses status solusi.');
+          targetBtn.disabled = false;
+        }
+      });
+    });
+
+    // Delete Comment
+    const deleteCommentButtons = document.querySelectorAll('button[data-action="delete-comment"]');
+    deleteCommentButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const targetBtn = btn as HTMLButtonElement;
+        const commentId = targetBtn.dataset.commentId;
+        if (!commentId) return;
+
+        const isMod = targetBtn.dataset.isAdminMod === 'true';
+        const confirmMsg = isMod
+          ? 'Apakah Anda yakin ingin menghapus komentar ini sebagai tindakan moderasi Admin?'
+          : 'Apakah Anda yakin ingin menghapus komentar ini?';
+
+        const confirmed = window.confirm(confirmMsg);
+        if (!confirmed) return;
+
+        targetBtn.disabled = true;
+        try {
+          const res = await fetch('/api/community/comments', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment_id: commentId }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            window.location.reload();
+          } else {
+            alert(data.error || 'Gagal menghapus komentar.');
+            targetBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('Gagal menghapus komentar:', err);
+          alert('Terjadi kesalahan koneksi saat menghapus komentar.');
+          targetBtn.disabled = false;
+        }
+      });
+    });
   </script>
 </BaseLayout>
 
@@ -241,6 +464,21 @@ const comments = await getCommentsByPostId(supabase, id);
     padding: 0.25rem 0.6rem;
     border-radius: 0.45rem;
   }
+  .post-solved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.22rem 0.6rem;
+    border-radius: 0.45rem;
+  }
+  .icon-solved {
+    font-size: 0.95rem;
+  }
   .post-main-title {
     font-family: var(--font-heading);
     font-size: 1.5rem;
@@ -297,6 +535,23 @@ const comments = await getCommentsByPostId(supabase, id);
     padding: 0.1rem 0.4rem;
     border-radius: 999px;
   }
+  .badge-rank-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tier-color, #0284c7) 12%, transparent);
+    color: var(--tier-color, #0284c7);
+    border: 1px solid color-mix(in srgb, var(--tier-color, #0284c7) 30%, transparent);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .icon-rank-micro {
+    font-size: 0.8rem;
+  }
   .post-date {
     font-size: 0.74rem;
     color: var(--color-muted);
@@ -316,13 +571,90 @@ const comments = await getCommentsByPostId(supabase, id);
     margin: 0;
   }
 
+  /* Attached Image */
+  .post-attached-image-wrap {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .post-attached-image-link {
+    display: block;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    background: #f8fafc;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+  }
+  .post-attached-image-link:hover {
+    border-color: var(--color-phinisi-400);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  }
+  .post-attached-img {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 0.75rem;
+  }
+  .image-caption {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
   /* Footer */
   .post-main-footer {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1.25rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--color-line);
+    flex-wrap: wrap;
+  }
+  .footer-left-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .delete-post-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #fecaca;
+    border-radius: 0.65rem;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .delete-post-btn:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    color: #991b1b;
+  }
+  .delete-post-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .delete-post-btn.admin-mod-btn {
+    background: #fff1f2;
+    border-color: #fda4af;
+    color: #be123c;
+  }
+  .delete-post-btn.admin-mod-btn:hover {
+    background: #ffe4e6;
+    border-color: #f43f5e;
+    color: #9f1239;
+  }
+  .delete-post-btn span.material-symbols-outlined {
+    font-size: 1.1rem;
   }
   .upvote-btn {
     display: inline-flex;
@@ -431,6 +763,97 @@ const comments = await getCommentsByPostId(supabase, id);
     padding: 1.15rem;
     background: var(--color-section);
     border-radius: 1rem;
+    border: 1px solid transparent;
+    transition: all 150ms ease;
+  }
+  .comment-item.is-solution {
+    border-color: #86efac;
+    background: #f0fdf4;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.08);
+  }
+  .solution-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #15803d;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .icon-badge-check {
+    font-size: 0.85rem;
+  }
+  .comment-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .comment-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-action-solution {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #15803d;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .btn-action-solution:hover {
+    background: #dcfce7;
+  }
+  .btn-action-solution.is-active {
+    background: #15803d;
+    border-color: #15803d;
+    color: #ffffff;
+  }
+  .btn-action-delete-comment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    color: #dc2626;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .btn-action-delete-comment:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+  }
+  .btn-action-delete-comment.admin-mod-btn {
+    background: #fff1f2;
+    border-color: #fda4af;
+    color: #be123c;
+  }
+  .btn-action-delete-comment.admin-mod-btn:hover {
+    background: #ffe4e6;
+  }
+  .btn-action-solution:disabled,
+  .btn-action-delete-comment:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .icon-act {
+    font-size: 0.85rem;
   }
   .comment-avatar {
     width: 34px;
@@ -461,6 +884,8 @@ const comments = await getCommentsByPostId(supabase, id);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
   .comment-author-name {
     display: flex;

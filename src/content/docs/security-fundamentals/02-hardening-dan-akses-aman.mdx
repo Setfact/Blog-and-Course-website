@@ -63,6 +63,29 @@ Password policy perlu membahas panjang minimum, kompleksitas yang masuk akal, pe
   xp={30}
 />
 
+<PacketTracerLab
+  activityId="lab-hardening-ssh-01"
+  courseSlug="security-fundamentals"
+  lessonId="02-hardening-dan-akses-aman"
+  title="Praktik Lab: Hardening Akses SSH & AAA pada Router Cisco"
+  driveUrl="https://drive.google.com/file/d/1DemoPacketTracerHardeningLabLink/view?usp=sharing"
+  fileName="Lab-02-Hardening-SSH-AAA.pkt"
+  fileSize="1.9 MB"
+  minVersion="Cisco Packet Tracer v8.2+"
+  difficulty="beginner"
+  durationMinutes={25}
+  xp={40}
+  description="Unduh berkas topologi di bawah, jalankan pada aplikasi Cisco Packet Tracer di komputer Anda, lalu konfigurasikan akun admin lokal, enable secret, dan aktifkan SSHv2 pada line VTY."
+  tasks={[
+    "Buka berkas Lab-02-Hardening-SSH-AAA.pkt pada Cisco Packet Tracer",
+    "Konfigurasi hostname R1 dan domain-name phinisi.local",
+    "Buat username admin dengan secret kuat dan privilege 15",
+    "Generate RSA Key 2048 bit dan aktifkan ip ssh version 2",
+    "Aktifkan transport input ssh pada line vty 0 4",
+    "Uji koneksi SSH dari PC Admin menuju Router R1 (berhasil 100%)"
+  ]}
+/>
+
 ## Verifikasi
 
 <CommandBlock command="show ip ssh" prompt="R1#" title="Periksa status SSH" />

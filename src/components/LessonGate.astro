@@ -17,17 +17,56 @@ const { courseSlug, lessonId, nextHref, nextLabel, isLast = false } = Astro.prop
   </div>
   <div class="gate-actions">
     <button type="button" class="mark-complete-btn" data-mark-complete>
-      <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span class="material-symbols-outlined lock-icon" aria-hidden="true">lock</span>
+      <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
       <span data-mark-text>Tandai Selesai</span>
     </button>
-    <a href={nextHref} class="next-link" data-next-link>{isLast ? 'Kembali ke detail' : `Lanjut: ${nextLabel}`} →</a>
+    <a href={nextHref} class="next-link" data-next-link>{isLast ? 'Kembali ke detail' : (nextLabel.startsWith('Modul ') ? `Lanjut ke ${nextLabel}` : `Lanjut: ${nextLabel}`)} →</a>
   </div>
 </section>
 
 <script>
-  import { getLearningState, markLessonComplete } from '../scripts/learning-store';
+  import { getLearningState, markLessonComplete, dispatchToast } from '../scripts/learning-store';
 
-  const setupGate = (root: HTMLElement) => {
+  const checkPrerequisites = (courseSlug: string, state: ReturnType<typeof getLearningState>) => {
+    // 1. Periksa berkas lab Packet Tracer di halaman ini
+    const labElements = document.querySelectorAll<HTMLElement>('[data-packet-tracer-lab]');
+    let hasPendingLab = false;
+    labElements.forEach((lab) => {
+      const actId = lab.dataset.activityId;
+      if (actId && !state.completedActivities.includes(`${courseSlug}:${actId}`)) {
+        hasPendingLab = true;
+      }
+    });
+
+    // 2. Periksa kuis evaluasi di halaman ini
+    const quizElements = document.querySelectorAll<HTMLElement>('[data-lesson-quiz]');
+    let hasPendingQuiz = false;
+    quizElements.forEach((quiz) => {
+      const actId = quiz.dataset.activityId;
+      if (actId && !state.completedActivities.includes(`${courseSlug}:${actId}`)) {
+        hasPendingQuiz = true;
+      }
+    });
+
+    // 3. Periksa interaktif command ordering jika ada
+    const orderElements = document.querySelectorAll<HTMLElement>('[data-command-order]');
+    let hasPendingOrder = false;
+    orderElements.forEach((ord) => {
+      const actId = ord.dataset.activityId;
+      if (actId && !state.completedActivities.includes(`${courseSlug}:${actId}`)) {
+        hasPendingOrder = true;
+      }
+    });
+
+    return {
+      hasPendingLab,
+      hasPendingQuiz: hasPendingQuiz || hasPendingOrder,
+      isBlocked: hasPendingLab || hasPendingQuiz || hasPendingOrder,
+    };
+  };
+
+  const updateGateState = (root: HTMLElement) => {
     const courseSlug = root.dataset.course ?? '';
     const lessonId = root.dataset.lesson ?? '';
     const lessonKey = `${courseSlug}/${lessonId}`;
@@ -37,56 +76,259 @@ const { courseSlug, lessonId, nextHref, nextLabel, isLast = false } = Astro.prop
     const kicker = root.querySelector<HTMLElement>('[data-gate-kicker]');
     const title = root.querySelector<HTMLElement>('[data-gate-title]');
 
-    const updateState = () => {
-      const complete = getLearningState().completedLessons.includes(lessonKey);
-      root.classList.toggle('is-complete', complete);
-      if (kicker) kicker.textContent = complete ? 'Lesson Selesai' : 'Belum Selesai';
-      if (title) title.textContent = complete
-        ? 'Bagus! Materi pada lesson ini sudah kamu kuasai.'
-        : 'Sudah membaca dan memahami semua materi di atas?';
-      if (markText) markText.textContent = complete ? 'Tercentang Selesai' : 'Tandai Selesai';
+    const state = getLearningState();
+    const complete = state.completedLessons.includes(lessonKey);
+    root.classList.toggle('is-complete', complete);
+
+    if (complete) {
+      if (kicker) kicker.textContent = 'Lesson Selesai';
+      if (title) title.textContent = 'Bagus! Materi pada lesson ini sudah kamu kuasai.';
+      if (markText) markText.textContent = 'Tercentang Selesai';
       if (markBtn) {
-        markBtn.classList.toggle('completed', complete);
+        markBtn.classList.remove('is-locked');
+        markBtn.classList.add('completed');
+        markBtn.disabled = false;
       }
+      return;
+    }
+
+    const prereqs = checkPrerequisites(courseSlug, state);
+
+    if (prereqs.isBlocked) {
+      if (markBtn) {
+        markBtn.classList.add('is-locked');
+        markBtn.classList.remove('completed');
+      }
+
+      if (prereqs.hasPendingLab && prereqs.hasPendingQuiz) {
+        if (kicker) kicker.textContent = 'Prasyarat Belum Terpenuhi';
+        if (title) title.textContent = 'Wajib mengunduh berkas lab Packet Tracer (.pkt) dan lulus kuis sebelum menandai materi ini selesai.';
+        if (markText) markText.textContent = 'Kuis & Unduh Lab Belum Selesai';
+      } else if (prereqs.hasPendingLab) {
+        if (kicker) kicker.textContent = 'Prasyarat Lab Belum Terpenuhi';
+        if (title) title.textContent = 'Wajib mengunduh berkas lab Packet Tracer (.pkt) di atas terlebih dahulu.';
+        if (markText) markText.textContent = 'Unduh Berkas Lab Terlebih Dahulu';
+      } else {
+        if (kicker) kicker.textContent = 'Prasyarat Kuis Belum Terpenuhi';
+        if (title) title.textContent = 'Wajib menyelesaikan dan lulus kuis evaluasi di atas terlebih dahulu.';
+        if (markText) markText.textContent = 'Lulus Kuis Terlebih Dahulu';
+      }
+    } else {
+      if (markBtn) {
+        markBtn.classList.remove('is-locked');
+        markBtn.classList.remove('completed');
+        markBtn.disabled = false;
+      }
+      if (kicker) kicker.textContent = 'Siap Ditandai Selesai';
+      if (title) title.textContent = 'Seluruh prasyarat telah terpenuhi. Tandai materi ini sebagai selesai untuk mencatat kemajuan.';
+      if (markText) markText.textContent = 'Tandai Selesai';
+    }
+  };
+
+  const setupGate = (root: HTMLElement) => {
+    if (root.dataset.gateReady === 'true') {
+      updateGateState(root);
+      return;
+    }
+    root.dataset.gateReady = 'true';
+
+    const courseSlug = root.dataset.course ?? '';
+    const lessonId = root.dataset.lesson ?? '';
+    const lessonKey = `${courseSlug}/${lessonId}`;
+
+    const markBtn = root.querySelector<HTMLButtonElement>('[data-mark-complete]');
+    const nextLink = root.querySelector<HTMLAnchorElement>('[data-next-link]');
+    const paginationNext = document.querySelector<HTMLAnchorElement>('.player-pagination a.next');
+
+    const handleBlockedAction = (e?: Event) => {
+      const state = getLearningState();
+      if (state.completedLessons.includes(lessonKey)) {
+        return false;
+      }
+      const prereqs = checkPrerequisites(courseSlug, state);
+      if (prereqs.isBlocked) {
+        if (e) e.preventDefault();
+        if (prereqs.hasPendingLab && prereqs.hasPendingQuiz) {
+          dispatchToast('Anda harus mengunduh berkas lab Packet Tracer dan lulus kuis terlebih dahulu.', 'warning');
+        } else if (prereqs.hasPendingLab) {
+          dispatchToast('Anda harus mengunduh berkas lab Packet Tracer (.pkt) terlebih dahulu.', 'warning');
+        } else {
+          dispatchToast('Anda harus menyelesaikan dan lulus kuis evaluasi terlebih dahulu.', 'warning');
+        }
+        return true;
+      }
+      return false;
     };
 
     if (markBtn && courseSlug && lessonId) {
       markBtn.addEventListener('click', () => {
+        const isBlocked = handleBlockedAction();
+        if (isBlocked) return;
+
+        const state = getLearningState();
+        if (state.completedLessons.includes(lessonKey)) return;
+
         markLessonComplete(courseSlug, lessonId);
-        updateState();
+        updateGateState(root);
       });
     }
 
-    updateState();
+    if (nextLink) {
+      nextLink.addEventListener('click', (e) => {
+        handleBlockedAction(e);
+      });
+    }
+
+    if (paginationNext) {
+      paginationNext.addEventListener('click', (e) => {
+        handleBlockedAction(e);
+      });
+    }
+
+    updateGateState(root);
   };
 
   document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(setupGate);
   window.addEventListener('phinisi-progress-updated', () => {
-    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(setupGate);
+    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(updateGateState);
+  });
+  window.addEventListener('phinisi-lab-downloaded', () => {
+    document.querySelectorAll<HTMLElement>('[data-lesson-gate]').forEach(updateGateState);
   });
 </script>
 
 <style>
-  .lesson-gate { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; margin-top: 2.5rem; border: 1px solid #e2e8f0; border-radius: 1.1rem; padding: 1.1rem 1.25rem; background: #fafcfd; box-shadow: 0 4px 14px rgba(8, 42, 81, 0.04); transition: all 200ms ease; }
-  .lesson-gate.is-complete { border-color: #bbf7d0; background: #f0fdf4; }
-  .gate-info { display: grid; gap: 0.2rem; }
-  .lesson-gate span[data-gate-kicker] { color: var(--color-muted); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.04em; }
-  .lesson-gate.is-complete span[data-gate-kicker] { color: #15803d; }
-  .lesson-gate strong { color: var(--color-navy); font-size: 0.88rem; font-weight: 700; }
-  .gate-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .lesson-gate {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.1rem;
+    padding: 1.1rem 1.25rem;
+    background: #fafcfd;
+    box-shadow: 0 4px 14px rgba(8, 42, 81, 0.04);
+    transition: all 200ms ease;
+  }
+  .lesson-gate.is-complete {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+  .gate-info {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .lesson-gate span[data-gate-kicker] {
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .lesson-gate.is-complete span[data-gate-kicker] {
+    color: #15803d;
+  }
+  .lesson-gate strong {
+    color: var(--color-navy);
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .gate-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
 
-  .mark-complete-btn { display: inline-flex; align-items: center; gap: 0.45rem; border: 1px solid var(--color-phinisi-200); border-radius: 0.75rem; padding: 0.62rem 0.95rem; background: #ffffff; color: var(--color-primary); font-size: 0.76rem; font-weight: 800; cursor: pointer; transition: all 180ms ease; box-shadow: 0 2px 6px rgba(8, 42, 81, 0.05); }
-  .mark-complete-btn:hover { background: var(--color-phinisi-50); border-color: var(--color-primary); }
-  .mark-complete-btn.completed { border-color: #86efac; background: #16a34a; color: #ffffff; }
-  .mark-complete-btn.completed .check-icon { stroke: #ffffff; }
+  .mark-complete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--color-phinisi-200);
+    border-radius: 0.75rem;
+    padding: 0.62rem 0.95rem;
+    background: #ffffff;
+    color: var(--color-primary);
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 180ms ease;
+    box-shadow: 0 2px 6px rgba(8, 42, 81, 0.05);
+  }
+  .mark-complete-btn:hover {
+    background: var(--color-phinisi-50);
+    border-color: var(--color-primary);
+  }
+  .mark-complete-btn .lock-icon {
+    display: none;
+    font-size: 1.05rem;
+  }
+  .mark-complete-btn .check-icon {
+    display: inline-block;
+  }
 
-  .next-link { display: inline-flex; align-items: center; border-radius: 0.75rem; padding: 0.62rem 0.95rem; background: var(--color-primary); color: #ffffff; font-size: 0.76rem; font-weight: 800; text-decoration: none; transition: background 180ms ease; box-shadow: 0 4px 12px rgba(20, 91, 215, 0.2); }
-  .next-link:hover { background: #0e4ca9; }
+  /* Status Terkunci Karena Prasyarat Belum Terpenuhi */
+  .mark-complete-btn.is-locked {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #64748b;
+    box-shadow: none;
+  }
+  .mark-complete-btn.is-locked:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #475569;
+  }
+  .mark-complete-btn.is-locked .check-icon {
+    display: none;
+  }
+  .mark-complete-btn.is-locked .lock-icon {
+    display: inline-block;
+    color: #94a3b8;
+  }
+
+  /* Status Selesai */
+  .mark-complete-btn.completed {
+    border-color: #86efac;
+    background: #16a34a;
+    color: #ffffff;
+  }
+  .mark-complete-btn.completed .check-icon {
+    stroke: #ffffff;
+  }
+
+  .next-link {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.75rem;
+    padding: 0.62rem 0.95rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background 180ms ease;
+    box-shadow: 0 4px 12px rgba(20, 91, 215, 0.2);
+  }
+  .next-link:hover {
+    background: #0e4ca9;
+  }
 
   @media (max-width: 620px) {
-    .lesson-gate { align-items: stretch; flex-direction: column; }
-    .gate-actions { flex-direction: column; }
-    .mark-complete-btn, .next-link { justify-content: center; width: 100%; }
+    .lesson-gate {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .gate-actions {
+      flex-direction: column;
+    }
+    .mark-complete-btn,
+    .next-link {
+      justify-content: center;
+      width: 100%;
+    }
   }
 </style>
-

@@ -46,7 +46,23 @@ const nextGateHref = nextEntry
   : relatedPath
     ? `/learning-path/${relatedPath.slug}`
     : `/courses/${course.slug}`;
-const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail course';
+
+const currentModule = course.modules.find((m) => m.slug === entry.data.module);
+const nextModule = nextEntry?.data.module ? course.modules.find((m) => m.slug === nextEntry.data.module) : undefined;
+const isNextInDifferentModule = Boolean(
+  nextModule && currentModule && nextModule.slug !== currentModule.slug
+);
+const nextModuleIndex = nextModule ? course.modules.findIndex((m) => m.slug === nextModule.slug) + 1 : undefined;
+
+const previousModule = previousEntry?.data.module ? course.modules.find((m) => m.slug === previousEntry.data.module) : undefined;
+const isPrevInDifferentModule = Boolean(
+  previousModule && currentModule && previousModule.slug !== currentModule.slug
+);
+const prevModuleIndex = previousModule ? course.modules.findIndex((m) => m.slug === previousModule.slug) + 1 : undefined;
+
+const nextGateLabel = isNextInDifferentModule && nextModule
+  ? `Modul ${nextModuleIndex}: ${nextEntry?.data.title}`
+  : nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail course';
 ---
 
 <BaseLayout title={`${entry.data.title} · ${course.title}`} description={entry.data.description ?? course.description.id}>
@@ -170,8 +186,22 @@ const nextGateLabel = nextEntry?.data.title ?? relatedPath?.title.id ?? 'Detail 
         )}
 
         <nav class="player-pagination" aria-label="Navigasi lesson">
-          {previousEntry ? <a href={playerHref(previousEntry)}>← <span><small>Sebelumnya</small><strong>{previousEntry.data.title}</strong></span></a> : <span></span>}
-          {nextEntry ? <a class="next" href={playerHref(nextEntry)}><span><small>Berikutnya</small><strong>{nextEntry.data.title}</strong></span> →</a> : <span></span>}
+          {previousEntry ? (
+            <a href={playerHref(previousEntry)}>
+              ← <span>
+                <small>{isPrevInDifferentModule ? `Modul ${prevModuleIndex} · Sebelumnya` : 'Sebelumnya'}</small>
+                <strong>{previousEntry.data.title}</strong>
+              </span>
+            </a>
+          ) : <span></span>}
+          {nextEntry ? (
+            <a class="next" href={playerHref(nextEntry)}>
+              <span>
+                <small>{isNextInDifferentModule ? `Modul ${nextModuleIndex} · Berikutnya` : 'Berikutnya'}</small>
+                <strong>{nextEntry.data.title}</strong>
+              </span> →
+            </a>
+          ) : <span></span>}
         </nav>
       </div>
     </main>

@@ -1,0 +1,2914 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Buat Kursus Baru" activeSection="courses">
+  <div class="course-creator-container">
+    <!-- Top Action Breadcrumb -->
+    <div class="creator-breadcrumb-bar">
+      <a href="/admin/courses" class="back-link">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Kembali ke Manajemen Kursus</span>
+      </a>
+      <span class="breadcrumb-current">Wizard Pembuat Kursus</span>
+    </div>
+
+    <div class="creator-grid">
+      <!-- Kolom Kiri: Formulir Penyusun Kursus & Silabus -->
+      <section class="creator-form-col">
+        <form id="course-builder-form" class="builder-form">
+          <!-- Step 1: Informasi Dasar -->
+          <div class="form-card">
+            <div class="card-title-row">
+              <span class="step-badge">1</span>
+              <div>
+                <h2 class="card-heading">Informasi Dasar Kursus</h2>
+                <p class="card-subheading">Tentukan judul, rumpun keahlian, dan estimasi waktu belajar.</p>
+              </div>
+            </div>
+
+            <div class="fields-grid">
+              <div class="field-group full-width">
+                <label for="course-title" class="field-label">Judul Kursus *</label>
+                <input
+                  type="text"
+                  id="course-title"
+                  name="title"
+                  required
+                  placeholder="Contoh: Dasar Switching, VLAN & Inter-VLAN Routing"
+                  class="text-input"
+                />
+              </div>
+
+              <div class="field-group">
+                <label for="course-slug" class="field-label">Slug URL (Otomatis)</label>
+                <input
+                  type="text"
+                  id="course-slug"
+                  name="slug"
+                  placeholder="dasar-switching-vlan"
+                  class="text-input font-mono"
+                />
+                <small class="field-hint">Alamat URL kursus, contoh: /courses/dasar-switching-vlan</small>
+              </div>
+
+              <div class="field-group">
+                <label for="course-category" class="field-label">Bidang Ilmu / Kategori *</label>
+                <select id="course-category" name="category" class="select-input">
+                  <option value="networking" selected>Jaringan Komputer (Networking)</option>
+                  <option value="linux">Linux & Server Administration</option>
+                  <option value="automation">Otomasi Jaringan & Python</option>
+                  <option value="iot">Internet of Things (IoT)</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label for="course-level" class="field-label">Tingkat Kemampuan *</label>
+                <select id="course-level" name="level" class="select-input">
+                  <option value="beginner" selected>Pemula (Beginner)</option>
+                  <option value="intermediate">Menengah (Intermediate)</option>
+                  <option value="advanced">Lanjutan (Advanced)</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label for="course-duration" class="field-label">Estimasi Waktu (Jam)</label>
+                <input
+                  type="number"
+                  id="course-duration"
+                  name="durationHours"
+                  value="8"
+                  min="1"
+                  max="120"
+                  class="text-input"
+                />
+              </div>
+
+              <div class="field-group full-width">
+                <label for="course-desc" class="field-label">Deskripsi Singkat Kursus</label>
+                <textarea
+                  id="course-desc"
+                  name="description"
+                  rows="3"
+                  class="textarea-input"
+                  placeholder="Rangkuman kompetensi utama yang akan dikuasai siswa setelah menuntaskan materi dan lab kursus ini..."
+                ></textarea>
+              </div>
+
+              <div class="field-group full-width">
+                <label for="course-status" class="field-label">Status Publikasi Awal</label>
+                <select id="course-status" name="status" class="select-input">
+                  <option value="draft" selected>Draf (Disimpan, belum tampil di katalog publik siswa)</option>
+                  <option value="published">Terpublikasi (Langsung aktif di katalog)</option>
+                </select>
+                <small class="field-hint">Disarankan tetap Draf sampai materi selesai ditulis di Keystatic.</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Konfigurasi Bobot Nilai XP -->
+          <div class="form-card">
+            <div class="card-title-row">
+              <span class="step-badge">2</span>
+              <div>
+                <h2 class="card-heading">Konfigurasi Bobot XP & Gamifikasi</h2>
+                <p class="card-subheading">Pilih preset poin pengalaman untuk menjaga keseimbangan kenaikan pangkat siswa.</p>
+              </div>
+            </div>
+
+            <div class="preset-buttons-row">
+              <button type="button" class="btn-preset active" data-preset="standard">
+                <strong>Standar Phinisi</strong>
+                <span>15 XP Teori · 25 XP Kuis · 40 XP Lab</span>
+              </button>
+              <button type="button" class="btn-preset" data-preset="light">
+                <strong>Ringan / Fundamental</strong>
+                <span>10 XP Teori · 20 XP Kuis · 30 XP Lab</span>
+              </button>
+              <button type="button" class="btn-preset" data-preset="heavy">
+                <strong>Tantangan Lab Berat</strong>
+                <span>20 XP Teori · 35 XP Kuis · 60 XP Lab</span>
+              </button>
+            </div>
+
+            <div class="xp-custom-row">
+              <div class="xp-input-box">
+                <label>XP Teori</label>
+                <input type="number" id="xp-theory" value="15" min="5" max="100" class="xp-num-input" />
+              </div>
+              <div class="xp-input-box">
+                <label>XP Kuis</label>
+                <input type="number" id="xp-quiz" value="25" min="5" max="100" class="xp-num-input" />
+              </div>
+              <div class="xp-input-box">
+                <label>XP Lab .pkt</label>
+                <input type="number" id="xp-lab" value="40" min="10" max="200" class="xp-num-input" />
+              </div>
+              <div class="xp-input-box">
+                <label>Bonus Tamat</label>
+                <input type="number" id="xp-bonus" value="100" min="0" max="500" class="xp-num-input" readonly />
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Modul & Konten Pembelajaran Terpadu (All-in-One Studio) -->
+          <div class="form-card">
+            <div class="card-title-row">
+              <span class="step-badge">3</span>
+              <div class="syllabus-header-between">
+                <div>
+                  <h2 class="card-heading">Modul & Konten Pembelajaran</h2>
+                  <p class="card-subheading">Tambahkan modul dan materi secara fleksibel. Anda dapat langsung menempelkan (paste) teks Markdown (.md), mengunggah foto, memasukkan lab Packet Tracer, atau menyusun kuis langsung di sini.</p>
+                </div>
+                <button type="button" id="btn-add-module" class="btn-add-primary">
+                  <span class="material-symbols-outlined">add_circle</span>
+                  <span>Tambah Bab Modul</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Berkas Tersembunyi untuk Unggah Foto, Berkas PKT, dan Panduan PDF -->
+            <input type="file" id="global-image-uploader" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display: none;" />
+            <input type="file" id="global-pkt-uploader" accept=".pkt,.pka" style="display: none;" />
+            <input type="file" id="global-pdf-uploader" accept=".pdf" style="display: none;" />
+
+            <div id="modules-container" class="modules-tree-wrap">
+              <!-- Modul dan materi akan dirender dinamis lewat JavaScript -->
+            </div>
+
+            <button type="button" id="btn-add-module-bottom" class="btn-add-module-dashed">
+              <span class="material-symbols-outlined">add_circle</span>
+              <span>Tambah Bab Modul Baru</span>
+            </button>
+          </div>
+
+          <div id="submit-error-msg" class="error-banner hidden"></div>
+
+          <!-- Submit Action Area -->
+          <div class="form-action-card">
+            <div class="action-desc">
+              <strong>Simpan & Publikasikan Kursus Lengkap</strong>
+              <p>Seluruh materi Markdown, foto yang diunggah, berkas lab Packet Tracer (.pkt), dan butir soal kuis akan disusun ke dalam sistem Phinisi secara instan.</p>
+            </div>
+            <button type="submit" id="btn-submit-course" class="btn-generate-course">
+              <span class="material-symbols-outlined">save</span>
+              <span>Simpan Seluruh Kursus & Konten</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Kolom Kanan: Simulator XP Real-Time & Pratinjau -->
+      <aside class="creator-preview-col">
+        <div class="sticky-preview-wrap">
+          <!-- Kotak Simulator XP & Pangkat -->
+          <div class="simulator-card">
+            <div class="sim-header">
+              <span class="material-symbols-outlined icon-sim">military_tech</span>
+              <div>
+                <span class="sim-kicker">SIMULATOR GAMIFIKASI</span>
+                <h3 class="sim-title">Total XP & Proyeksi Pangkat</h3>
+              </div>
+            </div>
+
+            <div class="sim-stats-grid">
+              <div class="sim-stat-item">
+                <span class="sim-stat-label">Total Modul</span>
+                <strong class="sim-stat-val" id="sim-module-count">1 Bab</strong>
+              </div>
+              <div class="sim-stat-item">
+                <span class="sim-stat-label">Total Pelajaran</span>
+                <strong class="sim-stat-val" id="sim-lesson-count">3 Materi</strong>
+              </div>
+              <div class="sim-stat-item">
+                <span class="sim-stat-label">Praktik Lab .pkt</span>
+                <strong class="sim-stat-val" id="sim-lab-count">1 Lab</strong>
+              </div>
+              <div class="sim-stat-item">
+                <span class="sim-stat-label">Kuis Evaluasi</span>
+                <strong class="sim-stat-val" id="sim-quiz-count">1 Kuis</strong>
+              </div>
+            </div>
+
+            <div class="total-xp-highlight-box">
+              <span class="total-label">Total Hadiah XP Tersedia:</span>
+              <strong class="total-val" id="sim-total-xp">180 XP</strong>
+              <small class="total-note">(Termasuk Bonus Milestone Tamat +100 XP)</small>
+            </div>
+
+            <div class="rank-impact-box">
+              <span class="impact-label">Proyeksi Pangkat Siswa Baru:</span>
+              <div class="impact-tier-badge" id="sim-projected-tier">
+                <span class="material-symbols-outlined icon-tier">sailing</span>
+                <strong id="sim-tier-name">Network Helmsman</strong>
+              </div>
+              <p class="impact-desc" id="sim-tier-desc">
+                Siswa baru yang menyelesaikan kursus ini akan langsung naik dari Deck Cadet menjadi Network Helmsman!
+              </p>
+            </div>
+          </div>
+
+          <!-- Pratinjau Kartu Kursus Siswa -->
+          <div class="preview-card-box">
+            <span class="preview-kicker">PRATINJAU KATALOG SISWA</span>
+            <div class="mock-course-card">
+              <div class="mock-card-top">
+                <span class="mock-cat-badge" id="mock-cat-badge">NETWORKING</span>
+                <span class="mock-level-pill" id="mock-level-pill">Beginner</span>
+              </div>
+              <h4 class="mock-title" id="mock-title">Judul Kursus Baru</h4>
+              <p class="mock-desc" id="mock-desc">Deskripsi singkat kursus akan tampil di sini...</p>
+              <div class="mock-footer">
+                <span class="mock-meta" id="mock-duration">8 Jam</span>
+                <span class="mock-meta" id="mock-lesson-stat">3 materi</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panduan Studio Terpadu -->
+          <div class="keystatic-guide-box">
+            <div class="guide-header">
+              <span class="material-symbols-outlined icon-guide">auto_stories</span>
+              <strong>Studio Terpadu (Satu Tempat)</strong>
+            </div>
+            <p>
+              Seluruh proses pembuatan modul, penulisan materi Markdown (.md), pengunggahan foto, pemasangan tautan lab Packet Tracer (.pkt), hingga pembuatan kuis diselesaikan langsung di halaman ini tanpa perlu berpindah tab atau editor.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Modal Sukses Pembuatan Kursus -->
+    <dialog id="success-modal" class="success-dialog">
+      <div class="modal-card">
+        <div class="success-icon-wrap">
+          <span class="material-symbols-outlined">check_circle</span>
+        </div>
+        <h3 class="modal-success-title">Kursus Berhasil Disimpan & Diterbitkan!</h3>
+        <p class="modal-success-desc" id="success-modal-msg">
+          Seluruh modul, materi pelajaran, catatan Markdown, berkas lab Packet Tracer, dan kuis evaluasi telah siap di platform Phinisi.
+        </p>
+
+        <div class="modal-action-buttons">
+          <a href="#" id="link-preview-web" target="_blank" rel="noopener noreferrer" class="btn-keystatic-primary">
+            <span class="material-symbols-outlined">play_circle</span>
+            <span>Buka Kursus di Player Siswa</span>
+          </a>
+          <a href="/admin/courses" class="btn-preview-secondary">
+            <span class="material-symbols-outlined">list_alt</span>
+            <span>Kembali ke Manajemen Kursus</span>
+          </a>
+          <a href="#" id="link-open-keystatic" target="_blank" rel="noopener noreferrer" class="btn-back-courses">
+            <span>Buka di Keystatic CMS (Opsional)</span>
+          </a>
+        </div>
+      </div>
+    </dialog>
+  </div>
+</AdminLayout>
+
+<script>
+  let moduleCount = 0;
+
+  interface QuizQuestionData {
+    id: number;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation?: string;
+  }
+
+  interface LessonData {
+    id: number;
+    title: string;
+    type: 'theory' | 'quiz' | 'pkt_lab';
+    durationMinutes: number;
+    driveUrl?: string;
+    pktUrl?: string;
+    fileName?: string;
+    pdfUrl?: string;
+    pdfFileName?: string;
+    content?: string;
+    quizQuestions?: QuizQuestionData[];
+    passingScore?: number;
+    isEditorOpen?: boolean;
+  }
+
+  interface ModuleData {
+    id: number;
+    title: string;
+    lessons: LessonData[];
+  }
+
+  const modulesState: ModuleData[] = [];
+  let activeLessonIdForUpload: number | null = null;
+  let activeLessonIdForPktUpload: number | null = null;
+  let activeLessonIdForPdfUpload: number | null = null;
+
+  function slugify(text: string): string {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  function escapeHtml(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function findLesson(lesId: number) {
+    for (const mod of modulesState) {
+      const les = mod.lessons.find((l) => l.id === lesId);
+      if (les) return { mod, les };
+    }
+    return null;
+  }
+
+  function insertTextAtCursor(textarea: HTMLTextAreaElement, text: string) {
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+    const val = textarea.value;
+    textarea.value = val.substring(0, start) + text + val.substring(end);
+    const newPos = start + text.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const titleInput = document.getElementById('course-title') as HTMLInputElement;
+  const slugInput = document.getElementById('course-slug') as HTMLInputElement;
+  const catSelect = document.getElementById('course-category') as HTMLSelectElement;
+  const levelSelect = document.getElementById('course-level') as HTMLSelectElement;
+  const durationInput = document.getElementById('course-duration') as HTMLInputElement;
+  const descInput = document.getElementById('course-desc') as HTMLTextAreaElement;
+
+  const xpTheoryInput = document.getElementById('xp-theory') as HTMLInputElement;
+  const xpQuizInput = document.getElementById('xp-quiz') as HTMLInputElement;
+  const xpLabInput = document.getElementById('xp-lab') as HTMLInputElement;
+  const xpBonusInput = document.getElementById('xp-bonus') as HTMLInputElement;
+
+  const modulesContainer = document.getElementById('modules-container');
+  const addModuleBtn = document.getElementById('btn-add-module');
+  const form = document.getElementById('course-builder-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('btn-submit-course') as HTMLButtonElement;
+  const errorMsg = document.getElementById('submit-error-msg');
+  const successModal = document.getElementById('success-modal') as HTMLDialogElement;
+  const globalImageUploader = document.getElementById('global-image-uploader') as HTMLInputElement;
+  const globalPktUploader = document.getElementById('global-pkt-uploader') as HTMLInputElement;
+  const globalPdfUploader = document.getElementById('global-pdf-uploader') as HTMLInputElement;
+
+  // Auto-slug generator
+  if (titleInput && slugInput) {
+    titleInput.addEventListener('input', () => {
+      if (!slugInput.dataset.manualEdit) {
+        slugInput.value = slugify(titleInput.value);
+      }
+      updatePreview();
+    });
+
+    slugInput.addEventListener('input', () => {
+      slugInput.dataset.manualEdit = 'true';
+    });
+  }
+
+  // Presets XP
+  document.querySelectorAll<HTMLButtonElement>('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-preset').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const preset = btn.dataset.preset;
+      if (preset === 'standard') {
+        xpTheoryInput.value = '15';
+        xpQuizInput.value = '25';
+        xpLabInput.value = '40';
+      } else if (preset === 'light') {
+        xpTheoryInput.value = '10';
+        xpQuizInput.value = '20';
+        xpLabInput.value = '30';
+      } else if (preset === 'heavy') {
+        xpTheoryInput.value = '20';
+        xpQuizInput.value = '35';
+        xpLabInput.value = '60';
+      }
+      updatePreview();
+    });
+  });
+
+  [catSelect, levelSelect, durationInput, descInput, xpTheoryInput, xpQuizInput, xpLabInput].forEach((el) => {
+    if (el) el.addEventListener('input', updatePreview);
+  });
+
+  // Global Image Uploader Handler
+  if (globalImageUploader) {
+    globalImageUploader.addEventListener('change', async () => {
+      if (!globalImageUploader.files || globalImageUploader.files.length === 0 || !activeLessonIdForUpload) {
+        return;
+      }
+      const file = globalImageUploader.files[0];
+      const targetLesId = activeLessonIdForUpload;
+      const lesObj = findLesson(targetLesId);
+
+      const uploadBtn = document.querySelector(`.btn-tool-upload[data-les-id="${targetLesId}"]`) as HTMLButtonElement;
+      const originalBtnHtml = uploadBtn ? uploadBtn.innerHTML : '';
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span><span>Mengunggah...</span>`;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch('/api/admin/upload-image', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal mengunggah foto.');
+        }
+
+        const markdownImg = `\n![${data.alt || data.fileName || 'gambar'}](${data.url})\n`;
+        const textarea = document.querySelector(`.lesson-builder-item[data-lesson-id="${targetLesId}"] .les-md-textarea`) as HTMLTextAreaElement;
+        if (textarea) {
+          insertTextAtCursor(textarea, markdownImg);
+        } else if (lesObj) {
+          lesObj.les.content = (lesObj.les.content || '') + markdownImg;
+        }
+      } catch (err: any) {
+        alert('Gagal mengunggah foto/gambar: ' + (err.message || 'Terjadi kesalahan sistem.'));
+      } finally {
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = originalBtnHtml;
+        }
+        globalImageUploader.value = '';
+        activeLessonIdForUpload = null;
+      }
+    });
+  }
+
+  // Global PKT Uploader Handler
+  if (globalPktUploader) {
+    globalPktUploader.addEventListener('change', async () => {
+      if (!globalPktUploader.files || globalPktUploader.files.length === 0 || !activeLessonIdForPktUpload) return;
+      const file = globalPktUploader.files[0];
+      const targetLesId = activeLessonIdForPktUpload;
+      const lesObj = findLesson(targetLesId);
+
+      const uploadBtn = document.querySelector(`.btn-tool-pkt-upload[data-les-id="${targetLesId}"]`) as HTMLButtonElement;
+      const originalHtml = uploadBtn ? uploadBtn.innerHTML : '';
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span><span>Mengunggah PKT...</span>`;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal mengunggah berkas .pkt.');
+
+        if (lesObj) {
+          lesObj.les.pktUrl = data.url;
+          lesObj.les.driveUrl = data.url;
+          lesObj.les.fileName = data.originalName || data.fileName;
+          renderModules();
+        }
+      } catch (err: any) {
+        alert('Gagal mengunggah berkas .pkt: ' + (err.message || 'Terjadi kesalahan sistem.'));
+      } finally {
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = originalHtml;
+        }
+        globalPktUploader.value = '';
+        activeLessonIdForPktUpload = null;
+      }
+    });
+  }
+
+  // Global PDF Uploader Handler
+  if (globalPdfUploader) {
+    globalPdfUploader.addEventListener('change', async () => {
+      if (!globalPdfUploader.files || globalPdfUploader.files.length === 0 || !activeLessonIdForPdfUpload) return;
+      const file = globalPdfUploader.files[0];
+      const targetLesId = activeLessonIdForPdfUpload;
+      const lesObj = findLesson(targetLesId);
+
+      const uploadBtn = document.querySelector(`.btn-tool-pdf-upload[data-les-id="${targetLesId}"]`) as HTMLButtonElement;
+      const originalHtml = uploadBtn ? uploadBtn.innerHTML : '';
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span><span>Mengunggah PDF...</span>`;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal mengunggah berkas .pdf.');
+
+        if (lesObj) {
+          lesObj.les.pdfUrl = data.url;
+          lesObj.les.pdfFileName = data.originalName || data.fileName;
+          renderModules();
+        }
+      } catch (err: any) {
+        alert('Gagal mengunggah berkas PDF: ' + (err.message || 'Terjadi kesalahan sistem.'));
+      } finally {
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = originalHtml;
+        }
+        globalPdfUploader.value = '';
+        activeLessonIdForPdfUpload = null;
+      }
+    });
+  }
+
+  function addModule(initialTitle = '') {
+    moduleCount++;
+    const modId = Date.now() + Math.floor(Math.random() * 1000);
+    const modNumber = modulesState.length + 1;
+    const defaultTitle = initialTitle || `Modul ${modNumber}: Pembahasan Pokok`;
+
+    const newModule: ModuleData = {
+      id: modId,
+      title: defaultTitle,
+      lessons: [
+        {
+          id: Date.now() + 1,
+          title: `01. Konsep & Arsitektur Modul ${modNumber}`,
+          type: 'theory',
+          durationMinutes: 10,
+          isEditorOpen: true,
+          content: `## Pengantar Materi Modul ${modNumber}\n\nMateri ini membahas arsitektur dan prinsip kerja dasar.\n\n> [!NOTE]\n> Pastikan memahami konsep ini sebelum beralih ke simulasi Packet Tracer.\n`,
+        },
+        {
+          id: Date.now() + 2,
+          title: `02. Praktik Konfigurasi Modul ${modNumber}`,
+          type: 'pkt_lab',
+          durationMinutes: 30,
+          isEditorOpen: true,
+          pktUrl: '',
+          driveUrl: '',
+          fileName: `lab-modul-${modNumber}.pkt`,
+          pdfUrl: '',
+          pdfFileName: `panduan-lab-modul-${modNumber}.pdf`,
+          content: `The network model in this Packet Tracer activity explores the configuration and verification of network devices.\n\nMost of the devices are already deployed and configured. Follow the instructions and verify connectivity between endpoints using ping test.`,
+        },
+        {
+          id: Date.now() + 3,
+          title: `03. Kuis Evaluasi Modul ${modNumber}`,
+          type: 'quiz',
+          durationMinutes: 15,
+          isEditorOpen: true,
+          passingScore: 67,
+          quizQuestions: [
+            {
+              id: 1,
+              question: `Apa fungsi utama dari topik yang dipelajari pada Modul ${modNumber}?`,
+              options: [
+                'Meneruskan paket data antar segmen jaringan yang berbeda',
+                'Menyimpan konfigurasi startup di memori NVRAM router',
+                'Melakukan enkripsi frame pada Physical Layer',
+                'Mengatur alokasi tabel MAC address di switch',
+              ],
+              correctIndex: 0,
+              explanation: `Materi pada Modul ${modNumber} membahas prinsip transmisi dan konfigurasi perangkat.`,
+            },
+          ],
+        },
+      ],
+    };
+
+    modulesState.push(newModule);
+    renderModules();
+    updatePreview();
+  }
+
+  function renderModules() {
+    if (!modulesContainer) return;
+    modulesContainer.innerHTML = '';
+
+    modulesState.forEach((mod, modIdx) => {
+      const moduleCard = document.createElement('div');
+      moduleCard.className = 'module-builder-card';
+      moduleCard.dataset.moduleId = String(mod.id);
+      moduleCard.innerHTML = `
+        <div class="module-card-header">
+          <div class="mod-header-left">
+            <span class="mod-index-pill">Bab ${modIdx + 1}</span>
+            <input type="text" class="mod-title-input" value="${escapeHtml(mod.title)}" placeholder="Contoh: Modul ${modIdx + 1}: Konsep & Implementasi" />
+          </div>
+          <div class="mod-header-actions">
+            <button type="button" class="btn-add-lesson" data-mod-id="${mod.id}">
+              <span class="material-symbols-outlined icon-sm">add_circle</span>
+              <span>Tambah Materi</span>
+            </button>
+            ${modulesState.length > 1 ? `
+              <button type="button" class="btn-del-mod" data-mod-id="${mod.id}" title="Hapus Bab Ini">
+                <span class="material-symbols-outlined icon-sm">delete</span>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        <div class="lessons-builder-track">
+          <div class="lessons-builder-list" data-lessons-list="${mod.id}">
+            ${mod.lessons.map((les, lesIdx) => `
+              <div class="lesson-builder-item" data-lesson-id="${les.id}">
+                <div class="lesson-item-main-row">
+                  <span class="les-badge">${String(lesIdx + 1).padStart(2, '0')}</span>
+                  <div class="les-title-col">
+                    <input type="text" class="les-title-input" value="${escapeHtml(les.title)}" placeholder="Judul Materi Pelajaran" />
+                  </div>
+                  <div class="les-type-col">
+                    <select class="les-type-select ${les.type}">
+                      <option value="theory" ${les.type === 'theory' ? 'selected' : ''}>Teori / Bacaan</option>
+                      <option value="pkt_lab" ${les.type === 'pkt_lab' ? 'selected' : ''}>Praktik Packet Tracer (.pkt)</option>
+                      <option value="quiz" ${les.type === 'quiz' ? 'selected' : ''}>Kuis Evaluasi</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn-toggle-editor" data-les-id="${les.id}" title="Buka atau tutup editor konten">
+                    <span class="material-symbols-outlined icon-toggle">${les.isEditorOpen !== false ? 'expand_less' : 'expand_more'}</span>
+                    <span class="toggle-text">${les.isEditorOpen !== false ? 'Tutup Konten' : 'Buka Konten'}</span>
+                  </button>
+                  ${mod.lessons.length > 1 ? `
+                    <button type="button" class="btn-del-les" data-mod-id="${mod.id}" data-les-id="${les.id}" title="Hapus Materi">
+                      <span class="material-symbols-outlined">close</span>
+                    </button>
+                  ` : ''}
+                </div>
+
+                <div class="les-editor-panel ${les.isEditorOpen !== false ? '' : 'is-closed'}" data-editor-for="${les.id}">
+                  ${les.type === 'theory' ? `
+                    <div class="theory-editor-wrap">
+                      <div class="les-toolbar">
+                        <span class="toolbar-label">Sisipkan Cepat:</span>
+                        <button type="button" class="btn-tool btn-tool-upload" data-les-id="${les.id}" title="Unggah file foto langsung dan tempelkan markdown gambar">
+                          <span class="material-symbols-outlined icon-xs">add_photo_alternate</span>
+                          <span>+ Unggah Foto / Gambar</span>
+                        </button>
+                        <button type="button" class="btn-tool btn-tool-cli" data-les-id="${les.id}" title="Sisipkan blok kode CLI Cisco">
+                          <span class="material-symbols-outlined icon-xs">terminal</span>
+                          <span>+ Blok CLI Cisco</span>
+                        </button>
+                        <button type="button" class="btn-tool btn-tool-callout" data-les-id="${les.id}" title="Sisipkan kotak catatan penting">
+                          <span class="material-symbols-outlined icon-xs">info</span>
+                          <span>+ Kotak Catatan</span>
+                        </button>
+                        <button type="button" class="btn-tool btn-tool-heading" data-les-id="${les.id}" title="Sisipkan subjudul bab baru">
+                          <span class="material-symbols-outlined icon-xs">title</span>
+                          <span>+ Subjudul (##)</span>
+                        </button>
+                      </div>
+                      <textarea
+                        class="les-md-textarea"
+                        data-les-id="${les.id}"
+                        placeholder="Tulis materi di sini atau langsung paste dokumentasi Markdown (.md) yang Anda miliki..."
+                        rows="8"
+                      >${escapeHtml(les.content || '')}</textarea>
+                      <div class="editor-subtext-bar">
+                        <small class="editor-hint">
+                          Format: Markdown standar (.md). Mendukung tautan gambar, tabel, checklist, dan blok kode dengan pewarnaan sintaks.
+                        </small>
+                      </div>
+                    </div>
+                  ` : ''}
+
+                  ${les.type === 'pkt_lab' ? `
+                    <div class="pkt-lab-editor-wrap">
+                      <div class="pkt-drive-config-card">
+                        <div class="pkt-config-header">
+                          <span class="material-symbols-outlined icon-pkt">terminal</span>
+                          <div class="pkt-config-title">
+                            <strong>Praktik Lab (Gaya Cisco NetAcad)</strong>
+                            <span>Siswa dapat mengunduh berkas simulasi Packet Tracer (.pkt) dan modul panduan (.pdf)</span>
+                          </div>
+                          <span class="pkt-masked-badge">NetAcad Style</span>
+                        </div>
+
+                        <!-- 1. Berkas PKT / PKA -->
+                        <div class="netacad-field-section">
+                          <div class="field-title-badge">
+                            <span class="material-symbols-outlined icon-sub">download</span>
+                            <strong>1. Berkas Simulasi Packet Tracer (.pkt / .pka) <span class="req-star">*</span></strong>
+                          </div>
+                          <div class="field-actions-row">
+                            <button type="button" class="btn-tool-pkt-upload btn-upload-action" data-les-id="${les.id}">
+                              <span class="material-symbols-outlined icon-xs">upload_file</span>
+                              <span>${les.pktUrl || les.driveUrl ? 'Ganti Berkas .pkt' : 'Pilih Berkas .pkt dari Komputer'}</span>
+                            </button>
+                            <span class="or-text">atau tautan:</span>
+                            <input
+                              type="text"
+                              class="les-pkt-url pkt-input"
+                              placeholder="https://drive.google.com/... atau /labs/..."
+                              value="${escapeHtml(les.pktUrl || les.driveUrl || '')}"
+                              data-les-id="${les.id}"
+                            />
+                          </div>
+                          <div class="file-status-indicator ${les.pktUrl || les.driveUrl ? 'is-ready' : ''}">
+                            <span class="material-symbols-outlined icon-check-status">${les.pktUrl || les.driveUrl ? 'check_circle' : 'info'}</span>
+                            <span class="status-msg">
+                              ${les.pktUrl || les.driveUrl
+                                ? `Berkas terpasang: <strong>${escapeHtml(les.fileName || 'lab.pkt')}</strong>`
+                                : 'Pilih berkas dari komputer atau tempelkan link berbagi Google Drive.'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- 2. Berkas Panduan PDF (Opsional) -->
+                        <div class="netacad-field-section">
+                          <div class="field-title-badge">
+                            <span class="material-symbols-outlined icon-sub">description</span>
+                            <strong>2. Berkas Panduan Praktikum PDF (Opsional)</strong>
+                          </div>
+                          <div class="field-actions-row">
+                            <button type="button" class="btn-tool-pdf-upload btn-upload-action" data-les-id="${les.id}">
+                              <span class="material-symbols-outlined icon-xs">picture_as_pdf</span>
+                              <span>${les.pdfUrl ? 'Ganti Berkas .pdf' : 'Pilih Berkas .pdf dari Komputer'}</span>
+                            </button>
+                            <span class="or-text">atau tautan:</span>
+                            <input
+                              type="text"
+                              class="les-pdf-url pkt-input"
+                              placeholder="https://... atau /labs/panduan.pdf"
+                              value="${escapeHtml(les.pdfUrl || '')}"
+                              data-les-id="${les.id}"
+                            />
+                          </div>
+                          <div class="file-status-indicator ${les.pdfUrl ? 'is-ready' : ''}">
+                            <span class="material-symbols-outlined icon-check-status">${les.pdfUrl ? 'check_circle' : 'info'}</span>
+                            <span class="status-msg">
+                              ${les.pdfUrl
+                                ? `Panduan PDF terpasang: <strong>${escapeHtml(les.pdfFileName || 'panduan.pdf')}</strong>`
+                                : 'Opsional: Dapat diisi jika Anda memiliki dokumen langkah kerja PDF.'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="pkt-instructions-card">
+                        <div class="les-toolbar">
+                          <span class="toolbar-label">Uraian & Skenario Lab (Markdown):</span>
+                          <button type="button" class="btn-tool btn-tool-upload" data-les-id="${les.id}" title="Unggah diagram topologi lab">
+                            <span class="material-symbols-outlined icon-xs">add_photo_alternate</span>
+                            <span>+ Diagram Topologi</span>
+                          </button>
+                          <button type="button" class="btn-tool btn-tool-cli" data-les-id="${les.id}" title="Sisipkan blok kode CLI verifikasi">
+                            <span class="material-symbols-outlined icon-xs">terminal</span>
+                            <span>+ Blok CLI Verifikasi</span>
+                          </button>
+                          <button type="button" class="btn-tool btn-tool-callout" data-les-id="${les.id}" title="Sisipkan catatan target lab">
+                            <span class="material-symbols-outlined icon-xs">info</span>
+                            <span>+ Catatan Target</span>
+                          </button>
+                        </div>
+                        <textarea
+                          class="les-md-textarea"
+                          data-les-id="${les.id}"
+                          placeholder="Tulis uraian skenario lab, instruksi pengerjaan, atau target praktikum di sini..."
+                          rows="6"
+                        >${escapeHtml(les.content || '')}</textarea>
+                      </div>
+                    </div>
+                  ` : ''}
+
+                  ${les.type === 'quiz' ? `
+                    <div class="quiz-builder-card">
+                      <div class="quiz-builder-header">
+                        <div class="quiz-badge-wrap">
+                          <span class="material-symbols-outlined icon-quiz">quiz</span>
+                          <div>
+                            <strong>Penyusun Soal Kuis Interaktif</strong>
+                            <span>Tentukan pertanyaan, 4 pilihan ganda, dan tandai bulatan radio untuk kunci jawaban yang benar</span>
+                          </div>
+                        </div>
+                        <div class="quiz-passing-score-wrap">
+                          <label>Nilai Kelulusan (%):</label>
+                          <input type="number" min="1" max="100" class="les-passing-score" data-les-id="${les.id}" value="${les.passingScore || 67}" />
+                        </div>
+                      </div>
+
+                      <div class="quiz-questions-list" data-quiz-list="${les.id}">
+                        ${(les.quizQuestions || []).map((q, qIdx) => `
+                          <div class="quiz-question-card" data-q-id="${q.id}">
+                            <div class="q-card-header">
+                              <span class="q-index-badge">Soal #${qIdx + 1}</span>
+                              ${(les.quizQuestions && les.quizQuestions.length > 1) ? `
+                                <button type="button" class="btn-del-q" data-les-id="${les.id}" data-q-id="${q.id}" title="Hapus Soal Ini">
+                                  <span class="material-symbols-outlined icon-xs">delete</span>
+                                </button>
+                              ` : ''}
+                            </div>
+
+                            <div class="q-field-group">
+                              <label>Teks Pertanyaan <span class="req-star">*</span></label>
+                              <input type="text" class="quiz-q-input" data-les-id="${les.id}" data-q-id="${q.id}" placeholder="Contoh: Apa fungsi utama protokol OSPF dalam perutean jaringan?" value="${escapeHtml(q.question)}" />
+                            </div>
+
+                            <div class="q-options-container">
+                              <label class="q-options-label">Pilihan Ganda (Tandai bulatan radio pada opsi yang benar):</label>
+                              <div class="quiz-options-grid">
+                                ${['A', 'B', 'C', 'D'].map((letter, optIdx) => `
+                                  <div class="quiz-opt-item ${q.correctIndex === optIdx ? 'correct' : ''}">
+                                    <label class="opt-radio-label">
+                                      <input
+                                        type="radio"
+                                        name="correct-q-${les.id}-${q.id}"
+                                        class="quiz-radio-correct"
+                                        data-les-id="${les.id}"
+                                        data-q-id="${q.id}"
+                                        data-opt-idx="${optIdx}"
+                                        ${q.correctIndex === optIdx ? 'checked' : ''}
+                                      />
+                                      <span class="opt-letter">${letter}</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      class="quiz-opt-text"
+                                      data-les-id="${les.id}"
+                                      data-q-id="${q.id}"
+                                      data-opt-idx="${optIdx}"
+                                      placeholder="Pilihan jawaban ${letter}..."
+                                      value="${escapeHtml((q.options && q.options[optIdx]) || '')}"
+                                    />
+                                  </div>
+                                `).join('')}
+                              </div>
+                            </div>
+
+                            <div class="q-field-group">
+                              <label>Penjelasan Kunci Jawaban (Opsional, muncul setelah kuis dinilai):</label>
+                              <input type="text" class="quiz-q-explain" data-les-id="${les.id}" data-q-id="${q.id}" placeholder="Contoh: OSPF adalah protokol link-state yang menggunakan algoritma Dijkstra..." value="${escapeHtml(q.explanation || '')}" />
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+
+                      <button type="button" class="btn-add-q" data-les-id="${les.id}">
+                        <span class="material-symbols-outlined icon-sm">add_circle</span>
+                        <span>+ Tambah Butir Soal</span>
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      modulesContainer.appendChild(moduleCard);
+    });
+
+    // Event listeners
+    attachModuleEventListeners();
+  }
+
+  function attachModuleEventListeners() {
+    // Module title change
+    document.querySelectorAll<HTMLInputElement>('.mod-title-input').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const card = (e.target as HTMLElement).closest('.module-builder-card');
+        const modId = Number(card?.getAttribute('data-module-id'));
+        const mod = modulesState.find((m) => m.id === modId);
+        if (mod) mod.title = (e.target as HTMLInputElement).value;
+        updatePreview();
+      });
+    });
+
+    // Add lesson button
+    document.querySelectorAll<HTMLButtonElement>('.btn-add-lesson').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const modId = Number(btn.getAttribute('data-mod-id'));
+        const mod = modulesState.find((m) => m.id === modId);
+        if (mod) {
+          const lesNum = mod.lessons.length + 1;
+          mod.lessons.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            title: `Materi Pelajaran ${lesNum}`,
+            type: 'theory',
+            durationMinutes: 15,
+            isEditorOpen: true,
+            content: `## Pengantar Materi\n\nTulis penjelasan materi di sini atau paste dokumentasi Markdown (.md) yang Anda miliki.\n`,
+          });
+          renderModules();
+          updatePreview();
+        }
+      });
+    });
+
+    // Delete module button
+    document.querySelectorAll<HTMLButtonElement>('.btn-del-mod').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const modId = Number(btn.getAttribute('data-mod-id'));
+        const idx = modulesState.findIndex((m) => m.id === modId);
+        if (idx !== -1 && modulesState.length > 1) {
+          modulesState.splice(idx, 1);
+          renderModules();
+          updatePreview();
+        }
+      });
+    });
+
+    // Lesson title change
+    document.querySelectorAll<HTMLInputElement>('.les-title-input').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const item = (e.target as HTMLElement).closest('.lesson-builder-item');
+        const card = (e.target as HTMLElement).closest('.module-builder-card');
+        const modId = Number(card?.getAttribute('data-module-id'));
+        const lesId = Number(item?.getAttribute('data-lesson-id'));
+        const mod = modulesState.find((m) => m.id === modId);
+        const les = mod?.lessons.find((l) => l.id === lesId);
+        if (les) les.title = (e.target as HTMLInputElement).value;
+        updatePreview();
+      });
+    });
+
+    // Lesson type change
+    document.querySelectorAll<HTMLSelectElement>('.les-type-select').forEach((select) => {
+      select.addEventListener('change', (e) => {
+        const item = (e.target as HTMLElement).closest('.lesson-builder-item');
+        const card = (e.target as HTMLElement).closest('.module-builder-card');
+        const modId = Number(card?.getAttribute('data-module-id'));
+        const lesId = Number(item?.getAttribute('data-lesson-id'));
+        const mod = modulesState.find((m) => m.id === modId);
+        const les = mod?.lessons.find((l) => l.id === lesId);
+        if (les) {
+          les.type = (e.target as HTMLSelectElement).value as any;
+          if (les.type === 'pkt_lab') {
+            if (!les.driveUrl) les.driveUrl = '';
+            if (!les.fileName) les.fileName = `${slugify(les.title) || 'lab'}.pkt`;
+            if (!les.content) {
+              les.content = `## Instruksi Lab\n\n1. Unduh berkas **${les.fileName}** di atas.\n2. Buka pada Cisco Packet Tracer dan lakukan konfigurasi.\n`;
+            }
+          } else if (les.type === 'quiz') {
+            if (!les.quizQuestions || les.quizQuestions.length === 0) {
+              les.quizQuestions = [
+                {
+                  id: Date.now(),
+                  question: 'Tuliskan butir soal evaluasi pemahaman di sini...',
+                  options: ['Pilihan A', 'Pilihan B', 'Pilihan C', 'Pilihan D'],
+                  correctIndex: 0,
+                  explanation: 'Alasan mengapa pilihan ini benar.',
+                },
+              ];
+            }
+            if (!les.passingScore) les.passingScore = 67;
+          } else if (les.type === 'theory' && !les.content) {
+            les.content = `## Ringkasan Materi\n\nTulis isi materi di sini atau paste dokumentasi Markdown (.md).\n`;
+          }
+          renderModules();
+          updatePreview();
+        }
+      });
+    });
+
+    // Toggle Content Editor Expand/Collapse
+    document.querySelectorAll<HTMLButtonElement>('.btn-toggle-editor').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        const panel = document.querySelector(`.les-editor-panel[data-editor-for="${lesId}"]`);
+        const icon = btn.querySelector('.icon-toggle');
+        const textSpan = btn.querySelector('.toggle-text');
+
+        if (lesObj && panel) {
+          lesObj.les.isEditorOpen = !lesObj.les.isEditorOpen;
+          if (lesObj.les.isEditorOpen) {
+            panel.classList.remove('is-closed');
+            if (icon) icon.textContent = 'expand_less';
+            if (textSpan) textSpan.textContent = 'Tutup Konten';
+          } else {
+            panel.classList.add('is-closed');
+            if (icon) icon.textContent = 'expand_more';
+            if (textSpan) textSpan.textContent = 'Buka Konten';
+          }
+        }
+      });
+    });
+
+    // Delete lesson button
+    document.querySelectorAll<HTMLButtonElement>('.btn-del-les').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const modId = Number(btn.getAttribute('data-mod-id'));
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const mod = modulesState.find((m) => m.id === modId);
+        if (mod && mod.lessons.length > 1) {
+          const lIdx = mod.lessons.findIndex((l) => l.id === lesId);
+          if (lIdx !== -1) {
+            mod.lessons.splice(lIdx, 1);
+            renderModules();
+            updatePreview();
+          }
+        }
+      });
+    });
+
+    // Markdown Textarea change
+    document.querySelectorAll<HTMLTextAreaElement>('.les-md-textarea').forEach((ta) => {
+      ta.addEventListener('input', (e) => {
+        const lesId = Number(ta.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        if (lesObj) lesObj.les.content = (e.target as HTMLTextAreaElement).value;
+      });
+    });
+
+    // Trigger PKT file upload
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-pkt-upload').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        activeLessonIdForPktUpload = lesId;
+        if (globalPktUploader) globalPktUploader.click();
+      });
+    });
+
+    // Trigger PDF file upload
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-pdf-upload').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        activeLessonIdForPdfUpload = lesId;
+        if (globalPdfUploader) globalPdfUploader.click();
+      });
+    });
+
+    // PKT URL input change
+    document.querySelectorAll<HTMLInputElement>('.les-pkt-url').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        const val = (e.target as HTMLInputElement).value;
+        if (lesObj) {
+          lesObj.les.pktUrl = val;
+          lesObj.les.driveUrl = val;
+          if (!lesObj.les.fileName) {
+            lesObj.les.fileName = `${slugify(lesObj.les.title) || 'lab'}.pkt`;
+          }
+        }
+      });
+    });
+
+    // PDF URL input change
+    document.querySelectorAll<HTMLInputElement>('.les-pdf-url').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        const val = (e.target as HTMLInputElement).value;
+        if (lesObj) {
+          lesObj.les.pdfUrl = val;
+          if (!lesObj.les.pdfFileName) {
+            lesObj.les.pdfFileName = `${slugify(lesObj.les.title) || 'panduan'}.pdf`;
+          }
+        }
+      });
+    });
+
+    // Passing Score change
+    document.querySelectorAll<HTMLInputElement>('.les-passing-score').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        if (lesObj) lesObj.les.passingScore = Number((e.target as HTMLInputElement).value) || 67;
+      });
+    });
+
+    // Toolbar Tool Buttons: Upload Image
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-upload').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        activeLessonIdForUpload = lesId;
+        if (globalImageUploader) {
+          globalImageUploader.click();
+        }
+      });
+    });
+
+    // Toolbar Tool Buttons: Cisco CLI Snippet
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-cli').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const textarea = document.querySelector(`.lesson-builder-item[data-lesson-id="${lesId}"] .les-md-textarea`) as HTMLTextAreaElement;
+        if (textarea) {
+          const cliSnippet = `\n\`\`\`cisco\nRouter> enable\nRouter# configure terminal\nRouter(config)# interface gigabitEthernet 0/0\nRouter(config-if)# ip address 192.168.1.1 255.255.255.0\nRouter(config-if)# no shutdown\n\`\`\`\n`;
+          insertTextAtCursor(textarea, cliSnippet);
+        }
+      });
+    });
+
+    // Toolbar Tool Buttons: Callout Box
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-callout').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const textarea = document.querySelector(`.lesson-builder-item[data-lesson-id="${lesId}"] .les-md-textarea`) as HTMLTextAreaElement;
+        if (textarea) {
+          const calloutSnippet = `\n> [!NOTE]\n> Tulis catatan penting atau petunjuk konfigurasi di sini.\n`;
+          insertTextAtCursor(textarea, calloutSnippet);
+        }
+      });
+    });
+
+    // Toolbar Tool Buttons: Heading 2
+    document.querySelectorAll<HTMLButtonElement>('.btn-tool-heading').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const textarea = document.querySelector(`.lesson-builder-item[data-lesson-id="${lesId}"] .les-md-textarea`) as HTMLTextAreaElement;
+        if (textarea) {
+          const headingSnippet = `\n## Subjudul Pembahasan Baru\n\n`;
+          insertTextAtCursor(textarea, headingSnippet);
+        }
+      });
+    });
+
+    // Quiz Question Input change
+    document.querySelectorAll<HTMLInputElement>('.quiz-q-input').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const qId = Number(input.getAttribute('data-q-id'));
+        const lesObj = findLesson(lesId);
+        const q = lesObj?.les.quizQuestions?.find((item) => item.id === qId);
+        if (q) q.question = (e.target as HTMLInputElement).value;
+      });
+    });
+
+    // Quiz Option Text change
+    document.querySelectorAll<HTMLInputElement>('.quiz-opt-text').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const qId = Number(input.getAttribute('data-q-id'));
+        const optIdx = Number(input.getAttribute('data-opt-idx'));
+        const lesObj = findLesson(lesId);
+        const q = lesObj?.les.quizQuestions?.find((item) => item.id === qId);
+        if (q && q.options) {
+          q.options[optIdx] = (e.target as HTMLInputElement).value;
+        }
+      });
+    });
+
+    // Quiz Radio Correct change
+    document.querySelectorAll<HTMLInputElement>('.quiz-radio-correct').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        const lesId = Number(radio.getAttribute('data-les-id'));
+        const qId = Number(radio.getAttribute('data-q-id'));
+        const optIdx = Number(radio.getAttribute('data-opt-idx'));
+        const lesObj = findLesson(lesId);
+        const q = lesObj?.les.quizQuestions?.find((item) => item.id === qId);
+        if (q) {
+          q.correctIndex = optIdx;
+          const qCard = radio.closest('.quiz-question-card');
+          if (qCard) {
+            qCard.querySelectorAll('.quiz-opt-item').forEach((item, idx) => {
+              if (idx === optIdx) {
+                item.classList.add('correct');
+              } else {
+                item.classList.remove('correct');
+              }
+            });
+          }
+        }
+      });
+    });
+
+    // Quiz Explanation change
+    document.querySelectorAll<HTMLInputElement>('.quiz-q-explain').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        const lesId = Number(input.getAttribute('data-les-id'));
+        const qId = Number(input.getAttribute('data-q-id'));
+        const lesObj = findLesson(lesId);
+        const q = lesObj?.les.quizQuestions?.find((item) => item.id === qId);
+        if (q) q.explanation = (e.target as HTMLInputElement).value;
+      });
+    });
+
+    // Add Quiz Question Button
+    document.querySelectorAll<HTMLButtonElement>('.btn-add-q').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const lesObj = findLesson(lesId);
+        if (lesObj) {
+          if (!lesObj.les.quizQuestions) lesObj.les.quizQuestions = [];
+          lesObj.les.quizQuestions.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            question: '',
+            options: ['', '', '', ''],
+            correctIndex: 0,
+            explanation: '',
+          });
+          renderModules();
+        }
+      });
+    });
+
+    // Delete Quiz Question Button
+    document.querySelectorAll<HTMLButtonElement>('.btn-del-q').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lesId = Number(btn.getAttribute('data-les-id'));
+        const qId = Number(btn.getAttribute('data-q-id'));
+        const lesObj = findLesson(lesId);
+        if (lesObj && lesObj.les.quizQuestions && lesObj.les.quizQuestions.length > 1) {
+          const qIdx = lesObj.les.quizQuestions.findIndex((item) => item.id === qId);
+          if (qIdx !== -1) {
+            lesObj.les.quizQuestions.splice(qIdx, 1);
+            renderModules();
+          }
+        }
+      });
+    });
+  }
+
+  function updatePreview() {
+    const title = titleInput.value.trim() || 'Judul Kursus Baru';
+    const desc = descInput.value.trim() || 'Deskripsi singkat kursus akan tampil di sini...';
+    const cat = catSelect.value.toUpperCase();
+    const level = levelSelect.value;
+    const duration = durationInput.value || '8';
+
+    // Update Mock Course Card
+    const mockTitle = document.getElementById('mock-title');
+    const mockDesc = document.getElementById('mock-desc');
+    const mockCat = document.getElementById('mock-cat-badge');
+    const mockLevel = document.getElementById('mock-level-pill');
+    const mockDur = document.getElementById('mock-duration');
+    const mockLes = document.getElementById('mock-lesson-stat');
+
+    if (mockTitle) mockTitle.textContent = title;
+    if (mockDesc) mockDesc.textContent = desc;
+    if (mockCat) mockCat.textContent = cat;
+    if (mockLevel) mockLevel.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+    if (mockDur) mockDur.textContent = `${duration} Jam`;
+
+    // Hitung counts
+    let totalLessons = 0;
+    let theoryCount = 0;
+    let quizCount = 0;
+    let labCount = 0;
+
+    modulesState.forEach((mod) => {
+      mod.lessons.forEach((les) => {
+        totalLessons++;
+        if (les.type === 'pkt_lab') labCount++;
+        else if (les.type === 'quiz') quizCount++;
+        else theoryCount++;
+      });
+    });
+
+    if (mockLes) mockLes.textContent = `${totalLessons} materi`;
+
+    // Hitung Total XP
+    const xpTheory = Number(xpTheoryInput.value) || 15;
+    const xpQuiz = Number(xpQuizInput.value) || 25;
+    const xpLab = Number(xpLabInput.value) || 40;
+    const xpBonus = Number(xpBonusInput.value) || 100;
+
+    const totalXp = (theoryCount * xpTheory) + (quizCount * xpQuiz) + (labCount * xpLab) + xpBonus;
+
+    const simModCount = document.getElementById('sim-module-count');
+    const simLesCount = document.getElementById('sim-lesson-count');
+    const simLabCount = document.getElementById('sim-lab-count');
+    const simQuizCount = document.getElementById('sim-quiz-count');
+    const simTotalXp = document.getElementById('sim-total-xp');
+
+    if (simModCount) simModCount.textContent = `${modulesState.length} Bab`;
+    if (simLesCount) simLesCount.textContent = `${totalLessons} Materi`;
+    if (simLabCount) simLabCount.textContent = `${labCount} Lab`;
+    if (simQuizCount) simQuizCount.textContent = `${quizCount} Kuis`;
+    if (simTotalXp) simTotalXp.textContent = `${totalXp} XP`;
+
+    // Proyeksi Pangkat Siswa Baru (Mulai dari Deck Cadet 0 XP -> dapat totalXp)
+    const tierNameEl = document.getElementById('sim-tier-name');
+    const tierDescEl = document.getElementById('sim-tier-desc');
+
+    if (tierNameEl && tierDescEl) {
+      if (totalXp >= 1500) {
+        tierNameEl.textContent = 'Fleet Admiral';
+        tierDescEl.textContent = 'Kursus tingkat master! Siswa yang menuntaskan kursus ini melompat jauh hingga peringkat puncak maritim.';
+      } else if (totalXp >= 900) {
+        tierNameEl.textContent = 'Fleet Commander';
+        tierDescEl.textContent = 'Kursus advance dengan bobot materi sangat mendalam untuk mencetak perwira navigasi.';
+      } else if (totalXp >= 500) {
+        tierNameEl.textContent = 'Voyage Navigator';
+        tierDescEl.textContent = 'Siswa baru yang menyelesaikan kursus ini langsung mencapai pangkat perwira Voyage Navigator!';
+      } else if (totalXp >= 150) {
+        tierNameEl.textContent = 'Network Helmsman';
+        tierDescEl.textContent = 'Siswa baru yang menyelesaikan kursus ini akan langsung naik dari Deck Cadet menjadi Network Helmsman!';
+      } else {
+        tierNameEl.textContent = 'Deck Cadet';
+        tierDescEl.textContent = 'Kursus pengantar cepat untuk memulai perolehan XP awal siswa.';
+      }
+    }
+  }
+
+  // Tambah modul pertama secara default
+  addModule('Modul 1: Konsep & Implementasi Dasar');
+
+  if (addModuleBtn) {
+    addModuleBtn.addEventListener('click', () => addModule());
+  }
+
+  const addModuleBottomBtn = document.getElementById('btn-add-module-bottom');
+  if (addModuleBottomBtn) {
+    addModuleBottomBtn.addEventListener('click', () => addModule());
+  }
+
+  // Form Submission
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!submitBtn) return;
+
+      const title = titleInput.value.trim();
+      const slug = slugInput.value.trim() || slugify(title);
+      const category = catSelect.value;
+      const level = levelSelect.value;
+      const durationHours = Number(durationInput.value) || 6;
+      const description = descInput.value.trim();
+      const status = (document.getElementById('course-status') as HTMLSelectElement).value;
+
+      const xpTheory = Number(xpTheoryInput.value) || 15;
+      const xpQuiz = Number(xpQuizInput.value) || 25;
+      const xpLab = Number(xpLabInput.value) || 40;
+
+      // Siapkan payload modules lengkap dengan konten Markdown, kuis, dan lab
+      const payloadModules = modulesState.map((mod, modIdx) => ({
+        title: mod.title,
+        slug: slugify(mod.title),
+        order: modIdx + 1,
+        lessons: mod.lessons.map((les) => {
+          let cleanPktName = (les.fileName || `${slugify(les.title)}.pkt`).trim();
+          if (!cleanPktName.toLowerCase().endsWith('.pkt') && !cleanPktName.toLowerCase().endsWith('.pka')) {
+            cleanPktName += '.pkt';
+          }
+
+          let cleanPdfName = (les.pdfFileName || `${slugify(les.title)}-panduan.pdf`).trim();
+          if (!cleanPdfName.toLowerCase().endsWith('.pdf')) {
+            cleanPdfName += '.pdf';
+          }
+
+          return {
+            title: les.title,
+            slug: slugify(les.title),
+            type: les.type,
+            durationMinutes: les.durationMinutes || 15,
+            xp: les.type === 'pkt_lab' ? xpLab : les.type === 'quiz' ? xpQuiz : xpTheory,
+            pktUrl: les.pktUrl || les.driveUrl || '',
+            driveUrl: les.driveUrl || les.pktUrl || '',
+            fileName: cleanPktName,
+            pdfUrl: les.pdfUrl || '',
+            pdfFileName: cleanPdfName,
+            content: les.content || '',
+            quizQuestions: les.quizQuestions || [],
+            passingScore: les.passingScore || 67,
+          };
+        }),
+      }));
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <span class="material-symbols-outlined spin-icon">sync</span>
+        <span>Menyusun Berkas Kursus & Konten...</span>
+      `;
+      if (errorMsg) {
+        errorMsg.textContent = '';
+        errorMsg.classList.add('hidden');
+      }
+
+      try {
+        const res = await fetch('/api/admin/courses/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            slug,
+            category,
+            level,
+            durationHours,
+            description,
+            status,
+            modules: payloadModules,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Gagal membuat kursus baru.');
+        }
+
+        // Tampilkan Modal Sukses
+        const keystaticLink = document.getElementById('link-open-keystatic') as HTMLAnchorElement;
+        const previewLink = document.getElementById('link-preview-web') as HTMLAnchorElement;
+        const modalMsg = document.getElementById('success-modal-msg');
+
+        if (keystaticLink) keystaticLink.href = data.keystaticUrl;
+        if (previewLink) previewLink.href = data.learnUrl || data.previewUrl;
+        if (modalMsg) {
+          modalMsg.textContent = `Kursus '${data.title}' berhasil dibuat lengkap dengan ${data.totalLessonsCreated} berkas materi pembelajaran. Seluruh catatan Markdown, kuis interaktif, dan berkas lab Cisco Packet Tracer telah terbit dan siap diakses!`;
+        }
+
+        if (successModal) {
+          successModal.showModal();
+        }
+      } catch (err: any) {
+        if (errorMsg) {
+          errorMsg.textContent = err.message || 'Terjadi kesalahan sistem saat membuat kursus.';
+          errorMsg.classList.remove('hidden');
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <span class="material-symbols-outlined">rocket_launch</span>
+          <span>Simpan Seluruh Kursus & Konten</span>
+        `;
+      }
+    });
+  }
+</script>
+
+<style>
+  .course-creator-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-block: 0.5rem 3rem;
+  }
+
+  .creator-breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.86rem;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-weight: 700;
+  }
+  .back-link:hover {
+    text-decoration: underline;
+  }
+  .breadcrumb-current {
+    color: var(--color-muted);
+  }
+
+  .creator-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 1.75rem;
+    align-items: flex-start;
+  }
+
+  /* Form Kolom Kiri */
+  .creator-form-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .builder-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .form-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.03);
+  }
+
+  .card-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.95rem;
+  }
+  .step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.65rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .card-heading {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .card-subheading {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    margin: 0.2rem 0 0 0;
+  }
+
+  .syllabus-header-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .btn-add-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--color-phinisi-50);
+    border: 1px solid var(--color-phinisi-300);
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .btn-add-primary:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+  }
+
+  /* Form Fields */
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.25rem;
+  }
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .field-group.full-width {
+    grid-column: 1 / -1;
+  }
+  .field-label {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .text-input, .select-input, .textarea-input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    box-sizing: border-box;
+    background: #ffffff;
+    transition: border-color 150ms ease;
+  }
+  .text-input:focus, .select-input:focus, .textarea-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .field-hint {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+
+  /* Preset XP Buttons */
+  .preset-buttons-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+  }
+  .btn-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.85rem;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 150ms ease;
+  }
+  .btn-preset strong {
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .btn-preset span {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+    margin-top: 0.2rem;
+  }
+  .btn-preset.active {
+    border-color: var(--color-primary);
+    background: #eff6ff;
+  }
+  .btn-preset.active strong {
+    color: var(--color-primary);
+  }
+
+  .xp-custom-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--color-line);
+  }
+  .xp-input-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .xp-input-box label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    text-transform: uppercase;
+  }
+  .xp-num-input {
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--color-navy);
+    background: #ffffff;
+  }
+
+  /* Modules & Lessons Tree Builder (Global styles for dynamic DOM elements) */
+  :global(.modules-tree-wrap) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  :global(.module-builder-card) {
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  :global(.module-builder-card:focus-within) {
+    border-color: #93c5fd;
+    box-shadow: 0 4px 12px rgba(20, 91, 215, 0.06);
+  }
+
+  :global(.module-card-header) {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--color-line);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  :global(.mod-header-left) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 280px;
+  }
+
+  :global(.mod-index-pill) {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--color-navy);
+    color: #ffffff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(10, 26, 68, 0.2);
+  }
+
+  :global(.mod-title-input) {
+    flex: 1;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    border-radius: 0.6rem;
+    padding: 0.5rem 0.85rem;
+    transition: all 0.15s ease;
+  }
+
+  :global(.mod-title-input:focus) {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.12);
+  }
+
+  :global(.mod-header-actions) {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  :global(.btn-add-lesson) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1d4ed8;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  :global(.btn-add-lesson:hover) {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+  }
+
+  :global(.btn-del-mod) {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0.4rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+  }
+
+  :global(.btn-del-mod:hover) {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: var(--color-danger);
+  }
+
+  :global(.icon-sm) { font-size: 1.15rem; }
+  :global(.icon-xs) { font-size: 0.95rem; }
+
+  :global(.lessons-builder-track) {
+    padding: 1.25rem;
+  }
+
+  :global(.lessons-builder-list) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  :global(.lesson-builder-item) {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: all 0.15s ease;
+  }
+
+  :global(.lesson-builder-item:hover) {
+    border-color: #cbd5e1;
+    background: #fafafa;
+  }
+
+  :global(.lesson-item-main-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  :global(.les-badge) {
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.45rem;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+
+  :global(.les-title-col) {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  :global(.les-title-input) {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    transition: all 0.15s ease;
+  }
+
+  :global(.les-title-input:focus) {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(20, 91, 215, 0.1);
+  }
+
+  :global(.les-type-col) {
+    flex-shrink: 0;
+  }
+
+  :global(.les-type-select) {
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    color: var(--color-navy);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  :global(.les-type-select:focus) {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  :global(.les-type-select.pkt_lab) {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
+
+  :global(.les-type-select.quiz) {
+    background: #fefce8;
+    border-color: #fde68a;
+    color: #b45309;
+  }
+
+  :global(.btn-del-les) {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 0.35rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.4rem;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  :global(.btn-del-les:hover) {
+    color: var(--color-danger);
+    background: #fee2e2;
+    border-color: #fecaca;
+  }
+
+  :global(.btn-del-les .material-symbols-outlined) {
+    font-size: 1.15rem;
+  }
+
+  /* PKT Lab Google Drive Config Box */
+  :global(.pkt-drive-config-card) {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 0.75rem;
+    padding: 0.95rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  :global(.pkt-config-header) {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  :global(.icon-pkt) {
+    color: #0284c7;
+    font-size: 1.35rem;
+  }
+
+  :global(.pkt-config-title) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+  }
+
+  :global(.pkt-config-title strong) {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #0369a1;
+  }
+
+  :global(.pkt-config-title span) {
+    font-size: 0.72rem;
+    color: #0284c7;
+  }
+
+  :global(.pkt-masked-badge) {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.4rem;
+    letter-spacing: 0.03em;
+  }
+
+  :global(.netacad-field-section) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.65rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  :global(.field-title-badge) {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0369a1;
+  }
+
+  :global(.icon-inline-sm) {
+    font-size: 1rem;
+    color: #0284c7;
+  }
+
+  :global(.field-actions-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  :global(.btn-upload-action) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    color: #1d4ed8;
+    padding: 0.45rem 0.8rem;
+    border-radius: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  :global(.btn-upload-action:hover) {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e40af;
+  }
+
+  :global(.or-text) {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-style: italic;
+    white-space: nowrap;
+  }
+
+  :global(.file-status-indicator) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #64748b;
+  }
+
+  :global(.file-status-indicator.is-ready) {
+    color: #15803d;
+  }
+
+  :global(.icon-check-status) {
+    font-size: 1rem;
+  }
+
+  :global(.file-status-indicator.is-ready .icon-check-status) {
+    color: #16a34a;
+  }
+
+  :global(.req-star) {
+    color: #dc2626;
+  }
+
+  :global(.pkt-input) {
+    flex: 1;
+    min-width: 180px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: 1px solid #93c5fd;
+    background: #ffffff;
+    border-radius: 0.45rem;
+    color: #0f172a;
+    transition: all 0.15s ease;
+  }
+
+  :global(.pkt-input:focus) {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  /* Toggle Editor Button */
+  :global(.btn-toggle-editor) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    color: var(--color-navy);
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  :global(.btn-toggle-editor:hover) {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: var(--color-primary);
+  }
+  :global(.icon-toggle) {
+    font-size: 1.15rem;
+  }
+
+  /* Lesson Editor Panel */
+  :global(.les-editor-panel) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--color-line);
+    animation: fadeIn 0.2s ease;
+  }
+  :global(.les-editor-panel.is-closed) {
+    display: none;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Theory Editor & Toolbar */
+  :global(.theory-editor-wrap) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  :global(.les-toolbar) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.6rem;
+  }
+  :global(.toolbar-label) {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.25rem;
+  }
+  :global(.btn-tool) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    color: var(--color-navy);
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  :global(.btn-tool:hover) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+  :global(.btn-tool-upload) {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
+  :global(.btn-tool-upload:hover) {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+  }
+  :global(.les-md-textarea) {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-line);
+    background: #ffffff;
+    border-radius: 0.65rem;
+    padding: 0.75rem 0.85rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-ink);
+    resize: vertical;
+    transition: all 0.15s ease;
+  }
+  :global(.les-md-textarea:focus) {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.1);
+  }
+  :global(.editor-subtext-bar) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  :global(.editor-hint) {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+
+  /* PKT Lab Editor */
+  :global(.pkt-lab-editor-wrap) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  :global(.pkt-instructions-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  /* Quiz Builder */
+  :global(.quiz-builder-card) {
+    background: #fffdf5;
+    border: 1px solid #fde68a;
+    border-radius: 0.85rem;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  :global(.quiz-builder-header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-bottom: 1px solid #fef08a;
+    padding-bottom: 0.75rem;
+  }
+  :global(.quiz-badge-wrap) {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  :global(.quiz-badge-wrap strong) {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #92400e;
+  }
+  :global(.quiz-badge-wrap span) {
+    display: block;
+    font-size: 0.72rem;
+    color: #b45309;
+  }
+  :global(.quiz-passing-score-wrap) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  :global(.quiz-passing-score-wrap label) {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #92400e;
+  }
+  :global(.les-passing-score) {
+    width: 65px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #fde68a;
+    border-radius: 0.45rem;
+    background: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #92400e;
+    text-align: center;
+  }
+  :global(.les-passing-score:focus) {
+    outline: none;
+    border-color: #d97706;
+  }
+  :global(.quiz-questions-list) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  :global(.quiz-question-card) {
+    background: #ffffff;
+    border: 1px solid #fed7aa;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 1px 3px rgba(180, 83, 9, 0.05);
+  }
+  :global(.q-card-header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  :global(.q-index-badge) {
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.4rem;
+    letter-spacing: 0.02em;
+  }
+  :global(.btn-del-q) {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.4rem;
+    transition: all 0.15s ease;
+  }
+  :global(.btn-del-q:hover) {
+    color: var(--color-danger);
+    background: #fee2e2;
+  }
+  :global(.q-field-group) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  :global(.q-field-group label) {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  :global(.quiz-q-input),
+  :global(.quiz-q-explain) {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.84rem;
+    color: var(--color-ink);
+    background: #fafafa;
+    transition: all 0.15s ease;
+  }
+  :global(.quiz-q-input:focus),
+  :global(.quiz-q-explain:focus) {
+    outline: none;
+    border-color: var(--color-primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(20, 91, 215, 0.1);
+  }
+  :global(.q-options-container) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  :global(.q-options-label) {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  :global(.quiz-options-grid) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+  }
+  @media (max-width: 768px) {
+    :global(.quiz-options-grid) {
+      grid-template-columns: 1fr;
+    }
+  }
+  :global(.quiz-opt-item) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.65rem;
+    transition: all 0.15s ease;
+  }
+  :global(.quiz-opt-item.correct) {
+    background: #ecfdf5;
+    border-color: #86efac;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+  }
+  :global(.opt-radio-label) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  :global(.quiz-radio-correct) {
+    cursor: pointer;
+    accent-color: #10b981;
+    width: 16px;
+    height: 16px;
+  }
+  :global(.opt-letter) {
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  :global(.quiz-opt-item.correct .opt-letter) {
+    color: #065f46;
+  }
+  :global(.quiz-opt-text) {
+    flex: 1;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.82rem;
+    color: var(--color-ink);
+    border-radius: 0.35rem;
+  }
+  :global(.quiz-opt-text:focus) {
+    outline: none;
+    border-color: #cbd5e1;
+    background: #ffffff;
+  }
+  :global(.btn-add-q) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background: #ffffff;
+    border: 1px dashed #d97706;
+    color: #b45309;
+    padding: 0.55rem 1rem;
+    border-radius: 0.6rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  :global(.btn-add-q:hover) {
+    background: #fef3c7;
+    border-color: #b45309;
+  }
+
+  /* Bottom Dashed Add Module Button */
+  .btn-add-module-dashed {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.18s ease;
+  }
+
+  .btn-add-module-dashed:hover {
+    border-color: var(--color-primary);
+    background: #eff6ff;
+    color: var(--color-primary);
+  }
+
+  /* Action Card */
+  .form-action-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .action-desc strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .action-desc p {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+  }
+  .btn-generate-course {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.85rem;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(20, 91, 215, 0.25);
+    transition: all 180ms ease;
+  }
+  .btn-generate-course:hover {
+    background: #0e4ca9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(20, 91, 215, 0.35);
+  }
+  .btn-generate-course:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+  .spin-icon {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .error-banner {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 0.85rem 1.15rem;
+    border-radius: 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .error-banner.hidden { display: none; }
+
+  /* Kolom Kanan Preview */
+  .creator-preview-col {
+    position: relative;
+  }
+  .sticky-preview-wrap {
+    position: sticky;
+    top: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* Simulator Card */
+  .simulator-card {
+    background: linear-gradient(135deg, #091a38 0%, #0d2652 100%);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 1.25rem;
+    padding: 1.35rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 10px 30px rgba(8, 26, 58, 0.15);
+  }
+  .sim-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .icon-sim {
+    font-size: 1.75rem;
+    color: #fbbf24;
+  }
+  .sim-kicker {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #38bdf8;
+    text-transform: uppercase;
+  }
+  .sim-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .sim-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 0.85rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .sim-stat-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .sim-stat-label {
+    font-size: 0.68rem;
+    color: #94a3b8;
+  }
+  .sim-stat-val {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .total-xp-highlight-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+  }
+  .total-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fef08a;
+    text-transform: uppercase;
+  }
+  .total-val {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #fbbf24;
+    line-height: 1.1;
+    margin: 0.2rem 0;
+  }
+  .total-note {
+    font-size: 0.68rem;
+    color: #cbd5e1;
+  }
+
+  .rank-impact-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 0.75rem;
+  }
+  .impact-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+  }
+  .impact-tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(2, 132, 199, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #7dd3fc;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+  }
+  .icon-tier { font-size: 1.1rem; }
+  .impact-desc {
+    font-size: 0.74rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin: 0.2rem 0 0 0;
+  }
+
+  /* Mock Course Card Preview */
+  .preview-card-box {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .preview-kicker {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    letter-spacing: 0.04em;
+  }
+  .mock-course-card {
+    border: 1px solid var(--color-line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+    background: #fafcfd;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .mock-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mock-cat-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    background: var(--color-phinisi-50);
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.35rem;
+  }
+  .mock-level-pill {
+    font-size: 0.68rem;
+    color: var(--color-muted);
+  }
+  .mock-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .mock-desc {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .mock-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-line);
+    padding-top: 0.45rem;
+    margin-top: 0.25rem;
+  }
+  .mock-meta {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+
+  .keystatic-guide-box {
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .guide-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+  .icon-guide { font-size: 1.15rem; color: var(--color-primary); }
+  .keystatic-guide-box p {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* Success Dialog */
+  .success-dialog {
+    border: none;
+    border-radius: 1.5rem;
+    padding: 0;
+    background: transparent;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  }
+  .success-dialog::backdrop {
+    background: rgba(9, 26, 58, 0.65);
+    backdrop-filter: blur(4px);
+  }
+  .modal-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.15rem;
+  }
+  .success-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 1.25rem;
+    background: #dcfce7;
+    color: #16a34a;
+    display: grid;
+    place-items: center;
+  }
+  .success-icon-wrap .material-symbols-outlined { font-size: 2.5rem; }
+  .modal-success-title {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .modal-success-desc {
+    font-size: 0.86rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .modal-action-buttons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+  }
+  .btn-keystatic-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background 150ms ease;
+  }
+  .btn-keystatic-primary:hover { background: #0e4ca9; }
+  .btn-preview-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    color: var(--color-navy);
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .btn-preview-secondary:hover { background: var(--color-section); }
+  .btn-back-courses {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-decoration: none;
+    margin-top: 0.25rem;
+  }
+  .btn-back-courses:hover { text-decoration: underline; }
+
+  @media (max-width: 992px) {
+    .creator-grid {
+      grid-template-columns: 1fr;
+    }
+    .sticky-preview-wrap {
+      position: static;
+    }
+  }
+  @media (max-width: 600px) {
+    .fields-grid {
+      grid-template-columns: 1fr;
+    }
+    .preset-buttons-row {
+      grid-template-columns: 1fr;
+    }
+    .xp-custom-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .pkt-drive-config-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

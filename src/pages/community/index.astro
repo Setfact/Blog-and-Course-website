@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createSupabaseServerClient } from '../../lib/supabase';
 import { getChannels, getPosts, getTopLearners } from '../../lib/community';
+import { getRankTier } from '../../lib/rank';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -15,88 +16,144 @@ const supabase = createSupabaseServerClient({
 
 const currentChannel = Astro.url.searchParams.get('channel') || 'all';
 const currentSort = (Astro.url.searchParams.get('sort') === 'popular' ? 'popular' : 'newest') as 'newest' | 'popular';
+const currentSearch = (Astro.url.searchParams.get('q') || '').trim();
 
 const channels = await getChannels(supabase);
 const posts = await getPosts(supabase, {
   channelId: currentChannel,
   sort: currentSort,
+  search: currentSearch,
   currentUserId: user.id,
 });
 const topLearners = await getTopLearners(supabase, 5);
 
 const activeChannelInfo = channels.find((c) => c.id === currentChannel);
+const userTier = getRankTier(user.xp || 0);
 ---
 
 <BaseLayout
   title="Komunitas Siswa"
   description="Diskusikan konfigurasi Cisco, topologi lab, scripting otomatisasi, dan saling berbagi kemajuan belajar."
 >
-  <div class="page-shell community-layout">
-    <!-- Community Top Header -->
-    <header class="community-header">
-      <div class="header-text">
-        <span class="header-kicker">RUANG DISKUSI TEKNIS & SOSIAL</span>
-        <h1 class="header-title">Komunitas Phinisi Learn</h1>
-        <p class="header-sub">Berbagi hasil lab, konsultasi konfigurasi jaringan, dan saling merayakan pencapaian belajar.</p>
+  <div class="community-canvas">
+    <!-- Top Bar: Clean, Low-Profile Community Header -->
+    <header class="community-topbar">
+      <div class="topbar-info">
+        <span class="topbar-kicker">RUANG DISKUSI TEKNIS & SOSIAL</span>
+        <h1 class="topbar-title">Komunitas Phinisi Learn</h1>
+        <p class="topbar-sub">Tanya kendala lab Cisco, diskusikan konfigurasi jaringan, dan saling berbagi progres belajar.</p>
       </div>
-      <div class="user-greeting">
-        <span class="greeting-text">Masuk sebagai <strong>{user.full_name}</strong></span>
-        <span class="greeting-xp">{user.xp} XP</span>
+
+      <div class="topbar-user-badge">
+        <div class="topbar-avatar">
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt={user.full_name} width="36" height="36" />
+          ) : (
+            <span>{(user.full_name || 'U').slice(0, 1).toUpperCase()}</span>
+          )}
+        </div>
+        <div class="topbar-user-details">
+          <div class="topbar-user-name">
+            <strong>{user.full_name}</strong>
+            {user.role === 'admin' && <span class="role-badge-admin">Admin</span>}
+          </div>
+          <div class="topbar-user-meta">
+            <span class="rank-pill-mini" style={`--tier-color: ${userTier.badgeColor};`}>
+              <span class="material-symbols-outlined icon-mini">{userTier.icon}</span>
+              <span>{userTier.name}</span>
+            </span>
+            <span class="xp-pill-mini">{user.xp || 0} XP</span>
+          </div>
+        </div>
       </div>
     </header>
 
-    <div class="community-grid">
-      <!-- Left Column: Channel Navigation -->
-      <aside class="channels-sidebar" aria-label="Daftar Saluran Komunitas">
-        <div class="sidebar-box">
-          <h2 class="sidebar-title">Saluran Diskusi</h2>
-          <nav class="channel-nav">
-            <a
-              href={`/community?sort=${currentSort}`}
-              class:list={['channel-link', { active: currentChannel === 'all' }]}
-            >
-              <span class="material-symbols-outlined channel-icon">dashboard</span>
-              <div class="channel-info">
-                <span class="channel-name">Semua Saluran</span>
-                <span class="channel-desc">Seluruh feed komunitas</span>
-              </div>
-            </a>
+    <!-- Mobile Channel Chips Bar (Visible on mobile/tablet) -->
+    <div class="mobile-channels-bar">
+      <a
+        href={`/community?sort=${currentSort}${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+        class:list={['mobile-chip', { active: currentChannel === 'all' }]}
+      >
+        <span class="material-symbols-outlined chip-icon">dashboard</span>
+        <span>Semua</span>
+      </a>
+      {channels.map((ch) => (
+        <a
+          href={`/community?channel=${ch.id}&sort=${currentSort}${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+          class:list={['mobile-chip', { active: currentChannel === ch.id }]}
+        >
+          <span>#</span>
+          <span>{ch.name}</span>
+        </a>
+      ))}
+    </div>
 
+    <!-- Main 3-Column Layout -->
+    <div class="community-grid">
+      <!-- Left Column: Minimalist Channel Sidebar (Codédex Style) -->
+      <aside class="channels-sidebar" aria-label="Navigasi Saluran Komunitas">
+        <div class="nav-section">
+          <span class="nav-section-title">NAVIGASI</span>
+          <nav class="nav-list">
+            <a
+              href={`/community?sort=${currentSort}${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+              class:list={['nav-item', { active: currentChannel === 'all' }]}
+            >
+              <span class="material-symbols-outlined nav-item-icon">forum</span>
+              <span class="nav-item-text">Semua Diskusi</span>
+            </a>
+          </nav>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">SALURAN DISKUSI</span>
+          <nav class="nav-list">
             {channels.map((ch) => (
               <a
-                href={`/community?channel=${ch.id}&sort=${currentSort}`}
-                class:list={['channel-link', { active: currentChannel === ch.id }]}
+                href={`/community?channel=${ch.id}&sort=${currentSort}${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+                class:list={['nav-item', { active: currentChannel === ch.id }]}
+                title={ch.description}
               >
-                <span class="material-symbols-outlined channel-icon">{ch.icon_name}</span>
-                <div class="channel-info">
-                  <span class="channel-name">{ch.name}</span>
-                  <span class="channel-desc">{ch.description}</span>
-                </div>
+                <span class="channel-hashtag">#</span>
+                <span class="nav-item-text">{ch.name}</span>
               </a>
             ))}
           </nav>
         </div>
       </aside>
 
-      <!-- Center Column: Post Composer & Posts Feed -->
+      <!-- Center Column: Post Composer & Main Feed -->
       <main class="feed-main">
-        <!-- Post Composer Box -->
-        <section class="composer-card">
-          <h2 class="composer-heading">Buat Postingan Baru</h2>
-          <form action="/api/community/posts" method="POST" class="composer-form">
-            <div class="form-row">
+        <!-- Post Composer Box (Streamlined & Spacious) -->
+        <section class="composer-box">
+          <div class="composer-header-row">
+            <div class="composer-avatar">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} width="38" height="38" />
+              ) : (
+                <span>{(user.full_name || 'U').slice(0, 1).toUpperCase()}</span>
+              )}
+            </div>
+            <div class="composer-prompt">
+              <strong class="composer-prompt-title">Mulai Diskusi Baru</strong>
+              <span class="composer-prompt-sub">Tanyakan kendala lab, konfigurasi CLI Cisco, atau bagikan hasil belajar</span>
+            </div>
+          </div>
+
+          <form action="/api/community/posts" method="POST" enctype="multipart/form-data" class="composer-form">
+            <div class="composer-input-group">
               <input
                 type="text"
                 name="title"
-                placeholder="Judul topik atau pertanyaan Anda..."
+                placeholder="Judul topik diskusi atau pertanyaan Anda..."
                 required
-                class="input-title"
+                class="composer-title-input"
                 maxlength="150"
               />
-              <select name="channel_id" class="select-channel" required aria-label="Pilih Saluran">
+              <select name="channel_id" class="composer-channel-select" required aria-label="Pilih Saluran">
                 {channels.map((ch) => (
                   <option value={ch.id} selected={currentChannel === ch.id}>
-                    {ch.name}
+                    #{ch.name}
                   </option>
                 ))}
               </select>
@@ -104,118 +161,251 @@ const activeChannelInfo = channels.find((c) => c.id === currentChannel);
 
             <textarea
               name="content"
-              placeholder="Tulis penjelasan, output CLI Cisco IOS, atau kode skrip (gunakan ``` untuk blok kode)..."
+              placeholder="Tulis penjelasan lengkap atau lampirkan output CLI Cisco / kode script (gunakan ``` untuk blok kode)..."
               required
               rows="4"
-              class="textarea-content"
+              class="composer-textarea"
             ></textarea>
 
-            <div class="composer-footer">
-              <span class="markdown-hint">Mendukung blok kode format Markdown</span>
-              <button type="submit" class="submit-btn">Kirim Postingan</button>
+            <!-- Image Attachment Controls -->
+            <div class="composer-attachment-bar">
+              <div class="attachment-controls">
+                <input
+                  type="file"
+                  id="composer-file-input"
+                  name="image_file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                  class="hidden-file-input"
+                />
+                <label for="composer-file-input" class="attachment-upload-btn" title="Pilih gambar dari komputer atau HP">
+                  <span class="material-symbols-outlined icon-attach">add_photo_alternate</span>
+                  <span>Lampirkan Gambar</span>
+                </label>
+                <span class="attachment-separator">atau</span>
+                <input
+                  type="url"
+                  name="image_url"
+                  id="composer-url-input"
+                  placeholder="Tempel URL gambar (https://...)"
+                  class="attachment-url-input"
+                />
+              </div>
+
+              <div id="composer-preview-wrap" class="composer-preview-card hidden">
+                <img id="composer-preview-img" src="" alt="Pratinjau gambar terlampir" class="composer-preview-image" />
+                <button type="button" id="composer-remove-img" class="composer-remove-btn" title="Batal lampirkan gambar">
+                  <span class="material-symbols-outlined icon-close">close</span>
+                  <span>Hapus</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="composer-footer-bar">
+              <span class="composer-markdown-note">Mendukung blok kode Markdown dan gambar (JPG, PNG, WebP maks 3MB)</span>
+              <div class="composer-submit-actions">
+                <button type="button" id="composer-reset-btn" class="btn-cancel">Batal</button>
+                <button type="submit" class="btn-submit">Kirim Postingan</button>
+              </div>
             </div>
           </form>
         </section>
 
-        <!-- Feed Filter & Header -->
-        <div class="feed-filter-bar">
-          <div class="active-filter-label">
-            <strong class="label-text">
-              {activeChannelInfo ? activeChannelInfo.name : 'Semua Saluran'}
-            </strong>
-            <span class="post-count">({posts.length} kiriman)</span>
+        <!-- Search Bar & Filters -->
+        <section class="feed-control-section" aria-label="Kontrol Pencarian dan Urutan">
+          <div class="search-box-wrap">
+            <form action="/community" method="GET" class="search-form">
+              <input type="hidden" name="channel" value={currentChannel} />
+              <input type="hidden" name="sort" value={currentSort} />
+              <div class="search-field">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input
+                  type="text"
+                  name="q"
+                  value={currentSearch}
+                  placeholder="Cari topik diskusi, materi lab, atau istilah teknis (misal: OSPF, VLAN, Subnetting)..."
+                  class="search-input"
+                  aria-label="Cari Diskusi"
+                />
+                {currentSearch && (
+                  <a
+                    href={`/community?channel=${currentChannel}&sort=${currentSort}`}
+                    class="search-clear-link"
+                    title="Hapus pencarian"
+                  >
+                    <span class="material-symbols-outlined">close</span>
+                  </a>
+                )}
+              </div>
+              <button type="submit" class="search-btn">Cari</button>
+            </form>
           </div>
 
-          <div class="sort-tabs" role="tablist">
-            <a
-              href={`/community?channel=${currentChannel}&sort=newest`}
-              class:list={['sort-tab', { active: currentSort === 'newest' }]}
-            >
-              Terbaru
-            </a>
-            <a
-              href={`/community?channel=${currentChannel}&sort=popular`}
-              class:list={['sort-tab', { active: currentSort === 'popular' }]}
-            >
-              Populer
-            </a>
-          </div>
-        </div>
+          {currentSearch && (
+            <div class="search-active-pill">
+              <span>Hasil pencarian untuk: <strong>"{currentSearch}"</strong> ({posts.length} ditemukan)</span>
+              <a href={`/community?channel=${currentChannel}&sort=${currentSort}`} class="clear-filter-link">
+                Hapus filter pencarian
+              </a>
+            </div>
+          )}
 
-        <!-- Posts List -->
+          <!-- Feed Header & Sort Pills -->
+          <div class="feed-meta-row">
+            <div class="active-channel-heading">
+              <h2 class="active-channel-title">
+                {activeChannelInfo ? `#${activeChannelInfo.name}` : 'Semua Diskusi'}
+              </h2>
+              <span class="active-channel-count">{posts.length} postingan</span>
+            </div>
+
+            <div class="sort-pill-group" role="tablist">
+              <a
+                href={`/community?channel=${currentChannel}&sort=newest${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+                class:list={['sort-pill-btn', { active: currentSort === 'newest' }]}
+              >
+                Terbaru
+              </a>
+              <a
+                href={`/community?channel=${currentChannel}&sort=popular${currentSearch ? `&q=${encodeURIComponent(currentSearch)}` : ''}`}
+                class:list={['sort-pill-btn', { active: currentSort === 'popular' }]}
+              >
+                Populer
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- Posts List Feed -->
         {posts.length === 0 ? (
-          <div class="empty-feed">
-            <span class="material-symbols-outlined empty-icon">forum</span>
-            <p class="empty-title">Belum ada diskusi di saluran ini</p>
-            <p class="empty-desc">Jadilah orang pertama yang memulai topik di saluran ini!</p>
+          <div class="empty-feed-card">
+            <span class="material-symbols-outlined empty-feed-icon">forum</span>
+            <h3 class="empty-feed-title">
+              {currentSearch ? 'Tidak ada diskusi yang cocok dengan pencarian Anda' : 'Belum ada diskusi di saluran ini'}
+            </h3>
+            <p class="empty-feed-desc">
+              {currentSearch
+                ? 'Coba gunakan kata kunci yang lebih umum atau periksa ejaan istilah teknis yang dicari.'
+                : 'Jadilah yang pertama memulai pembahasan menarik di saluran ini.'}
+            </p>
+            {currentSearch && (
+              <a href={`/community?channel=${currentChannel}&sort=${currentSort}`} class="btn-empty-reset">
+                Tampilkan Semua Diskusi
+              </a>
+            )}
           </div>
         ) : (
-          <div class="posts-list">
+          <div class="posts-feed-stream">
             {posts.map((post) => (
-              <article class:list={['post-card', { pinned: post.is_pinned }]}>
+              <article class:list={['codedex-post-card', { pinned: post.is_pinned, solved: post.is_solved }]}>
                 {post.is_pinned && (
-                  <div class="pinned-badge">
+                  <div class="post-pinned-tag">
                     <span class="material-symbols-outlined icon-pin">push_pin</span>
                     <span>Disematkan oleh Admin</span>
                   </div>
                 )}
 
-                <header class="post-card-header">
-                  <div class="author-block">
-                    <div class="author-avatar">
+                <header class="card-author-row">
+                  <div class="author-profile-group">
+                    <div class="author-avatar-circle">
                       {post.author?.avatar_url ? (
-                        <img src={post.author.avatar_url} alt={post.author.full_name} width="38" height="38" />
+                        <img src={post.author.avatar_url} alt={post.author.full_name} width="42" height="42" />
                       ) : (
                         <span>{(post.author?.full_name || 'U').slice(0, 1).toUpperCase()}</span>
                       )}
                     </div>
-                    <div class="author-info">
-                      <div class="author-name-line">
-                        <strong class="author-name">{post.author?.full_name || 'Siswa Phinisi'}</strong>
+                    <div class="author-text-meta">
+                      <div class="author-headline">
+                        <strong class="author-display-name">{post.author?.full_name || 'Siswa Phinisi'}</strong>
                         {post.author?.role === 'admin' && <span class="badge-role-admin">Admin</span>}
+                        {(() => {
+                          const authorTier = getRankTier(post.author?.xp || 0);
+                          return (
+                            <span class="badge-tier-pill" style={`--tier-color: ${authorTier.badgeColor};`} title={`Peringkat: ${authorTier.name} (${post.author?.xp || 0} XP)`}>
+                              <span class="material-symbols-outlined icon-tier-micro">{authorTier.icon}</span>
+                              <span>{authorTier.name}</span>
+                            </span>
+                          );
+                        })()}
+                        <span class="post-timestamp">
+                          · {new Date(post.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
                       </div>
-                      <span class="post-time">
-                        {new Date(post.created_at).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                      <span class="author-channel-sub">#{post.channel?.name || post.channel_id}</span>
                     </div>
                   </div>
 
-                  <span class="post-channel-tag">{post.channel?.name || post.channel_id}</span>
+                  <div class="post-header-badges">
+                    {post.is_solved && (
+                      <span class="badge-solved-pill" title="Pertanyaan ini telah terpecahkan">
+                        <span class="material-symbols-outlined icon-check">check_circle</span>
+                        <span>Terjawab</span>
+                      </span>
+                    )}
+                  </div>
                 </header>
 
-                <div class="post-card-body">
-                  <h3 class="post-title">
-                    <a href={`/community/${post.id}`}>{post.title}</a>
+                <div class="card-content-area">
+                  <h3 class="card-title">
+                    <a href={`/community/${post.id}`} class="card-title-link">{post.title}</a>
                   </h3>
-                  <div class="post-content-preview">
+                  <div class="card-text-preview">
                     <p>{post.content}</p>
                   </div>
+                  {post.image_url && (
+                    <a href={`/community/${post.id}`} class="card-media-wrap">
+                      <img src={post.image_url} alt={post.title} loading="lazy" class="card-media-image" />
+                    </a>
+                  )}
                 </div>
 
-                <footer class="post-card-footer">
-                  <div class="actions-group">
+                <footer class="card-actions-bar">
+                  <div class="action-pills-left">
                     <button
                       type="button"
-                      class:list={['upvote-btn', { active: post.has_upvoted }]}
+                      class:list={['pill-action-btn', 'upvote-action', { active: post.has_upvoted }]}
                       data-post-id={post.id}
                       data-upvoted={post.has_upvoted ? 'true' : 'false'}
+                      title="Sukai postingan ini"
                     >
-                      <span class="material-symbols-outlined">thumb_up</span>
+                      <span class="material-symbols-outlined action-icon">thumb_up</span>
                       <span class="upvote-count">{post.upvotes_count}</span>
                     </button>
 
-                    <a href={`/community/${post.id}`} class="comments-link">
-                      <span class="material-symbols-outlined">mode_comment</span>
+                    <a href={`/community/${post.id}`} class="pill-action-btn comment-action" title="Lihat dan beri balasan">
+                      <span class="material-symbols-outlined action-icon">chat_bubble</span>
                       <span>{post.comments_count} balasan</span>
                     </a>
                   </div>
 
-                  <a href={`/community/${post.id}`} class="read-more-link">Lihat Diskusi →</a>
+                  <div class="action-pills-right">
+                    {(user && (user.role === 'admin' || post.author_id === user.id)) && (
+                      <button
+                        type="button"
+                        class:list={[
+                          'btn-action-delete',
+                          { 'admin-mod-delete': user.role === 'admin' && post.author_id !== user.id },
+                        ]}
+                        data-post-id={post.id}
+                        title={
+                          user.role === 'admin' && post.author_id !== user.id
+                            ? 'Hapus postingan ini sebagai wewenang moderasi Admin'
+                            : 'Hapus postingan yang Anda buat'
+                        }
+                      >
+                        <span class="material-symbols-outlined icon-delete">delete</span>
+                        <span>{user.role === 'admin' && post.author_id !== user.id ? 'Hapus (Moderasi)' : 'Hapus'}</span>
+                      </button>
+                    )}
+                    <a href={`/community/${post.id}`} class="link-open-thread">
+                      <span>Buka Diskusi</span>
+                      <span class="material-symbols-outlined icon-arrow">arrow_forward</span>
+                    </a>
+                  </div>
                 </footer>
               </article>
             ))}
@@ -223,41 +413,69 @@ const activeChannelInfo = channels.find((c) => c.id === currentChannel);
         )}
       </main>
 
-      <!-- Right Column: Weekly Leaderboard & Guidelines -->
-      <aside class="meta-sidebar" aria-label="Papan Peringkat & Pedoman">
-        <!-- Weekly XP Leaderboard -->
-        <div class="sidebar-box">
-          <div class="box-header">
-            <span class="material-symbols-outlined box-icon">military_tech</span>
-            <h2 class="sidebar-title">Top Pembelajar</h2>
+      <!-- Right Column: Sidebar Widgets (Top Pembelajar & Pedoman Komunitas) -->
+      <aside class="meta-sidebar" aria-label="Informasi Peringkat dan Pedoman">
+        <!-- Widget 1: Top Pembelajar (Weekly Leaderboard) -->
+        <div class="widget-card">
+          <div class="widget-header">
+            <div class="widget-header-title">
+              <span class="material-symbols-outlined widget-header-icon">military_tech</span>
+              <h2 class="widget-title">Top Pembelajar</h2>
+            </div>
           </div>
-          <p class="leaderboard-subtitle">Siswa paling aktif mengumpulkan poin XP</p>
+          <p class="widget-subtitle">Siswa paling aktif mengumpulkan poin XP belajar</p>
 
-          <ol class="leaderboard-list">
-            {topLearners.map((learner, idx) => (
-              <li class="leaderboard-item">
-                <span class:list={['rank-number', `rank-${idx + 1}`]}>{idx + 1}</span>
-                <div class="learner-info">
-                  <strong class="learner-name">{learner.full_name}</strong>
-                  <span class="learner-streak">{learner.streak} hari streak</span>
-                </div>
-                <strong class="learner-xp">{learner.xp} XP</strong>
-              </li>
-            ))}
+          <ol class="leaderboard-stream">
+            {topLearners.map((learner, idx) => {
+              const learnerTier = getRankTier(learner.xp || 0);
+              return (
+                <li class="leaderboard-entry">
+                  <span class:list={['rank-pill-badge', `rank-pos-${idx + 1}`]}>{idx + 1}</span>
+                  <div class="leaderboard-user-details">
+                    <strong class="leaderboard-name">{learner.full_name}</strong>
+                    <div class="leaderboard-meta">
+                      <span class="tier-indicator" style={`--tier-color: ${learnerTier.badgeColor};`}>
+                        <span class="material-symbols-outlined icon-tier">{learnerTier.icon}</span>
+                        <span>{learnerTier.name}</span>
+                      </span>
+                      <span class="streak-count">{learner.streak}d streak</span>
+                    </div>
+                  </div>
+                  <span class="leaderboard-xp-tag">{learner.xp} XP</span>
+                </li>
+              );
+            })}
           </ol>
         </div>
 
-        <!-- Community Guidelines -->
-        <div class="sidebar-box guidelines-box">
-          <div class="box-header">
-            <span class="material-symbols-outlined box-icon">handshake</span>
-            <h2 class="sidebar-title">Pedoman Diskusi</h2>
-          </div>
-          <ul class="guidelines-list">
-            <li>Sertakan konfigurasi atau diagram jika menanyakan kendala lab.</li>
-            <li>Gunakan blok kode (Markdown) agar teks CLI mudah dibaca.</li>
-            <li>Jaga kesantunan dan saling bantu antar sesama pembelajar.</li>
-          </ul>
+        <!-- Widget 2: Pedoman Komunitas Banner (Codédex Style) -->
+        <div class="widget-guidelines-card">
+          <details class="guidelines-accordion">
+            <summary class="guidelines-summary">
+              <div class="guidelines-summary-left">
+                <div class="guidelines-icon-box">
+                  <span class="material-symbols-outlined">menu_book</span>
+                </div>
+                <div class="guidelines-summary-text">
+                  <strong class="guidelines-heading">Pedoman Komunitas</strong>
+                  <span class="guidelines-subtext">Panduan etika diskusi & sharing lab</span>
+                </div>
+              </div>
+              <span class="material-symbols-outlined guidelines-chevron">expand_more</span>
+            </summary>
+            <div class="guidelines-body">
+              <ul class="guidelines-rules-list">
+                <li>Sertakan diagram topologi atau keluaran pesan error ketika menanyakan kendala lab.</li>
+                <li>Gunakan blok kode tiga backtick (```) agar konfigurasi CLI Cisco mudah dibaca.</li>
+                <li>Jaga kesantunan, hargai pertanyaan pemula, dan saling bantu antar pembelajar.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+
+        <!-- Widget 3: Minimalist Footer Info -->
+        <div class="sidebar-footer-note">
+          <span>Phinisi Learn Community &bull; Ruang kolaborasi konfigurasi jaringan dan materi CCNA.</span>
         </div>
       </aside>
     </div>
@@ -265,7 +483,7 @@ const activeChannelInfo = channels.find((c) => c.id === currentChannel);
 
   <script>
     // Interactive upvote handler
-    document.querySelectorAll('.upvote-btn').forEach((btn) => {
+    document.querySelectorAll('.upvote-action').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const button = btn as HTMLButtonElement;
@@ -292,350 +510,431 @@ const activeChannelInfo = channels.find((c) => c.id === currentChannel);
         }
       });
     });
+
+    // Image upload preview listener
+    const fileInput = document.getElementById('composer-file-input') as HTMLInputElement | null;
+    const urlInput = document.getElementById('composer-url-input') as HTMLInputElement | null;
+    const previewWrap = document.getElementById('composer-preview-wrap');
+    const previewImg = document.getElementById('composer-preview-img') as HTMLImageElement | null;
+    const removeBtn = document.getElementById('composer-remove-img');
+
+    if (fileInput && previewWrap && previewImg) {
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (previewImg && e.target?.result) {
+              previewImg.src = String(e.target.result);
+              previewWrap.classList.remove('hidden');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (urlInput && previewWrap && previewImg) {
+      urlInput.addEventListener('input', () => {
+        const val = urlInput.value.trim();
+        if (val.startsWith('http://') || val.startsWith('https://')) {
+          previewImg.src = val;
+          previewWrap.classList.remove('hidden');
+        } else if (!fileInput?.files?.length) {
+          previewWrap.classList.add('hidden');
+        }
+      });
+    }
+
+    if (removeBtn && previewWrap && previewImg && fileInput && urlInput) {
+      removeBtn.addEventListener('click', () => {
+        fileInput.value = '';
+        urlInput.value = '';
+        previewImg.src = '';
+        previewWrap.classList.add('hidden');
+      });
+    }
+
+    // Composer reset button listener
+    const composerResetBtn = document.getElementById('composer-reset-btn');
+    const composerForm = document.querySelector('.composer-form') as HTMLFormElement | null;
+    if (composerResetBtn && composerForm) {
+      composerResetBtn.addEventListener('click', () => {
+        composerForm.reset();
+        if (fileInput) fileInput.value = '';
+        if (urlInput) urlInput.value = '';
+        if (previewImg) previewImg.src = '';
+        if (previewWrap) previewWrap.classList.add('hidden');
+      });
+    }
+
+    // Feed card delete button listener
+    document.querySelectorAll('.btn-action-delete').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const postId = (btn as HTMLElement).dataset.postId;
+        if (!postId) return;
+
+        const confirmed = window.confirm(
+          'Apakah Anda yakin ingin membatalkan dan menghapus postingan ini? Tindakan ini tidak dapat dibatalkan.'
+        );
+        if (!confirmed) return;
+
+        (btn as HTMLButtonElement).disabled = true;
+
+        try {
+          const res = await fetch('/api/community/posts', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_id: postId }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            const card = btn.closest('.codedex-post-card');
+            if (card) {
+              card.remove();
+            } else {
+              window.location.reload();
+            }
+          } else {
+            alert(data.error || 'Gagal membatalkan postingan');
+            (btn as HTMLButtonElement).disabled = false;
+          }
+        } catch (err) {
+          console.error('Gagal membatalkan postingan:', err);
+          alert('Terjadi kesalahan koneksi saat membatalkan postingan.');
+          (btn as HTMLButtonElement).disabled = false;
+        }
+      });
+    });
   </script>
 </BaseLayout>
 
 <style>
-  .community-layout {
-    padding-block: 2.25rem 4rem;
+  /* =========================================================
+     1. Overall Community Layout Canvas (Spacious & Modern)
+     ========================================================= */
+  .community-canvas {
+    max-width: 1400px;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 2.5vw, 2.5rem);
+    padding-block: 2rem 4.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 2rem;
   }
-  .community-header {
+
+  /* Top Bar Header */
+  .community-topbar {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     gap: 1.5rem;
-    flex-wrap: wrap;
-    padding: 1.75rem 2rem;
+    padding: 1.5rem 2rem;
+    background: #ffffff;
     border: 1px solid var(--color-line);
-    border-radius: 1.5rem;
-    background: linear-gradient(135deg, #ffffff 0%, var(--color-section) 100%);
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.02);
   }
-  .header-kicker {
-    display: block;
+
+  .topbar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .topbar-kicker {
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.08em;
-    color: var(--color-phinisi-700);
-    margin-bottom: 0.25rem;
+    color: var(--color-phinisi-600);
   }
-  .header-title {
+
+  .topbar-title {
     font-family: var(--font-heading);
     font-size: 1.65rem;
     font-weight: 900;
     color: var(--color-navy);
     margin: 0;
+    letter-spacing: -0.02em;
   }
-  .header-sub {
-    margin: 0.35rem 0 0 0;
-    color: var(--color-muted);
+
+  .topbar-sub {
+    margin: 0;
     font-size: 0.88rem;
+    color: var(--color-muted);
   }
-  .user-greeting {
+
+  .topbar-user-badge {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background: #ffffff;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
+    gap: 0.85rem;
+    background: var(--color-section);
     border: 1px solid var(--color-line);
-    font-size: 0.82rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    flex-shrink: 0;
   }
-  .greeting-text strong {
+
+  .topbar-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .topbar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .topbar-user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .topbar-user-name {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.84rem;
     color: var(--color-navy);
   }
-  .greeting-xp {
+
+  .role-badge-admin {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+  }
+
+  .topbar-user-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .rank-pill-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--tier-color, #0284c7);
+  }
+
+  .icon-mini {
+    font-size: 0.85rem;
+  }
+
+  .xp-pill-mini {
     background: var(--color-gold-soft);
     color: #92400e;
     font-weight: 800;
-    padding: 0.2rem 0.6rem;
+    padding: 0.12rem 0.5rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.7rem;
   }
 
-  /* 3-Column Grid */
+  /* Mobile Chips Navigation */
+  .mobile-channels-bar {
+    display: none;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+  }
+
+  .mobile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.9rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 150ms ease;
+  }
+
+  .mobile-chip.active {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    border-color: var(--color-phinisi-600);
+  }
+
+  .chip-icon {
+    font-size: 1rem;
+  }
+
+  /* =========================================================
+     2. Main 3-Column Grid System (Spacious Gutters)
+     ========================================================= */
   .community-grid {
     display: grid;
-    grid-template-columns: 260px 1fr 280px;
-    gap: 1.5rem;
+    grid-template-columns: 240px minmax(0, 1fr) 300px;
+    gap: 2.25rem;
     align-items: start;
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1180px) {
     .community-grid {
-      grid-template-columns: 240px 1fr;
+      grid-template-columns: 220px minmax(0, 1fr);
     }
     .meta-sidebar {
       display: none;
     }
   }
 
-  @media (max-width: 820px) {
+  @media (max-width: 860px) {
     .community-grid {
       grid-template-columns: 1fr;
     }
     .channels-sidebar {
       display: none;
     }
+    .mobile-channels-bar {
+      display: flex;
+    }
+    .community-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1.25rem;
+    }
   }
 
-  /* Sidebar boxes */
-  .sidebar-box {
-    background: #ffffff;
-    border: 1px solid var(--color-line);
-    border-radius: 1.25rem;
-    padding: 1.25rem;
+  /* =========================================================
+     3. Left Channel Navigation (Codédex Style: Clean & Sticky)
+     ========================================================= */
+  .channels-sidebar {
+    position: sticky;
+    top: 5.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 1.75rem;
   }
-  .sidebar-title {
-    font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0;
-  }
-  .box-header {
+
+  .nav-section {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
   }
-  .box-icon {
-    font-size: 1.2rem;
-    color: var(--color-phinisi-600);
+
+  .nav-section-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    padding-inline: 0.75rem;
   }
 
-  /* Channels */
-  .channel-nav {
+  .nav-list {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
-  .channel-link {
+
+  .nav-item {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.65rem;
-    padding: 0.65rem 0.75rem;
-    border-radius: 0.85rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.75rem;
     text-decoration: none;
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-navy);
     transition: all 150ms ease;
   }
-  .channel-link:hover {
+
+  .nav-item:hover {
     background: var(--color-phinisi-50);
-  }
-  .channel-link.active {
-    background: var(--color-phinisi-100);
-  }
-  .channel-icon {
-    font-size: 1.25rem;
-    color: var(--color-muted);
-    flex-shrink: 0;
-    margin-top: 0.1rem;
-  }
-  .channel-link.active .channel-icon {
     color: var(--color-phinisi-700);
   }
-  .channel-info {
-    display: flex;
-    flex-direction: column;
-  }
-  .channel-name {
-    font-family: var(--font-heading);
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: var(--color-navy);
-  }
-  .channel-desc {
-    font-size: 0.7rem;
-    color: var(--color-muted);
-    line-height: 1.3;
+
+  .nav-item.active {
+    background: var(--color-phinisi-100);
+    color: var(--color-phinisi-700);
+    font-weight: 800;
   }
 
-  /* Feed Main */
+  .nav-item-icon {
+    font-size: 1.2rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .nav-item-icon {
+    color: var(--color-phinisi-700);
+  }
+
+  .channel-hashtag {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .channel-hashtag {
+    color: var(--color-phinisi-700);
+  }
+
+  .nav-item-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* =========================================================
+     4. Center Feed: Composer & Controls
+     ========================================================= */
   .feed-main {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.75rem;
+    min-width: 0;
   }
 
-  /* Composer */
-  .composer-card {
+  /* Composer Box */
+  .composer-box {
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 0 4px 16px rgba(8, 26, 58, 0.03);
-  }
-  .composer-heading {
-    font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0 0 0.85rem 0;
-  }
-  .composer-form {
+    padding: 1.5rem 1.75rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.03);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-  }
-  .form-row {
-    display: flex;
-    gap: 0.75rem;
-  }
-  .input-title {
-    flex: 1;
-    min-height: 42px;
-    padding: 0.5rem 0.85rem;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.88rem;
-    outline: none;
-  }
-  .input-title:focus {
-    border-color: var(--color-phinisi-500);
-  }
-  .select-channel {
-    min-height: 42px;
-    padding: 0.5rem 0.85rem;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    background: #ffffff;
-    outline: none;
-  }
-  .textarea-content {
-    width: 100%;
-    padding: 0.75rem 0.85rem;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    font-family: var(--font-body);
-    font-size: 0.86rem;
-    line-height: 1.5;
-    outline: none;
-    resize: vertical;
-  }
-  .textarea-content:focus {
-    border-color: var(--color-phinisi-500);
-  }
-  .composer-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .markdown-hint {
-    font-size: 0.72rem;
-    color: var(--color-muted);
-  }
-  .submit-btn {
-    background: var(--color-phinisi-600);
-    color: #ffffff;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.55rem 1.15rem;
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 150ms ease;
-  }
-  .submit-btn:hover {
-    background: var(--color-phinisi-700);
+    gap: 1.15rem;
   }
 
-  /* Filter bar */
-  .feed-filter-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.35rem 0.5rem;
-  }
-  .active-filter-label {
+  .composer-header-row {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-  }
-  .label-text {
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--color-navy);
-  }
-  .post-count {
-    color: var(--color-muted);
-    font-size: 0.8rem;
-  }
-  .sort-tabs {
-    display: flex;
-    background: #ffffff;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    padding: 0.2rem;
-  }
-  .sort-tab {
-    padding: 0.35rem 0.75rem;
-    border-radius: 0.6rem;
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-muted);
-    text-decoration: none;
-    transition: all 120ms ease;
-  }
-  .sort-tab.active {
-    background: var(--color-phinisi-50);
-    color: var(--color-phinisi-700);
-  }
-
-  /* Post Card */
-  .posts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .post-card {
-    background: #ffffff;
-    border: 1px solid var(--color-line);
-    border-radius: 1.25rem;
-    padding: 1.35rem;
-    display: flex;
-    flex-direction: column;
     gap: 0.85rem;
-    transition: box-shadow 150ms ease;
   }
-  .post-card:hover {
-    box-shadow: 0 6px 20px rgba(8, 26, 58, 0.05);
-  }
-  .post-card.pinned {
-    border-color: var(--color-gold);
-    background: #fffdf9;
-  }
-  .pinned-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    color: #b45309;
-    font-size: 0.74rem;
-    font-weight: 800;
-  }
-  .icon-pin {
-    font-size: 0.95rem;
-  }
-  .post-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .author-block {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-  }
-  .author-avatar {
+
+  .composer-avatar {
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -643,255 +942,1075 @@ const activeChannelInfo = channels.find((c) => c.id === currentChannel);
     background: var(--color-phinisi-100);
     display: grid;
     place-items: center;
-    font-family: var(--font-heading);
     font-weight: 800;
     color: var(--color-phinisi-700);
     font-size: 0.85rem;
     flex-shrink: 0;
   }
-  .author-avatar img {
+
+  .composer-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .author-name-line {
+
+  .composer-prompt {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.15rem;
   }
-  .author-name {
+
+  .composer-prompt-title {
     font-family: var(--font-heading);
-    font-size: 0.86rem;
+    font-size: 0.95rem;
     font-weight: 800;
     color: var(--color-navy);
   }
+
+  .composer-prompt-sub {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+
+  .composer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .composer-input-group {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .composer-title-input {
+    flex: 1;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 600;
+    outline: none;
+    background: #ffffff;
+    transition: all 150ms ease;
+  }
+
+  .composer-title-input:focus {
+    border-color: var(--color-phinisi-500);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.1);
+  }
+
+  .composer-channel-select {
+    min-height: 44px;
+    min-width: 170px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    background: #ffffff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 150ms ease;
+  }
+
+  .composer-channel-select:focus {
+    border-color: var(--color-phinisi-500);
+  }
+
+  .composer-textarea {
+    width: 100%;
+    min-height: 105px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    outline: none;
+    resize: vertical;
+    transition: border-color 150ms ease;
+  }
+
+  .composer-textarea:focus {
+    border-color: var(--color-phinisi-500);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.1);
+  }
+
+  /* Attachment Bar */
+  .composer-attachment-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .attachment-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  .attachment-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px dashed var(--color-line);
+    border-radius: 0.65rem;
+    background: var(--color-section);
+    color: var(--color-navy);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .attachment-upload-btn:hover {
+    background: #ffffff;
+    border-color: var(--color-phinisi-500);
+    color: var(--color-phinisi-600);
+  }
+
+  .icon-attach {
+    font-size: 1.15rem;
+    color: var(--color-phinisi-600);
+  }
+
+  .attachment-separator {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+
+  .attachment-url-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    font-size: 0.8rem;
+    outline: none;
+    background: #ffffff;
+  }
+
+  .attachment-url-input:focus {
+    border-color: var(--color-phinisi-500);
+  }
+
+  .composer-preview-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .composer-preview-card.hidden {
+    display: none;
+  }
+
+  .composer-preview-image {
+    width: 68px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 0.45rem;
+    border: 1px solid var(--color-line);
+  }
+
+  .composer-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.65rem;
+    background: #fee2e2;
+    color: #b91c1c;
+    border: none;
+    border-radius: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .composer-remove-btn:hover {
+    background: #fecaca;
+  }
+
+  .icon-close {
+    font-size: 1rem;
+  }
+
+  /* Composer Footer */
+  .composer-footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.4rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .composer-markdown-note {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+  }
+
+  .composer-submit-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .btn-cancel {
+    background: transparent;
+    color: var(--color-muted);
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.55rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .btn-cancel:hover {
+    background: #f1f5f9;
+    color: var(--color-navy);
+  }
+
+  .btn-submit {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.58rem 1.25rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+
+  .btn-submit:hover {
+    background: var(--color-phinisi-700);
+  }
+
+  /* =========================================================
+     5. Feed Controls & Search
+     ========================================================= */
+  .feed-control-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+  }
+
+  .search-field {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-muted);
+    font-size: 1.2rem;
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.7rem 2.4rem 0.7rem 2.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: #ffffff;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--color-navy);
+    outline: none;
+    transition: all 150ms ease;
+  }
+
+  .search-input:focus {
+    border-color: var(--color-phinisi-500);
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.1);
+  }
+
+  .search-clear-link {
+    position: absolute;
+    right: 0.85rem;
+    display: flex;
+    align-items: center;
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .search-clear-link:hover {
+    color: var(--color-navy);
+  }
+
+  .search-btn {
+    background: var(--color-navy);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 150ms ease;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover {
+    background: var(--color-phinisi-700);
+  }
+
+  .search-active-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0.9rem;
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+
+  .search-active-pill strong {
+    color: var(--color-navy);
+  }
+
+  .clear-filter-link {
+    color: var(--color-phinisi-600);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .clear-filter-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Feed Meta & Sort Group */
+  .feed-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-inline: 0.25rem;
+  }
+
+  .active-channel-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .active-channel-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--color-navy);
+    margin: 0;
+  }
+
+  .active-channel-count {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+  }
+
+  .sort-pill-group {
+    display: flex;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 0.2rem;
+  }
+
+  .sort-pill-btn {
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+
+  .sort-pill-btn.active {
+    background: var(--color-phinisi-600);
+    color: #ffffff;
+  }
+
+  /* =========================================================
+     6. Post Cards (Codédex Spacious Style)
+     ========================================================= */
+  .posts-feed-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+
+  .codedex-post-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .codedex-post-card:hover {
+    box-shadow: 0 10px 28px rgba(8, 26, 58, 0.06);
+    transform: translateY(-1px);
+  }
+
+  .codedex-post-card.pinned {
+    border-color: #fcd34d;
+    background: #fffefb;
+  }
+
+  .codedex-post-card.solved {
+    border-color: #86efac;
+    background: #fdfefe;
+  }
+
+  .post-pinned-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #b45309;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .icon-pin {
+    font-size: 1rem;
+  }
+
+  /* Card Author Header */
+  .card-author-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .author-profile-group {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .author-avatar-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-phinisi-100);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--color-phinisi-700);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .author-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .author-text-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .author-headline {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .author-display-name {
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
   .badge-role-admin {
     background: #fee2e2;
     color: #991b1b;
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 800;
-    padding: 0.1rem 0.4rem;
+    padding: 0.1rem 0.45rem;
     border-radius: 999px;
   }
-  .post-time {
-    display: block;
-    font-size: 0.7rem;
+
+  .badge-tier-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tier-color, #0284c7) 12%, transparent);
+    color: var(--tier-color, #0284c7);
+    border: 1px solid color-mix(in srgb, var(--tier-color, #0284c7) 30%, transparent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .icon-tier-micro {
+    font-size: 0.85rem;
+  }
+
+  .post-timestamp {
+    font-size: 0.74rem;
     color: var(--color-muted);
   }
-  .post-channel-tag {
-    font-size: 0.7rem;
+
+  .author-channel-sub {
+    font-size: 0.75rem;
     font-weight: 700;
-    color: var(--color-phinisi-700);
-    background: var(--color-phinisi-50);
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.4rem;
-  }
-  .post-title {
-    font-family: var(--font-heading);
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0;
-  }
-  .post-title a {
-    color: inherit;
-    text-decoration: none;
-  }
-  .post-title a:hover {
     color: var(--color-phinisi-600);
   }
-  .post-content-preview p {
+
+  .post-header-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .badge-solved-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+
+  .icon-check {
+    font-size: 0.9rem;
+  }
+
+  /* Card Content */
+  .card-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-title {
+    font-family: var(--font-heading);
+    font-size: 1.22rem;
+    font-weight: 800;
+    line-height: 1.35;
     margin: 0;
-    color: var(--color-muted);
-    font-size: 0.85rem;
-    line-height: 1.5;
+  }
+
+  .card-title-link {
+    color: var(--color-navy);
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+
+  .card-title-link:hover {
+    color: var(--color-phinisi-600);
+  }
+
+  .card-text-preview p {
+    margin: 0;
+    color: #334155;
+    font-size: 0.92rem;
+    line-height: 1.65;
     white-space: pre-wrap;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .post-card-footer {
+
+  .card-media-wrap {
+    display: block;
+    margin-top: 0.5rem;
+    border-radius: 1rem;
+    overflow: hidden;
+    max-height: 320px;
+    border: 1px solid var(--color-line);
+    background: #f8fafc;
+  }
+
+  .card-media-image {
+    width: 100%;
+    height: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    display: block;
+    transition: transform 200ms ease;
+  }
+
+  .card-media-wrap:hover .card-media-image {
+    transform: scale(1.015);
+  }
+
+  /* Card Footer Actions (Codédex Pill Style) */
+  .card-actions-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 0.75rem;
+    padding-top: 1rem;
     border-top: 1px solid var(--color-line);
-  }
-  .actions-group {
-    display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 0.75rem;
   }
-  .upvote-btn {
+
+  .action-pills-left {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.7rem;
+    gap: 0.65rem;
+  }
+
+  .pill-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.9rem;
     border: 1px solid var(--color-line);
-    border-radius: 0.6rem;
+    border-radius: 999px;
     background: #ffffff;
     color: var(--color-muted);
     font-family: var(--font-heading);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 700;
+    text-decoration: none;
     cursor: pointer;
-    transition: all 120ms ease;
+    transition: all 150ms ease;
   }
-  .upvote-btn:hover {
+
+  .pill-action-btn:hover {
     background: var(--color-phinisi-50);
     color: var(--color-phinisi-700);
+    border-color: var(--color-phinisi-300);
   }
-  .upvote-btn.active {
+
+  .pill-action-btn.active {
     background: var(--color-phinisi-100);
     border-color: var(--color-phinisi-400);
     color: var(--color-phinisi-700);
   }
-  .upvote-btn .material-symbols-outlined {
-    font-size: 1.05rem;
-  }
-  .comments-link {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    color: var(--color-muted);
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-decoration: none;
-    padding: 0.35rem 0.7rem;
-    border-radius: 0.6rem;
-    transition: background 120ms ease;
-  }
-  .comments-link:hover {
-    background: var(--color-phinisi-50);
-    color: var(--color-phinisi-700);
-  }
-  .comments-link .material-symbols-outlined {
-    font-size: 1.05rem;
-  }
-  .read-more-link {
-    font-family: var(--font-heading);
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--color-phinisi-600);
-    text-decoration: none;
-  }
-  .read-more-link:hover {
-    text-decoration: underline;
+
+  .action-icon {
+    font-size: 1.1rem;
   }
 
-  /* Empty feed */
-  .empty-feed {
+  .action-pills-right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .btn-action-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid #fecaca;
+    border-radius: 0.55rem;
+    background: #fff5f5;
+    color: #dc2626;
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+
+  .btn-action-delete:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+  }
+
+  .icon-delete {
+    font-size: 0.95rem;
+  }
+
+  .btn-action-delete.admin-mod-delete {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+  }
+
+  .link-open-thread {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--color-phinisi-600);
+    text-decoration: none;
+    transition: gap 150ms ease;
+  }
+
+  .link-open-thread:hover {
+    gap: 0.5rem;
+    color: var(--color-phinisi-700);
+  }
+
+  .icon-arrow {
+    font-size: 1rem;
+  }
+
+  /* Empty Feed */
+  .empty-feed-card {
     text-align: center;
-    padding: 3.5rem 1.5rem;
+    padding: 4rem 2rem;
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-  }
-  .empty-icon {
-    font-size: 2.5rem;
-    color: var(--color-muted);
-  }
-  .empty-title {
-    font-family: var(--font-heading);
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0.5rem 0 0.25rem 0;
-  }
-  .empty-desc {
-    margin: 0;
-    color: var(--color-muted);
-    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
   }
 
-  /* Leaderboard */
-  .leaderboard-subtitle {
+  .empty-feed-icon {
+    font-size: 3rem;
+    color: var(--color-muted);
+  }
+
+  .empty-feed-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+
+  .empty-feed-desc {
     margin: 0;
     color: var(--color-muted);
-    font-size: 0.75rem;
+    font-size: 0.88rem;
+    max-width: 480px;
   }
-  .leaderboard-list {
+
+  .btn-empty-reset {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.55rem 1.2rem;
+    background: var(--color-section);
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .btn-empty-reset:hover {
+    background: #e2e8f0;
+  }
+
+  /* =========================================================
+     7. Right Sidebar Widgets (Codédex Style)
+     ========================================================= */
+  .meta-sidebar {
+    position: sticky;
+    top: 5.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .widget-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.35rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .widget-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .widget-header-icon {
+    font-size: 1.25rem;
+    color: var(--color-phinisi-600);
+  }
+
+  .widget-title {
+    font-family: var(--font-heading);
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+
+  .widget-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+  }
+
+  .leaderboard-stream {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.6rem;
   }
-  .leaderboard-item {
+
+  .leaderboard-entry {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.5rem 0.65rem;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
     border-radius: 0.75rem;
     background: var(--color-section);
+    transition: background 150ms ease;
   }
-  .rank-number {
+
+  .leaderboard-entry:hover {
+    background: #e6f0fa;
+  }
+
+  .rank-pill-badge {
     width: 24px;
     height: 24px;
     border-radius: 50%;
     display: grid;
     place-items: center;
     font-family: var(--font-heading);
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     font-weight: 800;
     background: #ffffff;
     color: var(--color-navy);
     flex-shrink: 0;
   }
-  .rank-1 {
+
+  .rank-pos-1 {
     background: var(--color-gold);
     color: #ffffff;
   }
-  .rank-2 {
+
+  .rank-pos-2 {
     background: #cbd5e1;
     color: #1e293b;
   }
-  .rank-3 {
+
+  .rank-pos-3 {
     background: #d97706;
     color: #ffffff;
   }
-  .learner-info {
+
+  .leaderboard-user-details {
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow: hidden;
   }
-  .learner-name {
+
+  .leaderboard-name {
     font-family: var(--font-heading);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 800;
     color: var(--color-navy);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .learner-streak {
+
+  .leaderboard-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.1rem;
+  }
+
+  .tier-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.64rem;
+    font-weight: 800;
+    color: var(--tier-color, #0284c7);
+  }
+
+  .icon-tier {
+    font-size: 0.75rem;
+  }
+
+  .streak-count {
     font-size: 0.68rem;
     color: var(--color-muted);
   }
-  .learner-xp {
+
+  .leaderboard-xp-tag {
     font-family: var(--font-heading);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 800;
     color: var(--color-phinisi-700);
     flex-shrink: 0;
   }
 
-  /* Guidelines */
-  .guidelines-box {
-    background: #fafcff;
+  /* Widget 2: Guidelines Card */
+  .widget-guidelines-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.02);
+    overflow: hidden;
   }
-  .guidelines-list {
-    margin: 0;
-    padding-left: 1.1rem;
+
+  .guidelines-accordion {
+    width: 100%;
+  }
+
+  .guidelines-summary {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.15rem 1.35rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 150ms ease;
+  }
+
+  .guidelines-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .guidelines-summary:hover {
+    background: var(--color-section);
+  }
+
+  .guidelines-summary-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .guidelines-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.65rem;
+    background: var(--color-phinisi-50);
+    color: var(--color-phinisi-600);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .guidelines-icon-box .material-symbols-outlined {
+    font-size: 1.25rem;
+  }
+
+  .guidelines-summary-text {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.15rem;
+  }
+
+  .guidelines-heading {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
+  .guidelines-subtext {
+    font-size: 0.72rem;
     color: var(--color-muted);
-    font-size: 0.76rem;
-    line-height: 1.45;
+  }
+
+  .guidelines-chevron {
+    color: var(--color-muted);
+    font-size: 1.25rem;
+    transition: transform 200ms ease;
+  }
+
+  .guidelines-accordion[open] .guidelines-chevron {
+    transform: rotate(180deg);
+  }
+
+  .guidelines-body {
+    padding: 0 1.35rem 1.25rem 1.35rem;
+    border-top: 1px solid var(--color-line);
+    background: #fafcff;
+  }
+
+  .guidelines-rules-list {
+    margin: 0.75rem 0 0 0;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .sidebar-footer-note {
+    padding-inline: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--color-muted);
+    line-height: 1.4;
   }
 </style>

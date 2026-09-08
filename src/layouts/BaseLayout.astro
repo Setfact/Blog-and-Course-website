@@ -26,7 +26,10 @@ const fullTitle = title === 'Phinisi Learn' ? title : `${title} | Phinisi Learn`
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#145bd7" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
@@ -42,6 +45,8 @@ const fullTitle = title === 'Phinisi Learn' ? title : `${title} | Phinisi Learn`
       <slot />
     </main>
     <Footer />
+
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <script>
       const setupReveal = () => {
@@ -62,6 +67,106 @@ const fullTitle = title === 'Phinisi Learn' ? title : `${title} | Phinisi Learn`
       };
       setupReveal();
       document.addEventListener('astro:page-load', setupReveal);
+
+      // Listener Toast Notifikasi Global dengan pencegahan duplikasi berturut-turut
+      let lastToastMessage = '';
+      let lastToastTime = 0;
+
+      window.addEventListener('phinisi-toast', (event: any) => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const detail = event.detail || {};
+        const message = detail.message || 'Pemberitahuan sistem';
+        const type = detail.type || 'info';
+
+        const now = Date.now();
+        if (message === lastToastMessage && now - lastToastTime < 1000) {
+          return;
+        }
+        lastToastMessage = message;
+        lastToastTime = now;
+
+        const toast = document.createElement('div');
+        toast.className = `toast-item toast-${type}`;
+        
+        const iconName = type === 'success' ? 'check_circle' : type === 'warning' ? 'warning' : 'info';
+        toast.innerHTML = `
+          <span class="material-symbols-outlined toast-icon">${iconName}</span>
+          <span class="toast-text">${message}</span>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.classList.add('toast-show');
+        }, 10);
+
+        setTimeout(() => {
+          toast.classList.remove('toast-show');
+          setTimeout(() => toast.remove(), 300);
+        }, 3800);
+      });
     </script>
+
+    <style is:global>
+      .toast-container {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        pointer-events: none;
+      }
+      .toast-item {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.75rem 1.15rem;
+        border-radius: 0.85rem;
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        font-weight: 700;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 250ms ease, transform 250ms ease;
+      }
+      .toast-item.toast-show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .toast-item.toast-success {
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid #334155;
+      }
+      .toast-item.toast-success .toast-icon {
+        color: #22c55e;
+      }
+      .toast-item.toast-info {
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid #334155;
+      }
+      .toast-item.toast-info .toast-icon {
+        color: #38bdf8;
+      }
+      .toast-item.toast-warning {
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid #334155;
+      }
+      .toast-item.toast-warning .toast-icon {
+        color: #f59e0b;
+      }
+      .toast-icon {
+        font-size: 1.25rem;
+      }
+    </style>
+
   </body>
 </html>

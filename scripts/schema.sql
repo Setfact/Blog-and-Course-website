@@ -47,12 +47,20 @@ CREATE TABLE IF NOT EXISTS public.community_posts (
   post_type TEXT NOT NULL DEFAULT 'discussion' CHECK (post_type IN ('discussion', 'showcase', 'milestone')),
   title TEXT NOT NULL,
   content TEXT NOT NULL,
+  image_url TEXT DEFAULT '',
   is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
   upvotes_count INTEGER NOT NULL DEFAULT 0,
-  comments_count INTEGER NOT NULL DEFAULT 0,
+  is_solved BOOLEAN NOT NULL DEFAULT FALSE,
+  solved_comment_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Pastikan kolom image_url dan status solusi ada jika tabel sudah pernah dibuat sebelumnya
+ALTER TABLE public.community_posts ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT '';
+ALTER TABLE public.community_posts ADD COLUMN IF NOT EXISTS is_solved BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.community_posts ADD COLUMN IF NOT EXISTS solved_comment_id UUID;
+
 
 -- 5. Tabel Komentar
 CREATE TABLE IF NOT EXISTS public.community_comments (
@@ -91,6 +99,20 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
   details JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 9. Tabel Buku Besar Riwayat XP (XP Ledger)
+CREATE TABLE IF NOT EXISTS public.user_xp_ledger (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  source TEXT NOT NULL, -- 'lesson_complete', 'quiz_pass', 'course_completion', 'community_solution', 'streak_bonus'
+  title TEXT NOT NULL,
+  reference_id TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index untuk efisiensi query riwayat XP
+CREATE INDEX IF NOT EXISTS idx_xp_ledger_user_created ON public.user_xp_ledger(user_id, created_at DESC);
 
 -- Trigger untuk sinkronisasi otomatis counter komentar & upvote
 CREATE OR REPLACE FUNCTION public.update_post_comment_count()
@@ -297,3 +319,27 @@ TO authenticated
 USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
+
+-- 9. Tabel Pengumuman Platform
+CREATE TABLE IF NOT EXISTS public.platform_announcements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  message TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'info' CHECK (type IN ('info', 'warning', 'success')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.platform_announcements ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Announcements readable by authenticated users"
+ON public.platform_announcements FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Announcements manageable by admins"
+ON public.platform_announcements FOR ALL
+TO authenticated
+USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+

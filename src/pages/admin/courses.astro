@@ -1,13 +1,23 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { loadCourses } from '../../data/learning';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getCourseAnalytics, getActiveAnnouncement } from '../../lib/admin';
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
 
 const courses = await loadCourses();
 const totalLessons = courses.reduce((acc, c) => acc + (c.lessonCount || 0), 0);
 const publishedCount = courses.filter((c) => c.status === 'published').length;
+
+const analytics = await getCourseAnalytics(supabase);
+const announcement = await getActiveAnnouncement(supabase);
 ---
 
-<AdminLayout title="Status & Kursus" activeSection="courses">
+<AdminLayout title="Status Kursus & Pengumuman" activeSection="courses">
   <div class="courses-mgmt-container">
     <!-- Top Stats -->
     <section class="kpi-mini-row">
@@ -16,7 +26,7 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
         <strong class="val">{courses.length} Kursus</strong>
       </div>
       <div class="kpi-mini-card">
-        <span class="label">Kursus Publikasi</span>
+        <span class="label">Kursus Terpublikasi</span>
         <strong class="val val-success">{publishedCount} Aktif</strong>
       </div>
       <div class="kpi-mini-card">
@@ -25,63 +35,175 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
       </div>
     </section>
 
-    <!-- Header with Keystatic Bridge CTA -->
-    <div class="mgmt-header-card">
-      <div class="header-copy">
-        <h2 class="section-title">Kurikulum & Materi Teknis</h2>
-        <p class="section-desc">
-          Seluruh konten kursus dan materi MDX dikelola melalui Keystatic CMS. Klik tombol di kanan untuk menambah modul baru, mengubah urutan pelajaran, atau mengunggah diagram topologi.
-        </p>
+    <!-- Platform Announcement Manager Card -->
+    <section class="announcement-mgmt-card">
+      <div class="card-header-bar">
+        <div class="icon-wrap-horn">
+          <span class="material-symbols-outlined">campaign</span>
+        </div>
+        <div class="header-text-block">
+          <h2 class="card-title">Siaran Pengumuman Platform</h2>
+          <p class="card-desc">
+            Pesan pengumuman ini akan langsung ditampilkan di bagian atas Dashboard seluruh siswa.
+          </p>
+        </div>
+        <span class:list={['broadcast-status-pill', announcement.is_active ? 'status-live' : 'status-off']}>
+          {announcement.is_active ? 'Siaran Aktif' : 'Siaran Nonaktif'}
+        </span>
       </div>
-      <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-btn">
-        <span class="material-symbols-outlined">edit_square</span>
-        <span>Buka Editor Keystatic CMS</span>
-      </a>
-    </div>
 
-    <!-- Courses Grid -->
-    <div class="courses-grid">
-      {courses.map((course) => (
-        <div class="course-item-card">
-          <div class="course-card-top">
-            <span class="category-badge">{course.category.toUpperCase()}</span>
-            <span class:list={['pub-pill', course.status === 'published' ? 'pub-published' : 'pub-draft']}>
-              {course.status}
-            </span>
+      <form id="announcement-form" class="announcement-form">
+        <div class="form-row">
+          <div class="form-col-wide">
+            <label for="announcement-msg" class="field-label">Isi Pesan Pengumuman</label>
+            <input
+              type="text"
+              id="announcement-msg"
+              name="message"
+              value={announcement.message}
+              required
+              maxlength="200"
+              class="text-input"
+              placeholder="Contoh: Webinar CCNA Cisco Sabtu jam 19:00 WIB, siapkan lab Packet Tracer Anda!"
+            />
           </div>
 
-          <h3 class="course-item-title">{course.title}</h3>
-          <p class="course-item-summary">{course.description.id}</p>
-
-          <div class="course-stats-bar">
-            <div class="stat-pill">
-              <span class="material-symbols-outlined icon-mini">menu_book</span>
-              <span>{course.lessonCount} materi</span>
-            </div>
-            <div class="stat-pill">
-              <span class="material-symbols-outlined icon-mini">signal_cellular_alt</span>
-              <span class="text-capitalize">{course.level}</span>
-            </div>
+          <div class="form-col-narrow">
+            <label for="announcement-type" class="field-label">Tipe Tampilan</label>
+            <select id="announcement-type" name="type" class="select-input">
+              <option value="info" selected={announcement.type === 'info'}>Info (Biru)</option>
+              <option value="warning" selected={announcement.type === 'warning'}>Penting (Kuning)</option>
+              <option value="success" selected={announcement.type === 'success'}>Sukses (Hijau)</option>
+            </select>
           </div>
 
-          <div class="course-card-actions">
-            <a href={`/courses/${course.slug}`} class="action-btn-outline" target="_blank">
-              <span class="material-symbols-outlined icon-mini">visibility</span>
-              <span>Lihat di Web</span>
-            </a>
-            <a
-              href={`/keystatic/branch/main/collection/courses/item/${course.slug}`}
-              class="action-btn-primary"
-              target="_blank"
-            >
-              <span class="material-symbols-outlined icon-mini">edit</span>
-              <span>Edit Materi CMS</span>
-            </a>
+          <div class="form-col-action">
+            <button type="submit" class="btn-save-announcement" id="btn-save-announce">
+              <span>Simpan Pengumuman</span>
+            </button>
           </div>
         </div>
-      ))}
+      </form>
+    </section>
+
+    <!-- Header with Create Course CTA & Keystatic Bridge -->
+    <div class="mgmt-header-card">
+      <div class="header-copy">
+        <h2 class="section-title">Kurikulum, Materi Teknis & Lab</h2>
+        <p class="section-desc">
+          Gunakan <strong>Wizard Buat Kursus</strong> untuk menyusun struktur silabus dan lab Packet Tracer (.pkt via Drive) dalam 1 layar cepat, atau buka <strong>Keystatic CMS</strong> untuk mengedit teks dan gambar secara visual.
+        </p>
+      </div>
+      <div class="header-actions-group">
+        <a href="/admin/courses/new" class="btn-create-course">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span>+ Buat Kursus Baru</span>
+        </a>
+        <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-btn">
+          <span class="material-symbols-outlined">edit_square</span>
+          <span>Editor Keystatic CMS</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Courses Grid with Real Analytics -->
+    <div class="courses-grid">
+      {courses.map((course) => {
+        const courseData = analytics[course.slug] || { enrolledStudentsCount: 0, totalCompletionsCount: 0 };
+        return (
+          <div class="course-item-card">
+            <div class="course-card-top">
+              <span class="category-badge">{course.category.toUpperCase()}</span>
+              <span class:list={['pub-pill', course.status === 'published' ? 'pub-published' : 'pub-draft']}>
+                {course.status}
+              </span>
+            </div>
+
+            <h3 class="course-item-title">{course.title}</h3>
+            <p class="course-item-summary">{course.description.id}</p>
+
+            <!-- Real Student Analytics Strip -->
+            <div class="course-analytics-strip">
+              <div class="analytic-item">
+                <span class="analytic-label">Siswa Terdaftar</span>
+                <strong class="analytic-val">{courseData.enrolledStudentsCount} Siswa</strong>
+              </div>
+              <div class="analytic-item">
+                <span class="analytic-label">Modul Selesai</span>
+                <strong class="analytic-val">{courseData.totalCompletionsCount} Kali</strong>
+              </div>
+            </div>
+
+            <div class="course-stats-bar">
+              <div class="stat-pill">
+                <span class="material-symbols-outlined icon-mini">menu_book</span>
+                <span>{course.lessonCount} materi</span>
+              </div>
+              <div class="stat-pill">
+                <span class="material-symbols-outlined icon-mini">signal_cellular_alt</span>
+                <span class="text-capitalize">{course.level}</span>
+              </div>
+            </div>
+
+            <div class="course-card-actions">
+              <a href={`/courses/${course.slug}`} class="action-btn-outline" target="_blank">
+                <span class="material-symbols-outlined icon-mini">visibility</span>
+                <span>Lihat di Web</span>
+              </a>
+              <a
+                href={`/keystatic/branch/main/collection/courses/item/${course.slug}`}
+                class="action-btn-primary"
+                target="_blank"
+              >
+                <span class="material-symbols-outlined icon-mini">edit</span>
+                <span>Edit Materi CMS</span>
+              </a>
+            </div>
+          </div>
+        );
+      })}
     </div>
   </div>
+
+  <script>
+    const announceForm = document.getElementById('announcement-form') as HTMLFormElement | null;
+    const saveAnnounceBtn = document.getElementById('btn-save-announce') as HTMLButtonElement | null;
+
+    if (announceForm) {
+      announceForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!saveAnnounceBtn) return;
+
+        const formData = new FormData(announceForm);
+        const message = String(formData.get('message') || '').trim();
+        const type = String(formData.get('type') || 'info');
+
+        saveAnnounceBtn.disabled = true;
+        saveAnnounceBtn.textContent = 'Menyimpan...';
+
+        try {
+          const res = await fetch('/api/admin/announcement', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, type, is_active: true }),
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            alert('Pengumuman platform berhasil diperbarui.');
+            window.location.reload();
+          } else {
+            alert(data.error || 'Gagal memperbarui pengumuman.');
+          }
+        } catch {
+          alert('Terjadi kesalahan jaringan.');
+        } finally {
+          saveAnnounceBtn.disabled = false;
+          saveAnnounceBtn.textContent = 'Simpan Pengumuman';
+        }
+      });
+    }
+  </script>
 </AdminLayout>
 
 <style>
@@ -100,11 +222,11 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
   .kpi-mini-card {
     background: #ffffff;
     border: 1px solid var(--color-line);
-    border-radius: 1rem;
-    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    padding: 1.15rem 1.35rem;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.25rem;
   }
   .kpi-mini-card .label {
     font-size: 0.74rem;
@@ -113,28 +235,146 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
   }
   .kpi-mini-card .val {
     font-family: var(--font-heading);
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     font-weight: 900;
     color: var(--color-navy);
   }
   .val-success {
-    color: #047857 !important;
+    color: #059669 !important;
   }
 
-  /* Header card */
-  .mgmt-header-card {
-    background: linear-gradient(135deg, #ffffff 0%, var(--color-section) 100%);
+  /* Announcement Manager */
+  .announcement-mgmt-card {
+    background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-    padding: 1.5rem 1.75rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .card-header-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .icon-wrap-horn {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.85rem;
+    background: #eff6ff;
+    color: #1d4ed8;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .header-text-block {
+    flex: 1;
+  }
+  .card-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .card-desc {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+  .broadcast-status-pill {
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .status-live { background: #dcfce7; color: #15803d; }
+  .status-off { background: #f1f5f9; color: #64748b; }
+
+  .announcement-form {
+    display: flex;
+    flex-direction: column;
+  }
+  .form-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .form-col-wide {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .form-col-narrow {
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .form-col-action {
+    display: flex;
+    align-items: flex-end;
+  }
+  .field-label {
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+  .text-input, .select-input {
+    width: 100%;
+    min-height: 40px;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    font-size: 0.84rem;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .text-input:focus, .select-input:focus {
+    border-color: var(--color-primary);
+  }
+  .btn-save-announcement {
+    min-height: 40px;
+    padding: 0.45rem 1.15rem;
+    border: none;
+    border-radius: 0.65rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 120ms ease;
+    white-space: nowrap;
+  }
+  .btn-save-announcement:hover {
+    background: #0e4ca9;
+  }
+  .btn-save-announcement:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Keystatic CMS CTA Header */
+  .mgmt-header-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
     flex-wrap: wrap;
+    gap: 1.25rem;
   }
   .header-copy {
-    max-width: 620px;
+    max-width: 680px;
   }
   .section-title {
     font-family: var(--font-heading);
@@ -149,42 +389,64 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
     font-size: 0.84rem;
     line-height: 1.5;
   }
-  .cms-btn {
+  .header-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .btn-create-course {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(20, 91, 215, 0.2);
+    transition: all 150ms ease;
+  }
+  .btn-create-course:hover {
+    background: #0e4ca9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(20, 91, 215, 0.3);
+  }
+  .cms-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     background: var(--color-phinisi-600);
     color: #ffffff;
+    padding: 0.65rem 1.15rem;
     border-radius: 0.75rem;
-    padding: 0.65rem 1.25rem;
     font-family: var(--font-heading);
     font-size: 0.84rem;
     font-weight: 700;
     text-decoration: none;
-    transition: background 150ms ease;
+    transition: all 150ms ease;
   }
   .cms-btn:hover {
     background: var(--color-phinisi-700);
   }
-  .cms-btn .material-symbols-outlined {
-    font-size: 1.15rem;
-  }
 
-  /* Grid */
+  /* Courses Grid */
   .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.25rem;
   }
   .course-item-card {
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-    padding: 1.35rem;
+    padding: 1.4rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.03);
+    gap: 0.85rem;
   }
   .course-card-top {
     display: flex;
@@ -192,28 +454,24 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
     align-items: center;
   }
   .category-badge {
-    font-size: 0.68rem;
+    background: var(--color-section);
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.45rem;
+    font-size: 0.7rem;
     font-weight: 800;
     color: var(--color-phinisi-700);
-    background: var(--color-phinisi-50);
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.4rem;
+    letter-spacing: 0.04em;
   }
   .pub-pill {
-    font-size: 0.68rem;
-    font-weight: 800;
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
     text-transform: uppercase;
   }
-  .pub-published {
-    background: #d1fae5;
-    color: #047857;
-  }
-  .pub-draft {
-    background: #f1f5f9;
-    color: #475569;
-  }
+  .pub-published { background: #d1fae5; color: #047857; }
+  .pub-draft { background: #f1f5f9; color: #475569; }
+
   .course-item-title {
     font-family: var(--font-heading);
     font-size: 1.1rem;
@@ -232,43 +490,71 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  .course-analytics-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+  }
+  .analytic-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .analytic-label {
+    font-size: 0.68rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .analytic-val {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
   .course-stats-bar {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding-block: 0.5rem;
-    border-top: 1px solid var(--color-line);
-    border-bottom: 1px solid var(--color-line);
+    gap: 0.75rem;
   }
   .stat-pill {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: var(--color-muted);
-    font-size: 0.78rem;
-    font-weight: 600;
+    background: var(--color-section);
+    padding: 0.25rem 0.55rem;
+    border-radius: 0.5rem;
+    font-size: 0.74rem;
+    color: var(--color-ink);
   }
   .icon-mini {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
   .text-capitalize {
     text-transform: capitalize;
   }
+
   .course-card-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.65rem;
-    margin-top: 0.25rem;
+    margin-top: 0.35rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
   }
   .action-btn-outline {
-    flex: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
+    padding: 0.5rem;
     border: 1px solid var(--color-line);
     border-radius: 0.65rem;
-    padding: 0.45rem;
-    color: var(--color-ink);
+    color: var(--color-navy);
     font-family: var(--font-heading);
     font-size: 0.76rem;
     font-weight: 700;
@@ -276,19 +562,18 @@ const publishedCount = courses.filter((c) => c.status === 'published').length;
     transition: all 120ms ease;
   }
   .action-btn-outline:hover {
-    background: var(--color-phinisi-50);
-    color: var(--color-phinisi-700);
+    background: var(--color-section);
+    border-color: var(--color-phinisi-300);
   }
   .action-btn-primary {
-    flex: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
+    padding: 0.5rem;
     background: var(--color-phinisi-50);
     border: 1px solid var(--color-phinisi-200);
     border-radius: 0.65rem;
-    padding: 0.45rem;
     color: var(--color-phinisi-700);
     font-family: var(--font-heading);
     font-size: 0.76rem;

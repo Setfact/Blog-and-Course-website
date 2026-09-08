@@ -1,0 +1,380 @@
+---
+title: "01. Networking Today: Mengapa Kita Belajar Jaringan?"
+course: "network-fundamental-2"
+module: "network-fundamental-2-01-modul-1-networking-today"
+order: 1
+durationMinutes: 10
+language: id
+description: "Materi pelajaran mengenai 01. Networking Today: Mengapa Kita Belajar Jaringan?."
+---
+# Modul 01: Networking Today — Mengapa Kita Belajar Jaringan?
+
+**Platform:** Phinisi Learn  
+**Kurikulum Acuan:** Cisco Networking Academy — CCNA 1: Introduction to Networks (ITN v7.02)  
+**Tingkat:** Pemula (*Zero Knowledge*)  
+**Prasyarat:** Tidak ada  
+
+---
+
+> [!NOTE]
+> ### Target Pembelajaran Modul 01
+> Di akhir modul ini, kamu diharapkan mampu:
+> 1. Memahami bagaimana jaringan komputer mengubah cara manusia berkomunikasi, belajar, bekerja, dan bermain di era global.
+> 2. Mengidentifikasi 3 komponen utama pembentuk jaringan: **End Devices**, **Intermediary Devices**, dan **Network Media**.
+> 3. Membaca dan membedakan representasi diagram: **Physical Topology Diagram** vs **Logical Topology Diagram**.
+> 4. Mengklasifikasikan cakupan jaringan berdasarkan skala geografis: **LAN**, **WAN**, serta perbedaan **Intranet, Extranet, dan Internet**.
+> 5. Memahami 4 pilar arsitektur jaringan yang andal: **Fault Tolerance**, **Scalability**, **Quality of Service (QoS)**, dan **Security**.
+> 6. Mengeksekusi uji konektivitas dasar (`ping`) langsung dari terminal laptop tanpa ribet.
+
+---
+
+## 1.1 Jaringan Mengubah Cara Hidup Kita (*Globally Connected*)
+
+Pernahkah kamu membayangkan apa yang terjadi jika seluruh jaringan internet di dunia tiba-tiba mati total selama 24 jam? 
+- Sistem perbankan dan ATM berhenti beroperasi.
+- Rumah sakit kehilangan akses ke rekam medis digital.
+- Aplikasi transportasi, logistik, dan navigasi lumpuh.
+- Komunikasi instan (WhatsApp, email, media sosial) lenyap seketika.
+
+Jaringan komputer bukan lagi sekadar pelengkap perkantoran; jaringan telah menjadi **infrastruktur dasar kehidupan modern**, setara dengan kebutuhan listrik, air bersih, dan jalan raya.
+
+Dunia digital saat ini bekerja tanpa mengenal batasan geografis (*human network*). Seorang engineer di Indonesia bisa berkolaborasi secara real-time dengan tim di Eropa, mengakses data di Amerika, dan memantau sensor pabrik di Jepang dalam hitungan milidetik.
+
+Namun, banyak orang mengira internet bekerja seperti "awan gaib" (*cloud*) yang melayang di langit. Faktanya, internet adalah **jaringan fisik nyata raksasa yang saling terhubung**—terdiri dari jutaan kilometer kabel tembaga, serat optik yang dibentang di dasar samudra, pemancar nirkabel, serta jutaan perangkat keras perantara.
+
+Mempelajari jaringan komputer berarti kamu sedang mempelajari bagaimana cara membangun, mengamankan, dan memelihara urat nadi peradaban digital dunia.
+
+---
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_human_network_connectivity.png]**  
+> *Deskripsi Visual:* Ilustrasi konektivitas global yang memperlihatkan beragam aktivitas manusia (belajar online, kerja jarak jauh, transaksi perbankan, streaming) yang terhubung ke jaringan internet global.
+---
+
+---
+
+## 1.2 Anatomi Jaringan: 3 Komponen Utama
+
+setiap jaringan komputer—dari jaringan Wi-Fi rumah yang sederhana hingga jaringan enterprise lintas negara—selalu tersusun atas **tiga komponen utama**:
+
+```text
+[ End Devices ] ◄─── (Network Media) ───► [ Intermediary Devices ] ◄─── (Network Media) ───► [ End Devices ]
+(Laptop/Server)        (Kabel/Wi-Fi)           (Switch/Router)            (Kabel/Wi-Fi)        (Komputer Tujuan)
+````
+
+### 1. Perangkat Akhir (_End Devices / Hosts_)
+
+_End device_ adalah perangkat yang berada di titik awal (_sumber_) atau titik akhir (_tujuan_) dari sebuah transmisi data. Perangkat inilah yang berinteraksi langsung dengan manusia atau sistem operasi.
+
+- **Contoh Klien:** Laptop, PC desktop, smartphone, tablet, smart TV.
+    
+- **Contoh Server:** Web server, file server, database server, email server.
+    
+- **Contoh IoT (_Internet of Things_):** Kamera CCTV jaringan (IP Camera), sensor suhu cerdas, smart door lock.
+    
+
+> [!NOTE]
+> **Konsep Server vs Klien:**
+> 
+> - **Server:** Komputer dengan perangkat lunak khusus yang bertugas _memberikan layanan_ (misal: menyajikan halaman web).
+>     
+> - **Klien:** Komputer yang meminta layanan tersebut (_requesting services_).
+>     
+
+### 2. Perangkat Perantara (_Intermediary Devices_)
+
+Data dari ponselmu tidak bisa langsung "terbang" ke server tujuan. Data harus diarahkan oleh perangkat perantara. Perangkat ini bekerja di belakang layar untuk mengalirkan paket data melintasi jaringan.
+
+Fungsi utama perangkat perantara:
+
+- Mengalirkan ulang dan meregenerasi sinyal data yang mulai melemah.
+    
+- Menyimpan informasi tentang jalur mana saja yang tersedia di jaringan.
+    
+- Mengalihkan data ke jalur alternatif jika ada kabel yang putus.
+    
+- Memfilter atau memblokir lalu lintas data yang mencurigakan (keamanan).
+    
+
+**Daftar Perangkat Perantara yang Wajib Kamu Kenal:**
+
+- **Switch:** Penghubung antar-komputer di dalam satu ruangan atau satu jaringan lokal (LAN).
+    
+- **Router:** Penghubung antar-jaringan yang berbeda (misalnya menghubungkan jaringan rumahmu ke jaringan luar milik ISP).
+    
+- **Wireless Access Point (AP):** Pemancar gelombang radio yang menghubungkan perangkat nirkabel ke kabel jaringan lokal.
+    
+- **Firewall:** Penjaga gerbang keamanan yang menyaring paket data boleh masuk atau ditolak.
+    
+
+### 3. Media Jaringan (_Network Media_)
+
+Media adalah "jalan raya" atau saluran fisik tempat sinyal data merambat dari satu perangkat ke perangkat lainnya. Ada 3 kategori media utama di dunia nyata:
+
+- **Kabel Tembaga (_Copper Media_):** Data dikirim menggunakan pulsa **tegangan listrik**. Contoh paling populer: kabel _Unshielded Twisted Pair_ (UTP Cat5e/Cat6) dengan colokan RJ-45 yang biasa dicolok ke PC.
+    
+- **Kabel Serat Optik (_Glass/Fiber-Optic Media_):** Data dikirim menggunakan **kedipan pulsa cahaya laser / sinyal optik** di dalam serat kaca tipis. Media ini sangat cepat, tahan gangguan magnetik, dan digunakan untuk kabel jarak jauh (bawah tanah dan dasar laut).
+    
+- **Nirkabel (_Wireless Media_):** Data dikirim menggunakan **gelombang elektromagnetik / radio**. Contoh: Wi-Fi, Bluetooth, jaringan seluler 4G/5G, dan satelit.
+    
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_network_components_diagram.png]**
+> 
+> _Deskripsi Visual:_ Bagan visual yang menampilkan 3 kolom komponen jaringan Cisco ITN: Kolom 1 End Devices (PC, Laptop, Server, Smartphone), Kolom 2 Intermediary Devices (Router, Switch, Wireless Router, Firewall), Kolom 3 Network Media (Kabel tembaga UTP, Fiber optik, Gelombang radio Wi-Fi).
+
+## 1.3 Representasi Jaringan & Membaca Diagram Topologi
+
+Sebagai calon network engineer, kamu tidak bisa bekerja hanya dengan membayangkan kabel. Kamu harus bisa membaca "peta arsitektur" yang disebut **Diagram Topologi**.
+
+Cisco menggunakan simbol/ikon standar untuk menggambarkan jaringan di atas kertas atau di aplikasi simulator (Cisco Packet Tracer):
+
+|**Simbol Cisco**|**Nama Komponen**|**Keterangan Singkat**|
+|---|---|---|
+|*PC*|**Desktop / Endpoint**|Komputer klien pengguna.|
+|*SRV*|**Server**|Komputer penyedia layanan (Web/DNS/File).|
+|*SW*|**LAN Switch**|Perangkat penghubung lokal Layer 2.|
+|*RTR*|**Router**|Perangkat penentu rute antar-jaringan Layer 3.|
+|*FW*|**Firewall Appliance**|Perangkat pengaman penyaring paket data.|
+|*AP*|**Wireless Router / AP**|Perangkat pemancar koneksi nirkabel.|
+|──|**Media Kabel Ethernet**|Garis lurus hitam penanda kabel tembaga.|
+|⸺|**Media Kabel Serial / WAN**|Garis petir merah penanda koneksi jarak jauh.|
+
+### Membedakan Topologi Fisik vs Topologi Logis
+
+Di industri, sebuah diagram jaringan dibagi menjadi dua sudut pandang berbeda:
+
+1. **Topologi Fisik (_Physical Topology Diagram_):**
+    
+    Menampilkan **lokasi geografis dan tata letak fisik perangkat secara riil**.
+    
+    _Contoh:_ Menjelaskan Server 1 berada di Ruang Server Lantai 3, Kabel UTP ditarik ke Rak Nomor 2 (_Rack 02_), Switch berada di meja admin Lantai 1.
+    
+2. **Topologi Logis (_Logical Topology Diagram_):**
+    
+    Menampilkan **alur perpindahan data, skema pengalamatan (IP Address), nomor port interface, dan pembagian grup jaringan**.
+    
+    _Contoh:_ Komputer A menggunakan interface `GigabitEthernet 0/1` dengan alamat IP `192.168.1.10`, terhubung ke Router interface `G0/0` ber-IP `192.168.1.1`.
+    
+
+> [!NOTE]
+> **Catatan Belajar:**
+> 
+> Saat kamu melakukan perbaikan kabel lepas atau port rusak, kamu melihat **Topologi Fisik**. Namun saat kamu mengonfigurasi IP dan rute perutean, kamu melihat **Topologi Logis**.
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_physical_vs_logical_topology.png]**
+> 
+> _Deskripsi Visual:_ Gambar berdampingan dari modul Cisco ITN: Sisi kiri menampilkan Physical Topology (denah ruangan gedung, nomor rak, nomor meja), sisi kanan menampilkan Logical Topology (skema IP address, interface port G0/0, F0/1, dan pengelompokan subnet).
+
+## 1.4 Klasifikasi Skala Jaringan: LAN, WAN, & Batas Aksesnya
+
+Tidak semua jaringan ukurannya sama. Jaringan diklasifikasikan berdasarkan luas cakupan geografisnya:
+
+Plaintext
+
+```
+[ Jaringan Lokal (LAN) ] ────► Dipersempit/Dihubungkan via ────► [ Jaringan Luas (WAN) ]
+(Satu Ruangan / Gedung)           (Penyedia Layanan / ISP)          (Antar-Kota / Global)
+```
+
+### 1. LAN (_Local Area Network_)
+
+- Menghubungkan perangkat di area geografis yang terbatas (satu rumah, satu laboratorium sekolah, satu kantor, atau satu gedung kampus).
+    
+- Dimiliki, dikelola, dan dikontrol secara pribadi oleh individu atau perusahaan itu sendiri.
+    
+- Menyediakan bandwidth berkecepatan sangat tinggi (1 Gbps hingga 10 Gbps) dengan latensi yang sangat rendah.
+    
+
+### 2. WAN (_Wide Area Network_)
+
+- Menghubungkan jaringan-jaringan lokal (LAN) yang terpisah jarak geografis yang jauh (antar-kota, antar-provinsi, hingga antar-benua).
+    
+- Tidak bisa dimiliki sendiri oleh satu perusahaan biasa; wajib menyewa jalur infrastruktur dari penyedia jasa telekomunikasi atau ISP (_Internet Service Provider_).
+    
+- Contoh: Menghubungkan kantor cabang Bank Mandiri di Surabaya ke kantor pusat di Jakarta.
+    
+
+### 3. Internet, Intranet, dan Extranet
+
+Banyak pemula mengira semua koneksi adalah "Internet". Dalam arsitektur enterprise, ada batas keamanan akses:
+
+- **Intranet:** Jaringan internal privat yang **hanya bisa diakses oleh karyawan** perusahaan itu sendiri (misal: sistem absensi dan portal gaji internal).
+    
+- **Extranet:** Jaringan privat perusahaan yang **diberi izin akses terbatas kepada mitra luar**, seperti vendor, pemasok barang, atau klien terpercaya.
+    
+- **Internet:** Jaringan global publik terbuka yang menghubungkan miliaran komputer di seluruh dunia tanpa ada satu pihak pun yang menjadi pemilik tunggalnya.
+    
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_lan_wan_intranet_diagram.png]**
+> 
+> _Deskripsi Visual:_ Diagram lingkaran konsentris atau hubungan blok yang membedakan area privat Intranet (Internal only), Extranet (Partner/Vendor access), dan Internet (Dunia luar publik).
+
+## 1.5 Empat Karakteristik Jaringan yang Andal (_Reliable Network Architecture_)
+
+Ketika kamu merancang sebuah jaringan untuk perusahaan, ukuran keberhasilannya bukan hanya "bisa internetan". Kurikulum CCNA menetapkan **4 pilar arsitektur dasar** yang harus dipenuhi oleh jaringan kelas industri:
+
+### 1. Toleransi Kegagalan (_Fault Tolerance_)
+
+Jaringan yang baik dirancang dengan **jalur redundan (jalur cadangan)**. Jika ada satu kabel fiber optik putus atau salah satu router meledak, perangkat router perantara secara otomatis mengalihkan lalu lintas data ke kabel cadangan dalam hitungan detik sehingga pengguna tidak merasakan putus koneksi.
+
+### 2. Kemampuan Berkembang (_Scalability_)
+
+Jaringan dirancang agar mudah diperluas (_expandable_). Ketika sebuah perusahaan menambah 500 karyawan baru atau membuka 3 kantor cabang baru, struktur jaringan dapat menerima penambahan perangkat tersebut tanpa perlu membongkar atau merancang ulang arsitektur jaringan yang sudah ada.
+
+### 3. Kualitas Layanan (_Quality of Service / QoS_)
+
+Di dalam satu kabel jaringan, berbagai jenis data berebut bandwidth: video streaming, panggilan telepon suara (VoIP), download file game, dan browsing.
+
+- Menonton YouTube jika delay 2 detik masih bisa ditoleransi oleh sistem (buffering).
+    
+- Tapi jika panggilan telepon darurat atau transaksi kasir perbankan delay 2 detik, suaranya akan putus-putus dan transaksinya gagal.
+    
+- **QoS** adalah mekanisme prioritas: Router akan mendahulukan paket suara/video yang sensitif terhadap waktu (_time-sensitive_) sebelum mengirimkan paket download file biasa.
+    
+
+### 4. Keamanan Jaringan (_Network Security_)
+
+Infrastruktur jaringan harus melindungi kerahasiaan data (_Confidentiality_), keutuhan data (_Integrity_), dan kepastian akses data bagi pihak yang berhak (_Availability_). Ini dilakukan dengan membatasi akses login router, memasang firewall, dan mengenkripsi data penting.
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_four_pillars_network_architecture.png]**
+> 
+> _Deskripsi Visual:_ Infografis yang menampilkan 4 pilar arsitektur jaringan andal versi Cisco: 1. Fault Tolerance (jalur ganda redundan), 2. Scalability (penambahan node baru mudah), 3. Quality of Service / QoS (truk data prioritas vs reguler), 4. Security (gembok dan perisai data).
+
+## 1.6 Tren Dunia Jaringan Modern
+
+Dunia jaringan terus berevolusi mengikuti kebutuhan komputasi modern. Beberapa tren penting yang diujikan dalam CCNA:
+
+1. **BYOD (_Bring Your Own Device_):** Karyawan tidak hanya bekerja menggunakan PC kantor, tetapi membawa laptop pribadi, tablet, dan smartphone sendiri ke kantor. Jaringan harus mampu mengamankan perangkat luar ini.
+    
+2. **Kolaborasi Online (_Online Collaboration_):** Penggunaan aplikasi rapat video (Zoom, Microsoft Teams, Google Meet) secara masif yang menuntut bandwidth stabil dan QoS tinggi.
+    
+3. **Cloud Computing:** Perpindahan server internal kantor ke data center global penyedia cloud (AWS, Azure, GCP).
+    
+4. **Powerline Networking:** Memanfaatkan kabel listrik dinding yang sudah ada di rumah/gedung untuk menyalurkan sinyal data jaringan Ethernet tanpa perlu menarik kabel LAN baru.
+    
+5. **Wireless Broadband:** Akses internet nirkabel jarak jauh berkecepatan tinggi menggunakan pemancar 5G Home Broadband atau satelit orbit rendah (_Low Earth Orbit / LEO_).
+    
+
+## 1.7 Hands-on Praktik: Mengetuk Pintu Jaringan (`ping`)
+
+Mari kita buktikan salah satu prinsip dasar di modul ini: menguji apakah laptopmu bisa menjangkau perangkat lain melintasi jaringan fisik.
+
+1. Buka terminal laptopmu:
+    
+    - **Windows:** Tekan `Windows + R`, ketik `cmd`, lalu tekan `Enter`.
+        
+    - **macOS / Linux:** Buka aplikasi `Terminal`.
+        
+2. Ketik perintah uji konektivitas berikut:
+    
+    DOS
+    
+    ```
+    ping 8.8.8.8
+    ```
+    
+    _(Catatan: `8.8.8.8` adalah alamat publik server DNS milik Google)._
+    
+3. Amati hasilnya di layar:
+    
+    Plaintext
+    
+    ```
+    Pinging 8.8.8.8 with 32 bytes of data:
+    Reply from 8.8.8.8: bytes=32 time=15ms TTL=117
+    Reply from 8.8.8.8: bytes=32 time=16ms TTL=117
+    Reply from 8.8.8.8: bytes=32 time=15ms TTL=117
+    Reply from 8.8.8.8: bytes=32 time=14ms TTL=117
+    ```
+    
+
+**Analisis Konsep:**
+
+- Laptopmu (_End Device_) baru saja membuat paket data uji coba kecil.
+    
+- Paket keluar melewati _Network Media_ (Wi-Fi/Kabel LAN rumahmu).
+    
+- Paket diteruskan oleh _Intermediary Devices_ (Router rumah $\rightarrow$ Router ISP kotamu $\rightarrow$ Router tulang punggung internasional).
+    
+- Paket menyentuh server Google (_End Device tujuan_), lalu server Google membalas kembali dengan pesan balasan (_Reply_) dalam waktu sekitar **15 milidetik**.
+    
+
+> [!NOTE]
+> **Apa Arti Angka-Angka Tersebut?**
+> 
+> Kenapa ada tulisan `bytes=32`, `time=15ms`, dan `TTL=117`? Jangan pusing sekarang! Detail teknis mengenai bagaimana angka itu terbentuk dan bagaimana alamat IP bekerja akan kita bedah tuntas di **Modul 04 (Lapisan Network & Pengalamatan Logis)**.
+
+> [!TIP]
+> **PENANDA GAMBAR: [modul01_cmd_ping_execution.png]**
+> 
+> _Deskripsi Visual:_ Tangkapan layar terminal Command Prompt saat menjalankan perintah ping 8.8.8.8 yang berhasil mendapatkan balasan Reply from...
+
+## 1.8 Uji Pemahaman Mandiri (Kuis Review Modul 01)
+
+Jawab pertanyaan berikut untuk menguji pemahamanmu terhadap materi dasar ini:
+
+**1. Perangkat di bawah ini yang diklasifikasikan sebagai _Intermediary Device_ adalah:**
+
+A. Laptop Admin
+
+B. Database Server
+
+C. LAN Switch
+
+D. IP Camera
+
+**2. Seorang Network Engineer sedang merancang sistem di mana jika kabel fiber optik utama antara gedung A dan gedung B terputus oleh ekskavator proyek, jaringan tetap menyala otomatis melalui kabel cadangan jalur barat. Prinsip arsitektur andal manakah yang sedang diterapkan?**
+
+A. Quality of Service (QoS)
+
+B. Fault Tolerance
+
+C. Scalability
+
+D. User Authentication
+
+**3. Diagram jaringan yang secara spesifik menampilkan penomoran port interface (misal: Gig0/0), skema alamat IP, dan pembagian grup subnet disebut:**
+
+A. Physical Topology Diagram
+
+B. Wireless Radiation Diagram
+
+C. Logical Topology Diagram
+
+D. Geographic Blueprint Diagram
+
+**4. Jaringan privat milik internal perusahaan yang sebagian pintunya dibuka secara khusus dan aman agar bisa diakses oleh vendor atau mitra bisnis luar disebut:**
+
+A. Intranet
+
+B. Internet
+
+C. Extranet
+
+D. Darknet
+
+> [!TIP]
+> 
+> ### Kunci Jawaban & Penjelasan
+> 
+> 1. **C (LAN Switch)** — Switch adalah perangkat perantara yang mengalirkan data antar-host, sedangkan Laptop, Server, dan IP Camera adalah _End Devices_.
+>     
+> 2. **B (Fault Tolerance)** — Toleransi kegagalan menitikberatkan pada penyediaan jalur ganda/redundan agar sistem tidak mati saat ada komponen yang rusak.
+>     
+> 3. **C (Logical Topology Diagram)** — Topologi logis berfokus pada konfigurasi data, port interface, dan pengalamatan IP, bukan letak fisik meja/rak.
+>     
+> 4. **C (Extranet)** — Intranet hanya untuk orang dalam, Internet untuk publik, sedangkan Extranet adalah akses internal terbatas untuk rekanan bisnis luar.
+>     
+
+## Rangkuman Konsep Kunci (_Quick Review_)
+
+- **3 Komponen Jaringan:** _End Devices_ (klien/server), _Intermediary Devices_ (switch/router/firewall), dan _Network Media_ (tembaga/fiber/wireless).
+    
+- **Physical vs Logical Topology:** Physical mencatat lokasi fisik/rak/ruangan; Logical mencatat port interface, IP address, dan skema routing data.
+    
+- **LAN vs WAN:** LAN mencakup area lokal terbatas dengan kendali mandiri; WAN mencakup wilayah luas yang menghubungkan LAN-LAN melalui penyedia layanan (ISP).
+    
+- **4 Pilar Arsitektur Handal:** _Fault Tolerance_ (tahan gangguan), _Scalability_ (mudah diperbesar), _QoS_ (prioritas data suara/video), dan _Security_ (perlindungan sistem).

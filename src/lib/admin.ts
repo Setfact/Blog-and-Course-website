@@ -292,3 +292,225 @@ export const getAuditLogs = async (
 
   return inMemoryAuditLogs.slice(0, limit);
 };
+
+export interface UserProgressDetails {
+  profile: Profile | null;
+  completedLessons: { course_slug: string; lesson_id: string; completed_at: string }[];
+  totalCompleted: number;
+}
+
+export const getUserProgressDetails = async (
+  supabase: SupabaseClient | null,
+  targetUserId: string
+): Promise<UserProgressDetails> => {
+  if (supabase) {
+    try {
+      const [profRes, progRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', targetUserId).single(),
+        supabase
+          .from('user_lesson_progress')
+          .select('course_slug, lesson_id, completed_at')
+          .eq('user_id', targetUserId)
+          .order('completed_at', { ascending: false }),
+      ]);
+
+      return {
+        profile: profRes.data || null,
+        completedLessons: progRes.data || [],
+        totalCompleted: progRes.data ? progRes.data.length : 0,
+      };
+    } catch (err) {
+      console.error('Error getting user progress details:', err);
+    }
+  }
+
+  const fallbackUser = inMemoryUsers.find((u) => u.id === targetUserId) || null;
+  return {
+    profile: fallbackUser,
+    completedLessons: [
+      { course_slug: 'security-fundamentals', lesson_id: 'firewall-basics', completed_at: new Date().toISOString() },
+      { course_slug: 'ccna-fundamentals', lesson_id: 'ipv4-subnetting', completed_at: new Date().toISOString() },
+    ],
+    totalCompleted: 2,
+  };
+};
+
+export const resetUserProgress = async (
+  supabase: SupabaseClient | null,
+  adminId: string,
+  targetUserId: string
+): Promise<boolean> => {
+  if (supabase) {
+    try {
+      await supabase.from('user_lesson_progress').delete().eq('user_id', targetUserId);
+      await supabase
+        .from('profiles')
+        .update({
+          xp: 0,
+          streak: 0,
+          last_study_date: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', targetUserId);
+
+      await supabase.from('admin_audit_logs').insert({
+        admin_id: adminId,
+        action: 'RESET_PROGRESS',
+        target_type: 'user',
+        target_id: targetUserId,
+        details: { reset_at: new Date().toISOString() },
+      });
+
+      return true;
+    } catch (err) {
+      console.error('Error resetting user progress:', err);
+    }
+  }
+
+  inMemoryAuditLogs.unshift({
+    id: `log-${Date.now()}`,
+    admin_id: adminId,
+    action: 'RESET_PROGRESS',
+    target_type: 'user',
+    target_id: targetUserId,
+    details: { reset_at: new Date().toISOString() },
+    created_at: new Date().toISOString(),
+  });
+  return true;
+};
+
+export interface CourseAnalyticsData {
+  courseSlug: string;
+  enrolledStudentsCount: number;
+  totalCompletionsCount: number;
+}
+
+export const getCourseAnalytics = async (
+  supabase: SupabaseClient | null
+): Promise<Record<string, CourseAnalyticsData>> => {
+  const result: Record<string, CourseAnalyticsData> = {};
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('user_lesson_progress')
+        .select('user_id, course_slug');
+
+      if (!error && data) {
+        const studentMap: Record<string, Set<string>> = {};
+        const countMap: Record<string, number> = {};
+
+        data.forEach((row) => {
+          const slug = row.course_slug;
+          if (!studentMap[slug]) studentMap[slug] = new Set();
+          studentMap[slug].add(row.user_id);
+          countMap[slug] = (countMap[slug] || 0) + 1;
+        });
+
+        Object.keys(studentMap).forEach((slug) => {
+          result[slug] = {
+            courseSlug: slug,
+            enrolledStudentsCount: studentMap[slug].size,
+            totalCompletionsCount: countMap[slug] || 0,
+          };
+        });
+
+        return result;
+      }
+    } catch (err) {
+      console.error('Error fetching course analytics in Supabase:', err);
+    }
+  }
+
+  // Data fallback
+  return {
+    'ccna-fundamentals': { courseSlug: 'ccna-fundamentals', enrolledStudentsCount: 34, totalCompletionsCount: 248 },
+    'security-fundamentals': { courseSlug: 'security-fundamentals', enrolledStudentsCount: 22, totalCompletionsCount: 165 },
+    'network-automation': { courseSlug: 'network-automation', enrolledStudentsCount: 18, totalCompletionsCount: 92 },
+  };
+};
+
+let inMemoryAnnouncement = {
+  id: 'ann-1',
+  message: 'Selamat datang di Phinisi Learn! Ikuti challenge lab mingguan untuk memperbanyak XP.',
+  type: 'info' as 'info' | 'warning' | 'success',
+  is_active: true,
+  created_at: new Date().toISOString(),
+};
+
+export const getActiveAnnouncement = async (supabase: SupabaseClient | null) => {
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('platform_announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) return data;
+    } catch (err) {
+      console.error('Error fetching active announcement:', err);
+    }
+  }
+
+  return inMemoryAnnouncement;
+};
+
+export const saveAnnouncement = async (
+  supabase: SupabaseClient | null,
+  adminId: string,
+  message: string,
+  type: 'info' | 'warning' | 'success' = 'info',
+  is_active: boolean = true
+) => {
+  if (supabase) {
+    try {
+      // Nonaktifkan pengumuman sebelumnya
+      if (is_active) {
+        await supabase.from('platform_announcements').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+      }
+
+      const { data, error } = await supabase
+        .from('platform_announcements')
+        .insert({ message, type, is_active })
+        .select()
+        .single();
+
+      if (!error && data) {
+        await supabase.from('admin_audit_logs').insert({
+          admin_id: adminId,
+          action: 'UPDATE_ANNOUNCEMENT',
+          target_type: 'announcement',
+          target_id: data.id,
+          details: { message, type, is_active },
+        });
+        return data;
+      }
+    } catch (err) {
+      console.error('Error saving announcement in Supabase:', err);
+    }
+  }
+
+  inMemoryAnnouncement = {
+    id: `ann-${Date.now()}`,
+    message,
+    type,
+    is_active,
+    created_at: new Date().toISOString(),
+  };
+
+  inMemoryAuditLogs.unshift({
+    id: `log-${Date.now()}`,
+    admin_id: adminId,
+    action: 'UPDATE_ANNOUNCEMENT',
+    target_type: 'announcement',
+    target_id: inMemoryAnnouncement.id,
+    details: { message, type, is_active },
+    created_at: new Date().toISOString(),
+  });
+
+  return inMemoryAnnouncement;
+};
+

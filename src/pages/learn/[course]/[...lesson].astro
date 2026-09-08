@@ -11,6 +11,7 @@ import PracticeCTA from '../../../components/PracticeCTA.astro';
 import KnowledgeCheck from '../../../components/KnowledgeCheck.astro';
 import LessonQuiz from '../../../components/LessonQuiz.astro';
 import CommandOrder from '../../../components/CommandOrder.astro';
+import PacketTracerLab from '../../../components/PacketTracerLab.astro';
 import { getCourseBySlug, loadCourses } from '../../../data/learning';
 
 export const prerender = true;
@@ -55,5 +56,5 @@ const { Content } = await render(entry);
 ---
 
 <LearningPlayerLayout entry={entry} course={course} courseEntries={courseEntries}>
-  <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder }} />
+  <Content components={{ Callout, Tabs, TabItem, CustomImage, CommandBlock, TopologyDiagram, PracticeCTA, KnowledgeCheck, LessonQuiz, CommandOrder, PacketTracerLab }} />
 </LearningPlayerLayout>
