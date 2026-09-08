@@ -98,7 +98,7 @@ const announcement = await getActiveAnnouncement(supabase);
       <div class="header-copy">
         <h2 class="section-title">Kurikulum, Materi Teknis & Lab</h2>
         <p class="section-desc">
-          Gunakan <strong>Wizard Buat Kursus</strong> untuk menyusun struktur silabus dan lab Packet Tracer (.pkt via Drive) dalam 1 layar cepat, atau buka <strong>Keystatic CMS</strong> untuk mengedit teks dan gambar secara visual.
+          Gunakan <strong>Wizard Buat Kursus</strong> untuk menyusun kursus baru, atau klik <strong>Edit Kursus & Materi</strong> pada setiap kartu untuk mengedit modul, materi teks, lab Packet Tracer (.pkt), dan kuis secara langsung dalam satu studio terpadu tanpa perlu ke Keystatic.
         </p>
       </div>
       <div class="header-actions-group">
@@ -106,9 +106,9 @@ const announcement = await getActiveAnnouncement(supabase);
           <span class="material-symbols-outlined">add_circle</span>
           <span>+ Buat Kursus Baru</span>
         </a>
-        <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-btn">
-          <span class="material-symbols-outlined">edit_square</span>
-          <span>Editor Keystatic CMS</span>
+        <a href="/keystatic" target="_blank" rel="noopener noreferrer" class="cms-btn" title="Buka Keystatic CMS (Cadangan)">
+          <span class="material-symbols-outlined">dataset</span>
+          <span>Keystatic CMS (Opsional)</span>
         </a>
       </div>
     </div>
@@ -175,17 +175,17 @@ const announcement = await getActiveAnnouncement(supabase);
             </div>
 
             <div class="course-card-actions">
-              <a href={`/courses/${course.slug}`} class="action-btn-outline" target="_blank">
+              <a href={`/courses/${course.slug}`} class="action-btn-outline" target="_blank" title="Lihat tampilan kursus di web">
                 <span class="material-symbols-outlined icon-mini">visibility</span>
                 <span>Lihat di Web</span>
               </a>
               <a
-                href={`/keystatic/collection/courses/item/${course.slug}`}
+                href={`/admin/courses/${course.slug}/edit`}
                 class="action-btn-primary"
-                target="_blank"
+                title="Edit kursus, silabus, materi pelajaran, lab Packet Tracer, dan kuis"
               >
-                <span class="material-symbols-outlined icon-mini">edit</span>
-                <span>Edit Materi CMS</span>
+                <span class="material-symbols-outlined icon-mini">edit_note</span>
+                <span>Edit Kursus & Materi</span>
               </a>
             </div>
           </div>

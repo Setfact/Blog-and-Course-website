@@ -1,0 +1,2361 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'yaml';
+
+const { slug: courseSlug } = Astro.params;
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect('/login');
+}
+
+if (!courseSlug) {
+  return Astro.redirect('/admin/courses');
+}
+
+const projectRoot = process.cwd();
+const coursesDir = path.join(projectRoot, 'src/content/courses');
+const courseFilePath = path.join(coursesDir, `${courseSlug}.mdx`);
+
+if (!fs.existsSync(courseFilePath)) {
+  return Astro.redirect('/admin/courses');
+}
+
+// 1. Baca metadata kursus
+const courseRaw = fs.readFileSync(courseFilePath, 'utf-8');
+const courseMatch = courseRaw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/);
+const courseFrontmatter = courseMatch ? yaml.parse(courseMatch[1]) : {};
+const courseIntro = courseMatch?.[2]?.trim() || '';
+
+// 2. Baca overview lesson (index.mdx)
+const docsCourseDir = path.join(projectRoot, 'src/content/docs', courseSlug);
+const overviewPath = path.join(docsCourseDir, 'index.mdx');
+let overviewFrontmatter: any = {};
+let overviewBody = '';
+if (fs.existsSync(overviewPath)) {
+  try {
+    const ovRaw = fs.readFileSync(overviewPath, 'utf-8');
+    const ovMatch = ovRaw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/);
+    overviewFrontmatter = ovMatch ? yaml.parse(ovMatch[1]) : {};
+    overviewBody = ovMatch?.[2]?.trim() || '';
+  } catch {}
+}
+
+// 3. Baca modul kursus
+const modulesDir = path.join(projectRoot, 'src/content/modules');
+const rawModules: any[] = [];
+if (fs.existsSync(modulesDir)) {
+  try {
+    const allModFiles = fs.readdirSync(modulesDir);
+    for (const mf of allModFiles) {
+      if (!mf.endsWith('.md') && !mf.endsWith('.mdx')) continue;
+      try {
+        const mRaw = fs.readFileSync(path.join(modulesDir, mf), 'utf-8');
+        const mMatch = mRaw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+        if (mMatch) {
+          const parsed = yaml.parse(mMatch[1]);
+          if (parsed?.course === courseSlug) {
+            rawModules.push({
+              id: mf.replace(/\.(md|mdx)$/, ''),
+              slug: mf.replace(/\.(md|mdx)$/, ''),
+              title: parsed.title || mf,
+              order: Number(parsed.order) || 999,
+              description: parsed.description || '',
+            });
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+}
+rawModules.sort((a, b) => a.order - b.order);
+
+// 4. Baca pelajaran (lessons) kursus
+const rawLessons: any[] = [];
+if (fs.existsSync(docsCourseDir)) {
+  try {
+    const allDocFiles = fs.readdirSync(docsCourseDir);
+    for (const df of allDocFiles) {
+      if (df === 'index.mdx' || df === 'index.md') continue;
+      if (!df.endsWith('.md') && !df.endsWith('.mdx')) continue;
+      try {
+        const dRaw = fs.readFileSync(path.join(docsCourseDir, df), 'utf-8');
+        const dMatch = dRaw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/);
+        if (dMatch) {
+          const parsed = yaml.parse(dMatch[1]);
+          const body = dMatch[2]?.trim() || '';
+
+          let type: 'theory' | 'pkt_lab' | 'quiz' = 'theory';
+          let pktUrl = '';
+          let driveUrl = '';
+          let fileName = '';
+          let pdfUrl = '';
+          let pdfFileName = '';
+          let passingScore = 67;
+          let xp = 15;
+          let quizQuestions: any[] = [];
+          let cleanContent = body;
+
+          if (body.includes('<PacketTracerLab')) {
+            type = 'pkt_lab';
+            xp = 40;
+            const pktMatch = body.match(/pktUrl=(?:\{?"([^"]+)"\}?|\{([^\}]+)\})/);
+            if (pktMatch) pktUrl = pktMatch[1] || pktMatch[2] || '';
+            const fileMatch = body.match(/fileName=(?:\{?"([^"]+)"\}?|\{([^\}]+)\})/);
+            if (fileMatch) fileName = fileMatch[1] || fileMatch[2] || '';
+            const pdfMatch = body.match(/pdfUrl=(?:\{?"([^"]+)"\}?|\{([^\}]+)\})/);
+            if (pdfMatch) pdfUrl = pdfMatch[1] || pdfMatch[2] || '';
+            const pdfFileMatch = body.match(/pdfFileName=(?:\{?"([^"]+)"\}?|\{([^\}]+)\})/);
+            if (pdfFileMatch) pdfFileName = pdfFileMatch[1] || pdfFileMatch[2] || '';
+            const xpMatch = body.match(/xp=\{?(\d+)\}?/);
+            if (xpMatch) xp = Number(xpMatch[1]);
+            cleanContent = body.replace(/<PacketTracerLab[\s\S]*?\/>/, '').trim();
+          } else if (body.includes('<LessonQuiz')) {
+            type = 'quiz';
+            xp = 25;
+            const passMatch = body.match(/passingScore=\{?(\d+)\}?/);
+            if (passMatch) passingScore = Number(passMatch[1]);
+            const xpMatch = body.match(/xp=\{?(\d+)\}?/);
+            if (xpMatch) xp = Number(xpMatch[1]);
+            const qMatch = body.match(/questions=\{([\s\S]*?)\}\s*\/>/);
+            if (qMatch) {
+              try {
+                quizQuestions = JSON.parse(qMatch[1]);
+              } catch {}
+            }
+            cleanContent = body.replace(/<LessonQuiz[\s\S]*?\/>/, '').trim();
+          }
+
+          rawLessons.push({
+            id: df.replace(/\.(md|mdx)$/, ''),
+            fileName: df,
+            slug: df.replace(/\.(md|mdx)$/, ''),
+            moduleSlug: parsed.module || '',
+            title: parsed.title || df,
+            order: Number(parsed.order) || 999,
+            durationMinutes: Number(parsed.durationMinutes) || 10,
+            type,
+            content: cleanContent,
+            pktUrl,
+            driveUrl,
+            fileNameDownloaded: fileName,
+            pdfUrl,
+            pdfFileName,
+            passingScore,
+            xp,
+            quizQuestions,
+          });
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
+// 5. Susun modul dan pelajaran
+let initialModules = rawModules.map((mod) => {
+  const modLessons = rawLessons
+    .filter((l: any) => l.moduleSlug === mod.slug)
+    .sort((a: any, b: any) => a.order - b.order);
+  return {
+    ...mod,
+    lessons: modLessons,
+  };
+});
+
+if (initialModules.length === 0) {
+  initialModules = [
+    {
+      id: `${courseSlug}-01-modul-1`,
+      slug: `${courseSlug}-01-modul-1`,
+      title: 'Modul 1: Materi & Praktik',
+      order: 1,
+      description: '',
+      lessons: rawLessons.sort((a: any, b: any) => a.order - b.order),
+    },
+  ];
+} else {
+  // Masukkan pelajaran yang belum terpetakan ke modul pertama
+  const assigned = new Set(initialModules.flatMap((m: any) => m.lessons.map((l: any) => l.fileName)));
+  const unassigned = rawLessons.filter((l: any) => !assigned.has(l.fileName));
+  if (unassigned.length > 0) {
+    initialModules[0].lessons.push(...unassigned);
+  }
+}
+
+// Format deskripsi jika tersimpan sebagai objek teks terlokalisasi
+let descriptionText = '';
+if (typeof courseFrontmatter.description === 'string') {
+  descriptionText = courseFrontmatter.description;
+} else if (courseFrontmatter.description?.id) {
+  descriptionText = courseFrontmatter.description.id;
+}
+
+const initialCourseData = {
+  courseSlug,
+  title: courseFrontmatter.title || courseSlug,
+  category: courseFrontmatter.category || 'networking',
+  level: courseFrontmatter.level || 'beginner',
+  durationHours: Number(courseFrontmatter.durationHours) || 6,
+  status: courseFrontmatter.status || 'draft',
+  description: descriptionText,
+  cover: courseFrontmatter.cover || '/images/courses/security-fundamentals.webp',
+  tools: courseFrontmatter.tools || ['Cisco IOS', 'Cisco Packet Tracer'],
+  outcomes: courseFrontmatter.outcomes || [],
+  overviewTitle: overviewFrontmatter.title || `Pengantar: ${courseFrontmatter.title || courseSlug}`,
+  overviewDuration: Number(overviewFrontmatter.durationMinutes) || 5,
+  overviewContent: overviewBody || courseIntro || '',
+  modules: initialModules,
+};
+
+const queryLesson = Astro.url.searchParams.get('lesson') || '';
+---
+
+<AdminLayout title={`Studio Editor: ${initialCourseData.title}`} activeSection="courses">
+  <div class="studio-container" data-course-slug={courseSlug} data-focus-lesson={queryLesson}>
+    <!-- Top Action Bar -->
+    <header class="studio-topbar">
+      <div class="topbar-left">
+        <a href="/admin/courses" class="btn-back-link">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Kembali ke Manajemen Kursus</span>
+        </a>
+        <div class="course-header-meta">
+          <h1 class="studio-course-title" id="display-course-title">{initialCourseData.title}</h1>
+          <span class="status-badge" id="display-status-badge" data-status={initialCourseData.status}>
+            {initialCourseData.status === 'published' ? 'Terpublikasi' : initialCourseData.status === 'planned' ? 'Segera Hadir' : 'Draf'}
+          </span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <a href={`/courses/${courseSlug}`} target="_blank" rel="noopener noreferrer" class="btn-topbar-secondary" title="Buka Halaman Detail Kursus">
+          <span class="material-symbols-outlined icon-sm">visibility</span>
+          <span>Lihat di Web</span>
+        </a>
+        <a href={`/learn/${courseSlug}`} target="_blank" rel="noopener noreferrer" class="btn-topbar-secondary" title="Buka Player Siswa">
+          <span class="material-symbols-outlined icon-sm">play_circle</span>
+          <span>Player Siswa</span>
+        </a>
+        <a href={`/keystatic/collection/courses/item/${courseSlug}`} target="_blank" rel="noopener noreferrer" class="btn-topbar-subtle" title="Buka di Keystatic CMS (Cadangan)">
+          <span class="material-symbols-outlined icon-sm">open_in_new</span>
+          <span>Keystatic</span>
+        </a>
+        <button type="button" id="btn-save-course" class="btn-save-primary">
+          <span class="material-symbols-outlined icon-sm">save</span>
+          <span id="save-btn-label">Simpan Semua Perubahan</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Alert / Toast Banner -->
+    <div id="studio-alert-banner" class="studio-banner hidden"></div>
+
+    <!-- Main Studio Split View -->
+    <div class="studio-workspace">
+      <!-- Kolom Kiri: Navigasi Silabus (Daftar Bab & Pelajaran) -->
+      <aside class="syllabus-sidebar">
+        <div class="syllabus-sidebar-header">
+          <div class="sidebar-title-row">
+            <span class="material-symbols-outlined icon-syllabus">account_tree</span>
+            <div>
+              <h2 class="sidebar-heading">Silabus Kursus</h2>
+              <span class="sidebar-subheading" id="sidebar-stats-label">Menghitung materi...</span>
+            </div>
+          </div>
+          <button type="button" id="btn-select-course-settings" class="nav-item-btn" data-target="course-settings">
+            <span class="material-symbols-outlined icon-sm">tune</span>
+            <span>Pengaturan Informasi Kursus</span>
+          </button>
+          <button type="button" id="btn-select-overview" class="nav-item-btn" data-target="overview">
+            <span class="material-symbols-outlined icon-sm">article</span>
+            <span>Pengantar & Silabus (Overview)</span>
+          </button>
+        </div>
+
+        <div class="syllabus-tree-container" id="syllabus-tree">
+          <!-- Modul dan Pelajaran dirender via JavaScript -->
+        </div>
+
+        <div class="syllabus-sidebar-footer">
+          <button type="button" id="btn-add-new-module" class="btn-add-module-outline">
+            <span class="material-symbols-outlined icon-sm">add_circle</span>
+            <span>Tambah Bab Modul Baru</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Kolom Kanan: Canvas Editor Utama -->
+      <main class="editor-canvas">
+        <!-- Panel 1: Pengaturan Kursus -->
+        <section id="panel-course-settings" class="editor-panel-section hidden">
+          <div class="panel-card-header">
+            <div class="panel-header-icon-box">
+              <span class="material-symbols-outlined">tune</span>
+            </div>
+            <div>
+              <h2 class="panel-title">Pengaturan Informasi Kursus</h2>
+              <p class="panel-desc">Perbarui judul resmi, kategori, tingkat kemampuan, dan status publikasi kursus ini.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-two">
+            <div class="form-group-full">
+              <label for="input-course-title" class="field-label">Judul Kursus <span class="req-star">*</span></label>
+              <input type="text" id="input-course-title" class="studio-input" value={initialCourseData.title} required />
+            </div>
+
+            <div class="form-group">
+              <label for="input-course-category" class="field-label">Bidang Ilmu / Kategori <span class="req-star">*</span></label>
+              <select id="input-course-category" class="studio-select">
+                <option value="networking" selected={initialCourseData.category === 'networking'}>Jaringan Komputer (Networking)</option>
+                <option value="linux" selected={initialCourseData.category === 'linux'}>Linux & Server Administration</option>
+                <option value="automation" selected={initialCourseData.category === 'automation'}>Otomasi Jaringan & Python</option>
+                <option value="iot" selected={initialCourseData.category === 'iot'}>Internet of Things (IoT)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="input-course-level" class="field-label">Tingkat Kemampuan <span class="req-star">*</span></label>
+              <select id="input-course-level" class="studio-select">
+                <option value="beginner" selected={initialCourseData.level === 'beginner'}>Pemula (Beginner)</option>
+                <option value="intermediate" selected={initialCourseData.level === 'intermediate'}>Menengah (Intermediate)</option>
+                <option value="advanced" selected={initialCourseData.level === 'advanced'}>Lanjutan (Advanced)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="input-course-status" class="field-label">Status Publikasi <span class="req-star">*</span></label>
+              <select id="input-course-status" class="studio-select">
+                <option value="published" selected={initialCourseData.status === 'published'}>Terpublikasi (Aktif di Web Siswa)</option>
+                <option value="planned" selected={initialCourseData.status === 'planned'}>Segera Hadir (Planned / Coming Soon)</option>
+                <option value="draft" selected={initialCourseData.status === 'draft'}>Draf (Hanya Terlihat oleh Admin)</option>
+                <option value="archived" selected={initialCourseData.status === 'archived'}>Arsip (Disembunyikan)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="input-course-duration" class="field-label">Estimasi Waktu Belajar (Jam)</label>
+              <input type="number" id="input-course-duration" class="studio-input" min="1" max="200" value={initialCourseData.durationHours} />
+            </div>
+
+            <div class="form-group-full">
+              <label for="input-course-desc" class="field-label">Deskripsi Singkat Kursus</label>
+              <textarea id="input-course-desc" class="studio-textarea" rows="3" placeholder="Rangkuman kompetensi utama kursus ini...">{initialCourseData.description}</textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel 2: Pengantar & Overview Kursus -->
+        <section id="panel-overview" class="editor-panel-section hidden">
+          <div class="panel-card-header">
+            <div class="panel-header-icon-box">
+              <span class="material-symbols-outlined">article</span>
+            </div>
+            <div>
+              <h2 class="panel-title">Halaman Pengantar Kursus (Overview)</h2>
+              <p class="panel-desc">Materi ini tampil sebagai sambutan pertama dan ringkasan silabus saat siswa membuka player belajar.</p>
+            </div>
+          </div>
+
+          <div class="editor-toolbar-wrap">
+            <span class="toolbar-label">Sisipkan Cepat:</span>
+            <button type="button" class="btn-tool" id="tool-upload-overview" title="Unggah foto langsung ke materi pengantar">
+              <span class="material-symbols-outlined icon-xs">add_photo_alternate</span>
+              <span>+ Unggah Foto</span>
+            </button>
+            <button type="button" class="btn-tool" id="tool-callout-overview" title="Sisipkan kotak catatan pengantar">
+              <span class="material-symbols-outlined icon-xs">info</span>
+              <span>+ Kotak Catatan</span>
+            </button>
+            <button type="button" class="btn-tool" id="tool-heading-overview" title="Sisipkan subjudul bab">
+              <span class="material-symbols-outlined icon-xs">title</span>
+              <span>+ Subjudul (##)</span>
+            </button>
+          </div>
+
+          <div class="editor-tabs-bar">
+            <button type="button" class="editor-subtab active" id="subtab-write-overview">Tulis Markdown</button>
+            <button type="button" class="editor-subtab" id="subtab-preview-overview">Pratinjau Tampilan</button>
+          </div>
+
+          <div class="editor-workspace-area">
+            <textarea id="textarea-overview" class="markdown-editor-box" rows="16" placeholder="Tuliskan kata sambutan, prasyarat, atau panduan belajar kursus ini dalam format Markdown...">{initialCourseData.overviewContent}</textarea>
+            <div id="preview-overview" class="markdown-preview-box hidden"></div>
+          </div>
+        </section>
+
+        <!-- Panel 3: Editor Materi Pelajaran Aktif (Dynamic Lesson Editor) -->
+        <section id="panel-lesson" class="editor-panel-section">
+          <div id="lesson-editor-content">
+            <!-- Konten editor materi aktif dirender via JavaScript -->
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Hidden Global File Inputs untuk Upload Cepat -->
+    <input type="file" id="studio-image-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display: none;" />
+    <input type="file" id="studio-pkt-file" accept=".pkt,.pka" style="display: none;" />
+    <input type="file" id="studio-pdf-file" accept=".pdf" style="display: none;" />
+  </div>
+
+  <!-- Data Awal Kursus (Injeksi Aman SSR ke Klien) -->
+  <script is:inline type="application/json" id="raw-initial-data" set:html={JSON.stringify(initialCourseData)}></script>
+
+  <script>
+    interface LessonItem {
+      id: string | number;
+      slug: string;
+      fileName: string;
+      title: string;
+      type: 'theory' | 'pkt_lab' | 'quiz';
+      durationMinutes: number;
+      order: number;
+      content: string;
+      pktUrl?: string;
+      driveUrl?: string;
+      fileNameDownloaded?: string;
+      pdfUrl?: string;
+      pdfFileName?: string;
+      tasks?: string[];
+      passingScore?: number;
+      xp?: number;
+      quizQuestions?: Array<{
+        id: number;
+        question: string;
+        options: string[];
+        correctIndex: number;
+        explanation: string;
+      }>;
+    }
+
+    interface ModuleItem {
+      id: string | number;
+      slug: string;
+      title: string;
+      order: number;
+      description: string;
+      lessons: LessonItem[];
+    }
+
+    const rawDataEl = document.getElementById('raw-initial-data');
+    const courseData = rawDataEl ? JSON.parse(rawDataEl.textContent || '{}') : {};
+
+    let modulesState: ModuleItem[] = courseData.modules || [];
+    let selectedTarget: { type: 'course-settings' | 'overview' | 'lesson'; modId?: string | number; lesId?: string | number } = {
+      type: 'course-settings',
+    };
+
+    const container = document.querySelector('.studio-container') as HTMLElement;
+    const focusLessonParam = container?.dataset.focusLesson || '';
+
+    // Auto-select lesson if passed in query param
+    if (focusLessonParam) {
+      for (const mod of modulesState) {
+        const found = mod.lessons.find((l) => l.slug === focusLessonParam || l.fileName === focusLessonParam || l.fileName.includes(focusLessonParam));
+        if (found) {
+          selectedTarget = { type: 'lesson', modId: mod.id, lesId: found.id };
+          break;
+        }
+      }
+    } else if (modulesState.length > 0 && modulesState[0].lessons.length > 0) {
+      selectedTarget = { type: 'lesson', modId: modulesState[0].id, lesId: modulesState[0].lessons[0].id };
+    }
+
+    function escapeHtml(text: string): string {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function parseMarkdownToHtml(md: string): string {
+      if (!md) return '<p class="empty-hint">Belum ada materi yang ditulis.</p>';
+      let html = md;
+
+      // Handle Callout
+      html = html.replace(/<Callout\s+type="([^"]+)"(?:\s+title="([^"]*)")?>([\s\S]*?)<\/Callout>/g, (_, type, title, body) => {
+        return `<div class="preview-callout callout-${type}">
+          ${title ? `<strong>${title}</strong>` : ''}
+          <div>${body}</div>
+        </div>`;
+      });
+
+      // Handle CommandBlock
+      html = html.replace(/<CommandBlock[\s\S]*?command="([^"]*)"[\s\S]*?(?:title="([^"]*)")?[\s\S]*?\/>/g, (_, cmd, title) => {
+        return `<div class="preview-cli-block">
+          ${title ? `<div class="cli-title">${title}</div>` : ''}
+          <pre><code>${cmd}</code></pre>
+        </div>`;
+      });
+
+      // Headings
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // Images & Links
+      html = html.replace(/!\[(.*?)\]\((.*?)\)/gim, '<img alt="$1" src="$2" class="preview-img" />');
+      html = html.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank">$1</a>');
+
+      // Bold & Italic
+      html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+
+      // Code blocks
+      html = html.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+
+      // Line breaks to paragraphs
+      html = html.replace(/\n\n+/g, '</p><p>');
+      return `<p>${html}</p>`;
+    }
+
+    function insertTextAtCursor(textarea: HTMLTextAreaElement, text: string) {
+      const start = textarea.selectionStart || 0;
+      const end = textarea.selectionEnd || 0;
+      const val = textarea.value;
+      textarea.value = val.substring(0, start) + text + val.substring(end);
+      const newPos = start + text.length;
+      textarea.focus();
+      textarea.setSelectionRange(newPos, newPos);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Render tree sidebar
+    function renderSyllabusTree() {
+      const treeEl = document.getElementById('syllabus-tree');
+      const statsEl = document.getElementById('sidebar-stats-label');
+      if (!treeEl) return;
+
+      const totalLessons = modulesState.reduce((acc, m) => acc + m.lessons.length, 0);
+      if (statsEl) {
+        statsEl.textContent = `${modulesState.length} Bab Modul · ${totalLessons} Pelajaran`;
+      }
+
+      treeEl.innerHTML = '';
+
+      modulesState.forEach((mod, modIdx) => {
+        const modCard = document.createElement('div');
+        modCard.className = 'tree-module-group';
+        modCard.dataset.modId = String(mod.id);
+
+        modCard.innerHTML = `
+          <div class="tree-module-header">
+            <div class="mod-header-title-box">
+              <span class="mod-num-badge">Bab ${modIdx + 1}</span>
+              <input type="text" class="mod-title-inline-input" value="${escapeHtml(mod.title)}" title="Klik untuk mengubah judul modul" />
+            </div>
+            <div class="mod-header-actions-inline">
+              <button type="button" class="btn-tree-action btn-add-les-to-mod" data-mod-id="${mod.id}" title="Tambah materi ke bab ini">
+                <span class="material-symbols-outlined icon-xs">add</span>
+              </button>
+              ${modulesState.length > 1 ? `
+                <button type="button" class="btn-tree-action btn-del-mod" data-mod-id="${mod.id}" title="Hapus bab modul ini">
+                  <span class="material-symbols-outlined icon-xs">delete</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="tree-lessons-list">
+            ${mod.lessons.map((les, lesIdx) => {
+              const isSelected = selectedTarget.type === 'lesson' && String(selectedTarget.modId) === String(mod.id) && String(selectedTarget.lesId) === String(les.id);
+              const typeClass = les.type === 'pkt_lab' ? 'pill-lab' : les.type === 'quiz' ? 'pill-quiz' : 'pill-theory';
+              const typeText = les.type === 'pkt_lab' ? 'Lab PKT' : les.type === 'quiz' ? 'Kuis' : 'Teori';
+
+              return `
+                <div class="tree-lesson-item ${isSelected ? 'is-active' : ''}" data-mod-id="${mod.id}" data-les-id="${les.id}">
+                  <div class="les-item-clickable" data-mod-id="${mod.id}" data-les-id="${les.id}">
+                    <span class="les-num">${String(lesIdx + 1).padStart(2, '0')}</span>
+                    <span class="les-title-label">${escapeHtml(les.title)}</span>
+                    <span class="les-type-pill ${typeClass}">${typeText}</span>
+                  </div>
+                  ${mod.lessons.length > 1 ? `
+                    <button type="button" class="btn-del-les-tree" data-mod-id="${mod.id}" data-les-id="${les.id}" title="Hapus materi ini">
+                      <span class="material-symbols-outlined icon-xs">close</span>
+                    </button>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+
+        treeEl.appendChild(modCard);
+      });
+
+      attachTreeEvents();
+    }
+
+    function attachTreeEvents() {
+      // Mod title change
+      document.querySelectorAll<HTMLInputElement>('.mod-title-inline-input').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const card = (e.target as HTMLElement).closest('.tree-module-group');
+          const modId = card?.getAttribute('data-mod-id');
+          const mod = modulesState.find((m) => String(m.id) === String(modId));
+          if (mod) mod.title = (e.target as HTMLInputElement).value;
+        });
+      });
+
+      // Add lesson to module
+      document.querySelectorAll<HTMLButtonElement>('.btn-add-les-to-mod').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const modId = btn.getAttribute('data-mod-id');
+          const mod = modulesState.find((m) => String(m.id) === String(modId));
+          if (mod) {
+            const newLesId = Date.now();
+            const newLesson: LessonItem = {
+              id: newLesId,
+              slug: `pelajaran-${mod.lessons.length + 1}`,
+              fileName: '',
+              title: `Pelajaran Baru ${mod.lessons.length + 1}`,
+              type: 'theory',
+              durationMinutes: 10,
+              order: mod.lessons.length + 1,
+              content: `## Tujuan Pembelajaran\n\nMateri ini membahas konsep dan implementasi terapan.\n\n<Callout type="info" title="Catatan Pembuka">\n  Silakan pelajari langkah-langkah di bawah secara berurutan.\n</Callout>\n`,
+            };
+            mod.lessons.push(newLesson);
+            selectedTarget = { type: 'lesson', modId: mod.id, lesId: newLesId };
+            renderSyllabusTree();
+            renderActivePanel();
+          }
+        });
+      });
+
+      // Delete module
+      document.querySelectorAll<HTMLButtonElement>('.btn-del-mod').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!confirm('Apakah Anda yakin ingin menghapus bab modul ini beserta seluruh materi di dalamnya?')) return;
+          const modId = btn.getAttribute('data-mod-id');
+          const idx = modulesState.findIndex((m) => String(m.id) === String(modId));
+          if (idx !== -1 && modulesState.length > 1) {
+            modulesState.splice(idx, 1);
+            if (modulesState[0]?.lessons[0]) {
+              selectedTarget = { type: 'lesson', modId: modulesState[0].id, lesId: modulesState[0].lessons[0].id };
+            } else {
+              selectedTarget = { type: 'course-settings' };
+            }
+            renderSyllabusTree();
+            renderActivePanel();
+          }
+        });
+      });
+
+      // Click lesson item
+      document.querySelectorAll<HTMLElement>('.les-item-clickable').forEach((el) => {
+        el.addEventListener('click', () => {
+          const modId = el.getAttribute('data-mod-id');
+          const lesId = el.getAttribute('data-les-id');
+          if (modId && lesId) {
+            selectedTarget = { type: 'lesson', modId, lesId };
+            renderSyllabusTree();
+            renderActivePanel();
+          }
+        });
+      });
+
+      // Delete lesson
+      document.querySelectorAll<HTMLButtonElement>('.btn-del-les-tree').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!confirm('Hapus materi pelajaran ini?')) return;
+          const modId = btn.getAttribute('data-mod-id');
+          const lesId = btn.getAttribute('data-les-id');
+          const mod = modulesState.find((m) => String(m.id) === String(modId));
+          if (mod && mod.lessons.length > 1) {
+            const lIdx = mod.lessons.findIndex((l) => String(l.id) === String(lesId));
+            if (lIdx !== -1) {
+              mod.lessons.splice(lIdx, 1);
+              const nextLes = mod.lessons[0];
+              selectedTarget = { type: 'lesson', modId: mod.id, lesId: nextLes.id };
+              renderSyllabusTree();
+              renderActivePanel();
+            }
+          }
+        });
+      });
+    }
+
+    // Render panel active
+    function renderActivePanel() {
+      const panelSettings = document.getElementById('panel-course-settings');
+      const panelOverview = document.getElementById('panel-overview');
+      const panelLesson = document.getElementById('panel-lesson');
+      const lessonEditorContent = document.getElementById('lesson-editor-content');
+
+      const btnSettings = document.getElementById('btn-select-course-settings');
+      const btnOverview = document.getElementById('btn-select-overview');
+
+      btnSettings?.classList.remove('is-active');
+      btnOverview?.classList.remove('is-active');
+
+      panelSettings?.classList.add('hidden');
+      panelOverview?.classList.add('hidden');
+      panelLesson?.classList.add('hidden');
+
+      if (selectedTarget.type === 'course-settings') {
+        btnSettings?.classList.add('is-active');
+        panelSettings?.classList.remove('hidden');
+      } else if (selectedTarget.type === 'overview') {
+        btnOverview?.classList.add('is-active');
+        panelOverview?.classList.remove('hidden');
+      } else if (selectedTarget.type === 'lesson' && lessonEditorContent) {
+        panelLesson?.classList.remove('hidden');
+
+        const mod = modulesState.find((m) => String(m.id) === String(selectedTarget.modId));
+        const les = mod?.lessons.find((l) => String(l.id) === String(selectedTarget.lesId));
+
+        if (!les) {
+          lessonEditorContent.innerHTML = '<p class="empty-hint">Pilih materi pelajaran dari silabus di sebelah kiri.</p>';
+          return;
+        }
+
+        lessonEditorContent.innerHTML = `
+          <div class="panel-card-header">
+            <div class="panel-header-icon-box">
+              <span class="material-symbols-outlined">${les.type === 'pkt_lab' ? 'terminal' : les.type === 'quiz' ? 'quiz' : 'menu_book'}</span>
+            </div>
+            <div class="panel-header-copy">
+              <span class="panel-kicker">Bab: ${escapeHtml(mod?.title || 'Modul')}</span>
+              <h2 class="panel-title">${escapeHtml(les.title)}</h2>
+            </div>
+          </div>
+
+          <div class="lesson-meta-edit-grid">
+            <div class="meta-field-group-wide">
+              <label class="field-label">Judul Materi Pelajaran <span class="req-star">*</span></label>
+              <input type="text" class="studio-input input-les-title" value="${escapeHtml(les.title)}" />
+            </div>
+
+            <div class="meta-field-group">
+              <label class="field-label">Tipe Konten <span class="req-star">*</span></label>
+              <select class="studio-select select-les-type">
+                <option value="theory" ${les.type === 'theory' ? 'selected' : ''}>Teori / Pembahasan (Markdown)</option>
+                <option value="pkt_lab" ${les.type === 'pkt_lab' ? 'selected' : ''}>Praktik Lab Packet Tracer (.pkt)</option>
+                <option value="quiz" ${les.type === 'quiz' ? 'selected' : ''}>Kuis Evaluasi Interaktif</option>
+              </select>
+            </div>
+
+            <div class="meta-field-group">
+              <label class="field-label">Estimasi Waktu (Menit)</label>
+              <input type="number" class="studio-input input-les-duration" value="${les.durationMinutes || 10}" min="1" max="180" />
+            </div>
+          </div>
+
+          <!-- Body Editor Area Sesuai Tipe -->
+          <div class="lesson-type-workspace">
+            ${les.type === 'theory' ? renderTheoryEditorHtml(les) : ''}
+            ${les.type === 'pkt_lab' ? renderLabEditorHtml(les) : ''}
+            ${les.type === 'quiz' ? renderQuizEditorHtml(les) : ''}
+          </div>
+        `;
+
+        attachLessonEditorEvents(les);
+      }
+    }
+
+    function renderTheoryEditorHtml(les: LessonItem): string {
+      return `
+        <div class="theory-workspace-card">
+          <div class="editor-toolbar-wrap">
+            <span class="toolbar-label">Tombol Cepat:</span>
+            <button type="button" class="btn-tool btn-tool-upload-image" title="Unggah foto langsung ke materi">
+              <span class="material-symbols-outlined icon-xs">add_photo_alternate</span>
+              <span>+ Unggah Foto / Gambar</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-cli" title="Sisipkan jendela perintah terminal Cisco">
+              <span class="material-symbols-outlined icon-xs">terminal</span>
+              <span>+ Blok CLI Cisco</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-callout" title="Sisipkan kotak catatan penting">
+              <span class="material-symbols-outlined icon-xs">info</span>
+              <span>+ Kotak Catatan (Callout)</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-topology" title="Sisipkan diagram topologi jaringan">
+              <span class="material-symbols-outlined icon-xs">hub</span>
+              <span>+ Diagram Topologi</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-heading" title="Sisipkan subjudul">
+              <span class="material-symbols-outlined icon-xs">title</span>
+              <span>+ Subjudul (##)</span>
+            </button>
+          </div>
+
+          <div class="editor-tabs-bar">
+            <button type="button" class="editor-subtab active tab-les-write">Tulis Markdown</button>
+            <button type="button" class="editor-subtab tab-les-preview">Pratinjau Langsung</button>
+          </div>
+
+          <div class="editor-workspace-area">
+            <textarea class="markdown-editor-box textarea-les-content" rows="18" placeholder="Tulis uraian materi atau paste catatan Markdown Anda di sini...">${escapeHtml(les.content || '')}</textarea>
+            <div class="markdown-preview-box preview-les-content hidden"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLabEditorHtml(les: LessonItem): string {
+      return `
+        <div class="lab-workspace-card">
+          <div class="lab-config-header">
+            <span class="material-symbols-outlined icon-pkt">terminal</span>
+            <div>
+              <strong>Praktikum Simulasi Cisco Packet Tracer</strong>
+              <p>Siswa dapat mengunduh berkas .pkt untuk dikonfigurasi di software Packet Tracer beserta panduan pengerjaan.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-two">
+            <div class="form-group-full">
+              <label class="field-label">Berkas Simulasi Packet Tracer (.pkt / .pka) <span class="req-star">*</span></label>
+              <div class="input-with-button-row">
+                <input type="text" class="studio-input input-pkt-url" placeholder="https://drive.google.com/... atau /labs/..." value="${escapeHtml(les.pktUrl || les.driveUrl || '')}" />
+                <button type="button" class="btn-tool-upload-pkt btn-upload-pkt">
+                  <span class="material-symbols-outlined icon-xs">upload_file</span>
+                  <span>Unggah .pkt</span>
+                </button>
+              </div>
+              <small class="field-hint">Masukkan tautan Google Drive atau pilih berkas langsung dari komputer.</small>
+            </div>
+
+            <div class="form-group-full">
+              <label class="field-label">Berkas Panduan Praktikum PDF (Opsional)</label>
+              <div class="input-with-button-row">
+                <input type="text" class="studio-input input-pdf-url" placeholder="https://... atau /labs/panduan.pdf" value="${escapeHtml(les.pdfUrl || '')}" />
+                <button type="button" class="btn-tool-upload-pdf btn-upload-pkt">
+                  <span class="material-symbols-outlined icon-xs">picture_as_pdf</span>
+                  <span>Unggah PDF</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="editor-toolbar-wrap" style="margin-top: 1.5rem;">
+            <span class="toolbar-label">Uraian & Langkah Praktikum (Markdown):</span>
+            <button type="button" class="btn-tool btn-tool-upload-image">
+              <span class="material-symbols-outlined icon-xs">add_photo_alternate</span>
+              <span>+ Diagram Topologi</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-cli">
+              <span class="material-symbols-outlined icon-xs">terminal</span>
+              <span>+ CLI Verifikasi</span>
+            </button>
+            <button type="button" class="btn-tool btn-tool-callout">
+              <span class="material-symbols-outlined icon-xs">info</span>
+              <span>+ Catatan Lab</span>
+            </button>
+          </div>
+
+          <div class="editor-tabs-bar">
+            <button type="button" class="editor-subtab active tab-les-write">Tulis Instruksi</button>
+            <button type="button" class="editor-subtab tab-les-preview">Pratinjau Instruksi</button>
+          </div>
+
+          <div class="editor-workspace-area">
+            <textarea class="markdown-editor-box textarea-les-content" rows="12" placeholder="Uraian skenario lab, instruksi pengerjaan, tabel pengalamatan IP, atau kriteria kelulusan praktikum...">${escapeHtml(les.content || '')}</textarea>
+            <div class="markdown-preview-box preview-les-content hidden"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderQuizEditorHtml(les: LessonItem): string {
+      const questions = les.quizQuestions || [];
+      return `
+        <div class="quiz-workspace-card">
+          <div class="quiz-config-bar">
+            <div class="quiz-badge-wrap">
+              <span class="material-symbols-outlined icon-quiz">quiz</span>
+              <div>
+                <strong>Penyusun Soal Kuis Interaktif</strong>
+                <span>Tentukan butir pertanyaan, 4 pilihan ganda, dan tandai tombol radio pada jawaban yang benar.</span>
+              </div>
+            </div>
+            <div class="quiz-pass-rate-box">
+              <label>Nilai Kelulusan (%):</label>
+              <input type="number" class="studio-input input-quiz-pass" min="1" max="100" value="${les.passingScore || 67}" />
+            </div>
+          </div>
+
+          <div class="quiz-questions-wrap" id="quiz-questions-container">
+            ${questions.map((q, qIdx) => `
+              <div class="question-builder-item" data-q-idx="${qIdx}">
+                <div class="question-header-row">
+                  <span class="q-badge">Soal #${qIdx + 1}</span>
+                  ${questions.length > 1 ? `
+                    <button type="button" class="btn-del-question" data-q-idx="${qIdx}" title="Hapus soal ini">
+                      <span class="material-symbols-outlined icon-xs">delete</span>
+                    </button>
+                  ` : ''}
+                </div>
+
+                <div class="q-field-group">
+                  <label class="field-label">Teks Pertanyaan <span class="req-star">*</span></label>
+                  <input type="text" class="studio-input input-q-text" data-q-idx="${qIdx}" value="${escapeHtml(q.question)}" placeholder="Contoh: Apa fungsi utama routing table?" />
+                </div>
+
+                <div class="q-options-container">
+                  <label class="field-label">Pilihan Jawaban (Tandai radio button pada jawaban benar):</label>
+                  <div class="options-grid">
+                    ${['A', 'B', 'C', 'D'].map((letter, optIdx) => `
+                      <div class="opt-row ${q.correctIndex === optIdx ? 'is-correct' : ''}">
+                        <label class="radio-label">
+                          <input type="radio" name="correct-${qIdx}" class="radio-correct-opt" data-q-idx="${qIdx}" data-opt-idx="${optIdx}" ${q.correctIndex === optIdx ? 'checked' : ''} />
+                          <span class="letter-badge">${letter}</span>
+                        </label>
+                        <input type="text" class="studio-input input-opt-text" data-q-idx="${qIdx}" data-opt-idx="${optIdx}" placeholder="Pilihan jawaban ${letter}..." value="${escapeHtml(q.options?.[optIdx] || '')}" />
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="q-field-group" style="margin-top: 1rem;">
+                  <label class="field-label">Pembahasan Kunci Jawaban</label>
+                  <input type="text" class="studio-input input-q-explain" data-q-idx="${qIdx}" value="${escapeHtml(q.explanation || '')}" placeholder="Penjelasan alasan jawaban ini benar..." />
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <button type="button" id="btn-add-question" class="btn-add-question-dashed">
+            <span class="material-symbols-outlined icon-sm">add_circle</span>
+            <span>+ Tambah Butir Soal Kuis</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function attachLessonEditorEvents(les: LessonItem) {
+      // Title change
+      const titleInput = document.querySelector('.input-les-title') as HTMLInputElement | null;
+      if (titleInput) {
+        titleInput.addEventListener('input', (e) => {
+          les.title = (e.target as HTMLInputElement).value;
+          renderSyllabusTree();
+        });
+      }
+
+      // Duration change
+      const durInput = document.querySelector('.input-les-duration') as HTMLInputElement | null;
+      if (durInput) {
+        durInput.addEventListener('input', (e) => {
+          les.durationMinutes = Number((e.target as HTMLInputElement).value) || 10;
+        });
+      }
+
+      // Type change
+      const typeSelect = document.querySelector('.select-les-type') as HTMLSelectElement | null;
+      if (typeSelect) {
+        typeSelect.addEventListener('change', (e) => {
+          les.type = (e.target as HTMLSelectElement).value as any;
+          if (les.type === 'quiz' && (!les.quizQuestions || les.quizQuestions.length === 0)) {
+            les.quizQuestions = [
+              {
+                id: 1,
+                question: 'Pertanyaan kuis baru?',
+                options: ['Pilihan A (Benar)', 'Pilihan B', 'Pilihan C', 'Pilihan D'],
+                correctIndex: 0,
+                explanation: 'Penjelasan kunci jawaban.',
+              },
+            ];
+          }
+          renderSyllabusTree();
+          renderActivePanel();
+        });
+      }
+
+      // Markdown Textarea
+      const textarea = document.querySelector('.textarea-les-content') as HTMLTextAreaElement | null;
+      const previewBox = document.querySelector('.preview-les-content') as HTMLElement | null;
+      const tabWrite = document.querySelector('.tab-les-write') as HTMLElement | null;
+      const tabPreview = document.querySelector('.tab-les-preview') as HTMLElement | null;
+
+      if (textarea) {
+        textarea.addEventListener('input', () => {
+          les.content = textarea.value;
+          if (previewBox && !previewBox.classList.contains('hidden')) {
+            previewBox.innerHTML = parseMarkdownToHtml(textarea.value);
+          }
+        });
+      }
+
+      if (tabWrite && tabPreview && textarea && previewBox) {
+        tabWrite.addEventListener('click', () => {
+          tabWrite.classList.add('active');
+          tabPreview.classList.remove('active');
+          textarea.classList.remove('hidden');
+          previewBox.classList.add('hidden');
+        });
+
+        tabPreview.addEventListener('click', () => {
+          tabPreview.classList.add('active');
+          tabWrite.classList.remove('active');
+          textarea.classList.add('hidden');
+          previewBox.classList.remove('hidden');
+          previewBox.innerHTML = parseMarkdownToHtml(textarea.value);
+        });
+      }
+
+      // Tool buttons
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-cli').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (textarea) {
+            insertTextAtCursor(
+              textarea,
+              `\n<CommandBlock\n  title="Cisco IOS"\n  prompt="Router#"\n  command="show ip interface brief"\n  output="Interface                  IP-Address      OK? Method Status   Protocol\\nGigabitEthernet0/0/0       192.168.1.1     YES manual up       up"\n/>\n`
+            );
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-callout').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (textarea) {
+            insertTextAtCursor(
+              textarea,
+              `\n<Callout type="info" title="Informasi Penting">\n  Tuliskan catatan penting atau tips teknis di sini.\n</Callout>\n`
+            );
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-topology').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (textarea) {
+            insertTextAtCursor(
+              textarea,
+              `\n<TopologyDiagram\n  title="Topologi Latihan"\n  caption="Skema koneksi antara Switch dan Router"\n  leftLabel="LAN Pengguna"\n  centerLabel="Router Utama"\n  rightLabel="Server Internal"\n/>\n`
+            );
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-heading').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (textarea) {
+            insertTextAtCursor(textarea, `\n## Subjudul Pembahasan Baru\n\n`);
+          }
+        });
+      });
+
+      // Upload image button
+      const hiddenImgInput = document.getElementById('studio-image-file') as HTMLInputElement | null;
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-upload-image').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (hiddenImgInput) {
+            hiddenImgInput.onchange = async () => {
+              if (!hiddenImgInput.files || hiddenImgInput.files.length === 0) return;
+              const file = hiddenImgInput.files[0];
+              const formData = new FormData();
+              formData.append('image', file);
+              btn.disabled = true;
+              btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+
+              try {
+                const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.url && textarea) {
+                  insertTextAtCursor(textarea, `\n![${data.alt || 'gambar'}](${data.url})\n`);
+                } else {
+                  alert(data.error || 'Gagal mengunggah gambar.');
+                }
+              } catch {
+                alert('Terjadi kesalahan jaringan.');
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined icon-xs">add_photo_alternate</span> <span>+ Unggah Foto / Gambar</span>`;
+                hiddenImgInput.value = '';
+              }
+            };
+            hiddenImgInput.click();
+          }
+        });
+      });
+
+      // Upload PKT button
+      const hiddenPktInput = document.getElementById('studio-pkt-file') as HTMLInputElement | null;
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-upload-pkt').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (hiddenPktInput) {
+            hiddenPktInput.onchange = async () => {
+              if (!hiddenPktInput.files || hiddenPktInput.files.length === 0) return;
+              const file = hiddenPktInput.files[0];
+              const formData = new FormData();
+              formData.append('file', file);
+              btn.disabled = true;
+              btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+
+              try {
+                const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.url) {
+                  const pktUrlInput = document.querySelector('.input-pkt-url') as HTMLInputElement | null;
+                  if (pktUrlInput) pktUrlInput.value = data.url;
+                  les.pktUrl = data.url;
+                  les.fileNameDownloaded = data.fileName;
+                } else {
+                  alert(data.error || 'Gagal mengunggah berkas PKT.');
+                }
+              } catch {
+                alert('Terjadi kesalahan jaringan.');
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined icon-xs">upload_file</span> <span>Unggah .pkt</span>`;
+                hiddenPktInput.value = '';
+              }
+            };
+            hiddenPktInput.click();
+          }
+        });
+      });
+
+      // Upload PDF button
+      const hiddenPdfInput = document.getElementById('studio-pdf-file') as HTMLInputElement | null;
+      document.querySelectorAll<HTMLButtonElement>('.btn-tool-upload-pdf').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (hiddenPdfInput) {
+            hiddenPdfInput.onchange = async () => {
+              if (!hiddenPdfInput.files || hiddenPdfInput.files.length === 0) return;
+              const file = hiddenPdfInput.files[0];
+              const formData = new FormData();
+              formData.append('file', file);
+              btn.disabled = true;
+              btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+
+              try {
+                const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.url) {
+                  const pdfUrlInput = document.querySelector('.input-pdf-url') as HTMLInputElement | null;
+                  if (pdfUrlInput) pdfUrlInput.value = data.url;
+                  les.pdfUrl = data.url;
+                  les.pdfFileName = data.fileName;
+                } else {
+                  alert(data.error || 'Gagal mengunggah panduan PDF.');
+                }
+              } catch {
+                alert('Terjadi kesalahan jaringan.');
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined icon-xs">picture_as_pdf</span> <span>Unggah PDF</span>`;
+                hiddenPdfInput.value = '';
+              }
+            };
+            hiddenPdfInput.click();
+          }
+        });
+      });
+
+      // Lab input changes
+      const pktUrlInput = document.querySelector('.input-pkt-url') as HTMLInputElement | null;
+      if (pktUrlInput) {
+        pktUrlInput.addEventListener('input', (e) => {
+          les.pktUrl = (e.target as HTMLInputElement).value;
+        });
+      }
+
+      const pdfUrlInput = document.querySelector('.input-pdf-url') as HTMLInputElement | null;
+      if (pdfUrlInput) {
+        pdfUrlInput.addEventListener('input', (e) => {
+          les.pdfUrl = (e.target as HTMLInputElement).value;
+        });
+      }
+
+      // Quiz events
+      const passRateInput = document.querySelector('.input-quiz-pass') as HTMLInputElement | null;
+      if (passRateInput) {
+        passRateInput.addEventListener('input', (e) => {
+          les.passingScore = Number((e.target as HTMLInputElement).value) || 67;
+        });
+      }
+
+      document.querySelectorAll<HTMLInputElement>('.input-q-text').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const qIdx = Number(input.getAttribute('data-q-idx'));
+          if (les.quizQuestions && les.quizQuestions[qIdx]) {
+            les.quizQuestions[qIdx].question = (e.target as HTMLInputElement).value;
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLInputElement>('.radio-correct-opt').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          const qIdx = Number(radio.getAttribute('data-q-idx'));
+          const optIdx = Number(radio.getAttribute('data-opt-idx'));
+          if (les.quizQuestions && les.quizQuestions[qIdx]) {
+            les.quizQuestions[qIdx].correctIndex = optIdx;
+            const parent = radio.closest('.options-grid');
+            parent?.querySelectorAll('.opt-row').forEach((r, i) => {
+              if (i === optIdx) r.classList.add('is-correct');
+              else r.classList.remove('is-correct');
+            });
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLInputElement>('.input-opt-text').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const qIdx = Number(input.getAttribute('data-q-idx'));
+          const optIdx = Number(input.getAttribute('data-opt-idx'));
+          if (les.quizQuestions && les.quizQuestions[qIdx]) {
+            if (!les.quizQuestions[qIdx].options) les.quizQuestions[qIdx].options = [];
+            les.quizQuestions[qIdx].options[optIdx] = (e.target as HTMLInputElement).value;
+          }
+        });
+      });
+
+      document.querySelectorAll<HTMLInputElement>('.input-q-explain').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const qIdx = Number(input.getAttribute('data-q-idx'));
+          if (les.quizQuestions && les.quizQuestions[qIdx]) {
+            les.quizQuestions[qIdx].explanation = (e.target as HTMLInputElement).value;
+          }
+        });
+      });
+
+      // Delete question
+      document.querySelectorAll<HTMLButtonElement>('.btn-del-question').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const qIdx = Number(btn.getAttribute('data-q-idx'));
+          if (les.quizQuestions && les.quizQuestions.length > 1) {
+            les.quizQuestions.splice(qIdx, 1);
+            renderActivePanel();
+          }
+        });
+      });
+
+      // Add question
+      const addQBtn = document.getElementById('btn-add-question');
+      if (addQBtn) {
+        addQBtn.addEventListener('click', () => {
+          if (!les.quizQuestions) les.quizQuestions = [];
+          les.quizQuestions.push({
+            id: Date.now(),
+            question: `Pertanyaan kuis baru #${les.quizQuestions.length + 1}?`,
+            options: ['Pilihan Jawaban A (Kunci Benar)', 'Pilihan Jawaban B', 'Pilihan Jawaban C', 'Pilihan Jawaban D'],
+            correctIndex: 0,
+            explanation: 'Pembahasan teknis jawaban yang benar.',
+          });
+          renderActivePanel();
+        });
+      }
+    }
+
+    // Top buttons and overview panel events
+    const btnSelectSettings = document.getElementById('btn-select-course-settings');
+    const btnSelectOverview = document.getElementById('btn-select-overview');
+    const btnAddNewMod = document.getElementById('btn-add-new-module');
+
+    btnSelectSettings?.addEventListener('click', () => {
+      selectedTarget = { type: 'course-settings' };
+      renderSyllabusTree();
+      renderActivePanel();
+    });
+
+    btnSelectOverview?.addEventListener('click', () => {
+      selectedTarget = { type: 'overview' };
+      renderSyllabusTree();
+      renderActivePanel();
+    });
+
+    btnAddNewMod?.addEventListener('click', () => {
+      const newModOrder = modulesState.length + 1;
+      const newModId = `${courseData.courseSlug}-${String(newModOrder).padStart(2, '0')}-modul-${newModOrder}`;
+      const newModule: ModuleItem = {
+        id: newModId,
+        slug: newModId,
+        title: `Modul ${newModOrder}: Topik Bahasan Baru`,
+        order: newModOrder,
+        description: '',
+        lessons: [
+          {
+            id: Date.now(),
+            slug: `pelajaran-1`,
+            fileName: '',
+            title: `01. Pengantar Modul ${newModOrder}`,
+            type: 'theory',
+            durationMinutes: 10,
+            order: 1,
+            content: `## Pendahuluan Modul ${newModOrder}\n\nTuliskan rangkuman dan sasaran pembelajaran modul ini.\n`,
+          },
+        ],
+      };
+      modulesState.push(newModule);
+      selectedTarget = { type: 'lesson', modId: newModule.id, lesId: newModule.lessons[0].id };
+      renderSyllabusTree();
+      renderActivePanel();
+    });
+
+    // Overview Markdown Events
+    const textareaOverview = document.getElementById('textarea-overview') as HTMLTextAreaElement | null;
+    const previewOverview = document.getElementById('preview-overview') as HTMLElement | null;
+    const subtabWriteOverview = document.getElementById('subtab-write-overview') as HTMLElement | null;
+    const subtabPreviewOverview = document.getElementById('subtab-preview-overview') as HTMLElement | null;
+
+    if (textareaOverview) {
+      textareaOverview.addEventListener('input', () => {
+        courseData.overviewContent = textareaOverview.value;
+        if (previewOverview && !previewOverview.classList.contains('hidden')) {
+          previewOverview.innerHTML = parseMarkdownToHtml(textareaOverview.value);
+        }
+      });
+    }
+
+    if (subtabWriteOverview && subtabPreviewOverview && textareaOverview && previewOverview) {
+      subtabWriteOverview.addEventListener('click', () => {
+        subtabWriteOverview.classList.add('active');
+        subtabPreviewOverview.classList.remove('active');
+        textareaOverview.classList.remove('hidden');
+        previewOverview.classList.add('hidden');
+      });
+
+      subtabPreviewOverview.addEventListener('click', () => {
+        subtabPreviewOverview.classList.add('active');
+        subtabWriteOverview.classList.remove('active');
+        textareaOverview.classList.add('hidden');
+        previewOverview.classList.remove('hidden');
+        previewOverview.innerHTML = parseMarkdownToHtml(textareaOverview.value);
+      });
+    }
+
+    const toolUploadOverview = document.getElementById('tool-upload-overview');
+    const toolCalloutOverview = document.getElementById('tool-callout-overview');
+    const toolHeadingOverview = document.getElementById('tool-heading-overview');
+    const hiddenImgInput = document.getElementById('studio-image-file') as HTMLInputElement | null;
+
+    toolCalloutOverview?.addEventListener('click', () => {
+      if (textareaOverview) {
+        insertTextAtCursor(textareaOverview, `\n<Callout type="info" title="Selamat Datang!">\n  Selamat datang di kursus ini. Silakan ikuti seluruh silabus modul.\n</Callout>\n`);
+      }
+    });
+
+    toolHeadingOverview?.addEventListener('click', () => {
+      if (textareaOverview) {
+        insertTextAtCursor(textareaOverview, `\n## Ringkasan Silabus\n\n`);
+      }
+    });
+
+    toolUploadOverview?.addEventListener('click', () => {
+      if (hiddenImgInput) {
+        hiddenImgInput.onchange = async () => {
+          if (!hiddenImgInput.files || hiddenImgInput.files.length === 0) return;
+          const file = hiddenImgInput.files[0];
+          const formData = new FormData();
+          formData.append('image', file);
+          try {
+            const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.url && textareaOverview) {
+              insertTextAtCursor(textareaOverview, `\n![${data.alt || 'sampul'}](${data.url})\n`);
+            }
+          } catch {
+            alert('Gagal mengunggah foto.');
+          } finally {
+            hiddenImgInput.value = '';
+          }
+        };
+        hiddenImgInput.click();
+      }
+    });
+
+    // Save All Course & Materials Action
+    const saveBtn = document.getElementById('btn-save-course') as HTMLButtonElement | null;
+    const saveBtnLabel = document.getElementById('save-btn-label');
+    const banner = document.getElementById('studio-alert-banner');
+
+    function showBanner(message: string, isError = false) {
+      if (!banner) return;
+      banner.className = `studio-banner ${isError ? 'banner-error' : 'banner-success'}`;
+      banner.textContent = message;
+      banner.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!isError) {
+        setTimeout(() => banner.classList.add('hidden'), 5000);
+      }
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        if (saveBtnLabel) saveBtnLabel.textContent = 'Menyimpan ke Server...';
+
+        // Gather Course Settings
+        const titleInput = document.getElementById('input-course-title') as HTMLInputElement | null;
+        const catSelect = document.getElementById('input-course-category') as HTMLSelectElement | null;
+        const levelSelect = document.getElementById('input-course-level') as HTMLSelectElement | null;
+        const statusSelect = document.getElementById('input-course-status') as HTMLSelectElement | null;
+        const durInput = document.getElementById('input-course-duration') as HTMLInputElement | null;
+        const descInput = document.getElementById('input-course-desc') as HTMLTextAreaElement | null;
+
+        const payload = {
+          courseSlug: courseData.courseSlug,
+          title: titleInput ? titleInput.value.trim() : courseData.title,
+          category: catSelect ? catSelect.value : courseData.category,
+          level: levelSelect ? levelSelect.value : courseData.level,
+          status: statusSelect ? statusSelect.value : courseData.status,
+          durationHours: durInput ? Number(durInput.value) || 6 : courseData.durationHours,
+          description: descInput ? descInput.value.trim() : courseData.description,
+          cover: courseData.cover,
+          tools: courseData.tools,
+          outcomes: courseData.outcomes,
+          overviewContent: textareaOverview ? textareaOverview.value : courseData.overviewContent,
+          modules: modulesState,
+        };
+
+        try {
+          const res = await fetch('/api/admin/courses/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showBanner(`Perubahan pada kursus '${payload.title}' dan seluruh materinya berhasil disimpan!`);
+            const displayTitle = document.getElementById('display-course-title');
+            if (displayTitle) displayTitle.textContent = payload.title;
+            const displayBadge = document.getElementById('display-status-badge');
+            if (displayBadge) {
+              displayBadge.setAttribute('data-status', payload.status);
+              displayBadge.textContent = payload.status === 'published' ? 'Terpublikasi' : payload.status === 'planned' ? 'Segera Hadir' : 'Draf';
+            }
+          } else {
+            showBanner(data.error || 'Gagal menyimpan perubahan kursus.', true);
+          }
+        } catch (err: any) {
+          showBanner('Terjadi gangguan jaringan saat menyimpan kursus.', true);
+        } finally {
+          saveBtn.disabled = false;
+          if (saveBtnLabel) saveBtnLabel.textContent = 'Simpan Semua Perubahan';
+        }
+      });
+    }
+
+    // Initial render
+    renderSyllabusTree();
+    renderActivePanel();
+  </script>
+
+  <style>
+    .studio-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: 0 0 4rem 0;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .studio-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: #ffffff;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.82rem;
+      color: #64748b;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .btn-back-link:hover {
+      color: #0f172a;
+    }
+
+    .course-header-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .studio-course-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .status-badge[data-status='published'] {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .status-badge[data-status='planned'] {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .status-badge[data-status='draft'] {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-topbar-secondary, .btn-topbar-subtle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn-topbar-secondary {
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-topbar-secondary:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+    .btn-topbar-subtle {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid transparent;
+    }
+    .btn-topbar-subtle:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .btn-save-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.25rem;
+      border-radius: 8px;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
+    }
+    .btn-save-primary:hover {
+      background: #0369a1;
+    }
+    .btn-save-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .studio-banner {
+      padding: 0.85rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+    .banner-success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .banner-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    /* Split Workspace */
+    .studio-workspace {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .studio-workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Syllabus Sidebar */
+    .syllabus-sidebar {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .syllabus-sidebar-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .sidebar-title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .icon-syllabus {
+      font-size: 1.5rem;
+      color: #0284c7;
+    }
+    .sidebar-heading {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+    .sidebar-subheading {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .nav-item-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .nav-item-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+    .nav-item-btn.is-active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #93c5fd;
+    }
+
+    .syllabus-tree-container {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .tree-module-group {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .tree-module-header {
+      padding: 0.6rem 0.75rem;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .mod-header-title-box {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mod-num-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #cbd5e1;
+      color: #334155;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .mod-title-inline-input {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 0.2rem 0.4rem;
+      width: 100%;
+      min-width: 0;
+      transition: all 0.15s;
+    }
+    .mod-title-inline-input:hover, .mod-title-inline-input:focus {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      outline: none;
+    }
+
+    .mod-header-actions-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .btn-tree-action {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 0.2rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-tree-action:hover {
+      background: #ffffff;
+      color: #0f172a;
+    }
+    .btn-del-mod:hover {
+      color: #ef4444;
+    }
+
+    .tree-lessons-list {
+      display: flex;
+      flex-direction: column;
+      padding: 0.35rem;
+      gap: 0.25rem;
+    }
+
+    .tree-lesson-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #ffffff;
+      border: 1px solid transparent;
+    }
+    .tree-lesson-item:hover {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+    .tree-lesson-item.is-active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .les-item-clickable {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .les-num {
+      font-size: 0.72rem;
+      font-family: monospace;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .les-title-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .les-type-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .pill-theory {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .pill-lab {
+      background: #fdf4ff;
+      color: #9333ea;
+    }
+    .pill-quiz {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .btn-del-les-tree {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0.15rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+    }
+    .tree-lesson-item:hover .btn-del-les-tree {
+      opacity: 1;
+    }
+    .btn-del-les-tree:hover {
+      color: #ef4444;
+    }
+
+    .syllabus-sidebar-footer {
+      padding: 0.85rem;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .btn-add-module-outline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      width: 100%;
+      padding: 0.6rem;
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #0284c7;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-add-module-outline:hover {
+      border-color: #0284c7;
+      background: #f0f9ff;
+    }
+
+    /* Editor Canvas */
+    .editor-canvas {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      padding: 1.5rem;
+      min-height: 650px;
+    }
+
+    .editor-panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .panel-header-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #eff6ff;
+      color: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-kicker {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .panel-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .panel-desc {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin: 0.2rem 0 0 0;
+    }
+
+    .form-grid-two {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .form-group-full {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .req-star {
+      color: #ef4444;
+    }
+    .field-hint {
+      font-size: 0.72rem;
+      color: #64748b;
+    }
+
+    .studio-input, .studio-select, .studio-textarea {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: #0f172a;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .studio-input:focus, .studio-select:focus, .studio-textarea:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    .lesson-meta-edit-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 1fr;
+      gap: 1rem;
+      background: #f8fafc;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 768px) {
+      .lesson-meta-edit-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-grid-two {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .meta-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .meta-field-group-wide {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .editor-toolbar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .toolbar-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .btn-tool {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-tool:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+
+    .editor-tabs-bar {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      margin-top: 0.75rem;
+    }
+
+    .editor-subtab {
+      background: transparent;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      position: relative;
+      bottom: -2px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .editor-subtab.active {
+      color: #0284c7;
+      border-bottom-color: #0284c7;
+    }
+
+    .editor-workspace-area {
+      position: relative;
+      margin-top: 0.5rem;
+    }
+
+    .markdown-editor-box {
+      width: 100%;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      outline: none;
+      resize: vertical;
+    }
+    .markdown-editor-box:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    .markdown-preview-box {
+      min-height: 300px;
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: #1e293b;
+    }
+
+    .preview-callout {
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    .callout-info {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      color: #1e3a8a;
+    }
+    .callout-warning {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      color: #78350f;
+    }
+
+    .preview-cli-block {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-family: monospace;
+    }
+    .cli-title {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .preview-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 0.75rem 0;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Lab & Quiz Cards */
+    .lab-workspace-card, .quiz-workspace-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      background: #f8fafc;
+      padding: 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .lab-config-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .icon-pkt {
+      font-size: 2rem;
+      color: #9333ea;
+    }
+
+    .input-with-button-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-upload-pkt {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.6rem 0.95rem;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .btn-upload-pkt:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    /* Quiz Workspace */
+    .quiz-config-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .quiz-badge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .icon-quiz {
+      font-size: 2rem;
+      color: #059669;
+    }
+
+    .quiz-pass-rate-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .input-quiz-pass {
+      width: 75px !important;
+    }
+
+    .quiz-questions-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .question-builder-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .question-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .q-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      color: #047857;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .btn-del-question {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+    .btn-del-question:hover {
+      color: #ef4444;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+    }
+    @media (max-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f8fafc;
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .opt-row.is-correct {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+    }
+
+    .letter-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .btn-add-question-dashed {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #059669;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-add-question-dashed:hover {
+      border-color: #059669;
+      background: #f0fdf4;
+    }
+
+    .spin-icon {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</AdminLayout>

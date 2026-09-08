@@ -12,6 +12,8 @@ interface Props {
 }
 
 const { entry, course, courseEntries } = Astro.props;
+const user = Astro.locals.user;
+const isAdmin = user?.role === 'admin';
 const category = entry.id.split('/')[0];
 const moduleOrder = new Map(course.modules.map((module) => [module.slug, module.order]));
 const sortedEntries = [...courseEntries].sort((a, b) => {
@@ -168,6 +170,17 @@ const nextGateLabel = isNextInDifferentModule && nextModule
           <div class="lesson-resources">
             <a href={docsHref}>Buka dokumentasi</a>
             {relatedPath && <a href={'/learning-path/' + relatedPath.slug}>Lihat roadmap</a>}
+            {isAdmin && (
+              <a
+                href={isOverview ? `/admin/courses/${course.slug}/edit` : `/admin/courses/${course.slug}/edit?lesson=${currentLessonSlug}`}
+                class="admin-quick-edit-link"
+                target="_blank"
+                title="Edit materi ini di Studio Admin"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span>Edit Materi Ini (Admin)</span>
+              </a>
+            )}
           </div>
         </header>
 
@@ -424,8 +437,10 @@ const nextGateLabel = isNextInDifferentModule && nextModule
   .lesson-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.85rem; margin-bottom: 0.8rem; color: var(--color-primary); font-family: var(--font-mono); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.04em; text-transform: uppercase; }
   .lesson-header h1 { margin: 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; }
   .lesson-header p { max-width: 720px; margin: 0.9rem 0 0; color: var(--color-muted); font-size: 1rem; line-height: 1.65; }
-  .lesson-resources { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 1rem; }
+  .lesson-resources { display: flex; align-items: center; flex-wrap: wrap; gap: 0.85rem; margin-top: 1rem; }
   .lesson-resources a { color: var(--color-primary); font-size: 0.7rem; font-weight: 850; text-decoration: none; }
+  .admin-quick-edit-link { display: inline-flex !important; align-items: center; gap: 0.35rem; background: #eff6ff; color: #1d4ed8 !important; border: 1px solid #bfdbfe; padding: 0.2rem 0.55rem; border-radius: 6px; font-size: 0.68rem !important; font-weight: 700 !important; text-decoration: none; transition: all 180ms ease; }
+  .admin-quick-edit-link:hover { background: #dbeafe; border-color: #93c5fd; }
   .lesson-content { color: var(--color-ink); font-size: 1rem; line-height: 1.78; }
   .lesson-content :global(> h1:first-child) { display: none; }
   .lesson-content :global(h2), .lesson-content :global(h3), .lesson-content :global(h4) { color: var(--color-navy); font-family: var(--font-heading); font-weight: 600; letter-spacing: -0.015em; scroll-margin-top: 105px; }
