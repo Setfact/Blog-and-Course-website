@@ -149,11 +149,11 @@ const posts = await getPosts(supabase, { sort: 'newest' });
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'delete' }),
           });
-          const data = await res.json();
-          if (data.success) {
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
             window.location.reload();
           } else {
-            alert('Gagal menghapus postingan');
+            alert(data.error || 'Gagal menghapus postingan');
           }
         } catch {
           alert('Terjadi kesalahan jaringan');

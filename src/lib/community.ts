@@ -195,7 +195,7 @@ export const getPosts = async (
         .from('community_posts')
         .select(`
           *,
-          author:profiles(*),
+          author:profiles!community_posts_author_id_fkey(*),
           channel:community_channels(*)
         `);
 
@@ -263,13 +263,14 @@ export const getPostById = async (
   id: string,
   currentUserId?: string
 ): Promise<CommunityPost | null> => {
-  if (supabase) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  if (supabase && isUuid) {
     try {
       const { data, error } = await supabase
         .from('community_posts')
         .select(`
           *,
-          author:profiles(*),
+          author:profiles!community_posts_author_id_fkey(*),
           channel:community_channels(*)
         `)
         .eq('id', id)
@@ -305,7 +306,8 @@ export const getCommentsByPostId = async (
   supabase: SupabaseClient | null,
   postId: string
 ): Promise<CommunityComment[]> => {
-  if (supabase) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId);
+  if (supabase && isUuid) {
     try {
       const { data, error } = await supabase
         .from('community_comments')
@@ -354,7 +356,7 @@ export const createPost = async (
       let res = await supabase
         .from('community_posts')
         .insert(insertPayload)
-        .select(`*, author:profiles(*), channel:community_channels(*)`)
+        .select(`*, author:profiles!community_posts_author_id_fkey(*), channel:community_channels(*)`)
         .single();
 
       // Jika gagal karena kolom image_url belum ada di skema tabel Supabase (PGRST204)
@@ -366,7 +368,7 @@ export const createPost = async (
         res = await supabase
           .from('community_posts')
           .insert(insertPayload)
-          .select(`*, author:profiles(*), channel:community_channels(*)`)
+          .select(`*, author:profiles!community_posts_author_id_fkey(*), channel:community_channels(*)`)
           .single();
       }
 
@@ -563,8 +565,10 @@ export const deletePost = async (
     }
   }
 
-  // 4. Hapus dari Supabase jika terhubung
-  if (supabase) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId);
+
+  // 4. Hapus dari Supabase jika terhubung dan berformat UUID
+  if (supabase && isUuid) {
     try {
       const { error } = await supabase
         .from('community_posts')
@@ -573,9 +577,11 @@ export const deletePost = async (
 
       if (error) {
         console.error('Error saat menghapus postingan di Supabase:', error.message);
+        return { success: false, error: error.message };
       }
     } catch (err) {
       console.error('Error saat eksekusi delete post Supabase:', err);
+      return { success: false, error: 'Gagal menghapus postingan di basis data.' };
     }
   }
 
@@ -585,6 +591,44 @@ export const deletePost = async (
   delete inMemoryUpvotes[postId];
 
   return { success: true };
+};
+
+export const togglePostPin = async (
+  supabase: SupabaseClient | null,
+  postId: string,
+  adminId: string
+): Promise<{ success: boolean; isPinned?: boolean; error?: string }> => {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId);
+  if (supabase && isUuid) {
+    try {
+      const { data: post, error: fetchErr } = await supabase
+        .from('community_posts')
+        .select('is_pinned')
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (fetchErr) return { success: false, error: fetchErr.message };
+      const nextPinned = !post?.is_pinned;
+      await supabase.from('community_posts').update({ is_pinned: nextPinned }).eq('id', postId);
+      await supabase.from('admin_audit_logs').insert({
+        admin_id: adminId,
+        action: nextPinned ? 'PIN_POST' : 'UNPIN_POST',
+        target_type: 'post',
+        target_id: postId,
+      });
+      return { success: true, isPinned: nextPinned };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  const memPost = inMemoryPosts.find((p) => p.id === postId);
+  if (memPost) {
+    memPost.is_pinned = !memPost.is_pinned;
+    return { success: true, isPinned: memPost.is_pinned };
+  }
+
+  return { success: false, error: 'Postingan tidak ditemukan' };
 };
 
 export const deleteComment = async (

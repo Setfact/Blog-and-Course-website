@@ -5,7 +5,6 @@ import {
   readBody,
   textField,
   enumField,
-  uuidField,
   HttpError,
   json,
 } from '../../../lib/security';
@@ -101,8 +100,12 @@ export const DELETE: APIRoute = async (context) => {
     return json({ error: 'ID postingan wajib disertakan.' }, 400);
   }
 
-  const validatedId = uuidField(postId);
-  const result = await deletePost(supabase, validatedId, user);
+  const cleanId = String(postId).trim();
+  if (!/^[a-zA-Z0-9_-]{3,64}$/.test(cleanId)) {
+    return json({ error: 'Format ID postingan tidak valid.' }, 400);
+  }
+
+  const result = await deletePost(supabase, cleanId, user);
 
   if (!result.success) {
     return json({ error: result.error || 'Gagal menghapus postingan.' }, 403);

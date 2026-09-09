@@ -1,67 +1,50 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServerClient } from '../../../../lib/supabase';
+import { deletePost, togglePostPin } from '../../../../lib/community';
+import { json, readBody } from '../../../../lib/security';
 
 export const POST: APIRoute = async (context) => {
   const currentAdmin = context.locals.user;
   if (!currentAdmin || currentAdmin.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Akses ditolak' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Akses ditolak: Hanya administrator yang berwenang.' }, 403);
   }
 
   const postId = context.params.id;
   if (!postId) {
-    return new Response(JSON.stringify({ error: 'Post ID wajib disertakan' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'ID postingan wajib disertakan.' }, 400);
   }
 
-  const supabase = createSupabaseServerClient({
-    request: context.request,
-    cookies: context.cookies,
-  });
-
-  const body = await context.request.json();
-  const { action } = body;
+  const supabase = createSupabaseServerClient(context);
+  const body = (await readBody(context.request).catch(() => ({}))) as Record<string, any>;
+  const action = body.action;
 
   if (action === 'pin') {
-    if (supabase) {
-      const { data: post } = await supabase.from('community_posts').select('is_pinned').eq('id', postId).single();
-      const nextPinned = !post?.is_pinned;
-      await supabase.from('community_posts').update({ is_pinned: nextPinned }).eq('id', postId);
-      await supabase.from('admin_audit_logs').insert({
-        admin_id: currentAdmin.id,
-        action: nextPinned ? 'PIN_POST' : 'UNPIN_POST',
-        target_type: 'post',
-        target_id: postId,
-      });
+    const result = await togglePostPin(supabase, postId, currentAdmin.id);
+    if (!result.success) {
+      return json({ error: result.error || 'Gagal mengubah status pin.' }, 400);
     }
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ success: true, isPinned: result.isPinned });
   }
 
   if (action === 'delete') {
-    if (supabase) {
-      await supabase.from('community_posts').delete().eq('id', postId);
-      await supabase.from('admin_audit_logs').insert({
-        admin_id: currentAdmin.id,
-        action: 'DELETE_POST',
-        target_type: 'post',
-        target_id: postId,
-      });
+    const result = await deletePost(supabase, postId, currentAdmin);
+    if (!result.success) {
+      return json({ error: result.error || 'Gagal menghapus postingan.' }, 400);
     }
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+
+    if (supabase) {
+      try {
+        await supabase.from('admin_audit_logs').insert({
+          admin_id: currentAdmin.id,
+          action: 'DELETE_POST',
+          target_type: 'post',
+          target_id: postId,
+        });
+      } catch {}
+    }
+
+    return json({ success: true, message: 'Postingan berhasil dihapus.' });
   }
 
-  return new Response(JSON.stringify({ error: 'Aksi tidak dikenal' }), {
-    status: 400,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return json({ error: 'Aksi tidak dikenali.' }, 400);
 };
