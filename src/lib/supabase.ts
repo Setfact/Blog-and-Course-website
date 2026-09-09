@@ -69,7 +69,10 @@ export const createSupabaseServerClient = (context: AstroContextLike) => {
     parseCookieHeader(context.request.headers.get('cookie') ?? '').map(({ name, value }) => [name, value ?? ''])
   );
 
-  const isHttps = new URL(context.request.url).protocol === 'https:';
+  const isHttps =
+    context.request.headers.get('x-forwarded-proto') === 'https' ||
+    new URL(context.request.url).protocol === 'https:' ||
+    process.env.NODE_ENV === 'production';
 
   const client = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookieOptions: {
