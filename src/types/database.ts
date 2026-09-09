@@ -13,6 +13,18 @@ export interface Profile {
   streak: number;
   last_study_date: string | null;
   bio: string;
+  phone_number?: string | null;
+  birth_date?: string | null;
+  gender?: 'male' | 'female' | 'other' | string | null;
+  country?: string | null;
+  country_code?: string | null;
+  dial_code?: string | null;
+  province?: string | null;
+  city?: string | null;
+  occupation?: string | null;
+  institution_name?: string | null;
+  referral_source?: string | null;
+  is_profile_complete?: boolean;
   created_at: string;
   updated_at: string;
 }

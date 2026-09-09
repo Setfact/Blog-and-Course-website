@@ -16,9 +16,35 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   streak INTEGER NOT NULL DEFAULT 0,
   last_study_date DATE,
   bio TEXT DEFAULT '',
+  phone_number TEXT DEFAULT '',
+  birth_date DATE,
+  gender TEXT DEFAULT '',
+  country TEXT DEFAULT 'Indonesia',
+  country_code TEXT DEFAULT 'ID',
+  dial_code TEXT DEFAULT '+62',
+  province TEXT DEFAULT '',
+  city TEXT DEFAULT '',
+  occupation TEXT DEFAULT '',
+  institution_name TEXT DEFAULT '',
+  referral_source TEXT DEFAULT '',
+  is_profile_complete BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Kolom Tambahan Profil (Jika tabel sudah ada sebelumnya)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'Indonesia';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS country_code TEXT DEFAULT 'ID';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS dial_code TEXT DEFAULT '+62';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS province TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS city TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS occupation TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS institution_name TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS referral_source TEXT DEFAULT '';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_profile_complete BOOLEAN DEFAULT FALSE;
 
 -- 3. Tabel Saluran Komunitas
 CREATE TABLE IF NOT EXISTS public.community_channels (
