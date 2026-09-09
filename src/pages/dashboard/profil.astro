@@ -87,12 +87,41 @@ const isProfileComplete = Boolean(
                     ) : (
                       <div class="avatar-photo-fallback" id="avatar-fallback-box">{user.full_name.slice(0, 2).toUpperCase()}</div>
                     )}
-                    <button type="button" class="avatar-edit-badge" id="avatar-change-btn" title="Foto profil disinkronkan dari akun Google">
-                      <span class="material-symbols-outlined">edit</span>
+                    <button type="button" class="avatar-edit-badge" id="avatar-change-btn" title="Ganti foto profil">
+                      <span class="material-symbols-outlined">photo_camera</span>
                     </button>
                   </div>
+
+                  <!-- Input Berkas Tersembunyi -->
+                  <input
+                    type="file"
+                    id="input-avatar-file"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="sr-only"
+                    aria-label="Pilih berkas foto profil baru"
+                  />
+
+                  <div class="avatar-action-cluster">
+                    <button type="button" id="btn-trigger-upload" class="btn-avatar-action upload-action">
+                      <span class="material-symbols-outlined icon-btn-xs">upload</span>
+                      <span>Ganti Foto</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="btn-remove-avatar"
+                      class:list={['btn-avatar-action remove-action', { hidden: !user.avatar_url }]}
+                      title="Hapus foto profil kustom dan gunakan inisial nama"
+                    >
+                      <span class="material-symbols-outlined icon-btn-xs">delete</span>
+                      <span>Hapus</span>
+                    </button>
+                  </div>
+
+                  <!-- Status Pengunggahan -->
+                  <div id="avatar-upload-feedback" class="avatar-feedback-pill hidden"></div>
+
                   <span class="avatar-caption">Foto Profil Siswa</span>
-                  <small class="avatar-note">Disinkronkan otomatis dari akun Google saat login.</small>
+                  <small class="avatar-note">Format JPG, PNG, atau WebP. Maksimal 3 MB.</small>
                 </div>
 
                 <!-- Kolom Kanan: Input Form 2 Kolom -->
@@ -335,6 +364,185 @@ const isProfileComplete = Boolean(
 
   tabProfileBtn?.addEventListener('click', () => switchTab('profile'));
   tabSecurityBtn?.addEventListener('click', () => switchTab('security'));
+
+  // Pengelolaan Foto Profil (Upload & Remove)
+  const avatarChangeBtn = document.getElementById('avatar-change-btn');
+  const triggerUploadBtn = document.getElementById('btn-trigger-upload');
+  const removeAvatarBtn = document.getElementById('btn-remove-avatar');
+  const avatarFileInput = document.getElementById('input-avatar-file') as HTMLInputElement | null;
+  const avatarFallbackBox = document.getElementById('avatar-fallback-box');
+  const avatarBox = document.querySelector('.avatar-box');
+  const avatarFeedback = document.getElementById('avatar-upload-feedback');
+
+  const setAvatarFeedback = (msg: string, type: 'info' | 'success' | 'error' | 'none') => {
+    if (!avatarFeedback) return;
+    if (type === 'none') {
+      avatarFeedback.textContent = '';
+      avatarFeedback.className = 'avatar-feedback-pill hidden';
+      return;
+    }
+    avatarFeedback.textContent = msg;
+    avatarFeedback.className = `avatar-feedback-pill ${type}`;
+  };
+
+  const openFilePicker = () => {
+    avatarFileInput?.click();
+  };
+
+  avatarChangeBtn?.addEventListener('click', openFilePicker);
+  triggerUploadBtn?.addEventListener('click', openFilePicker);
+
+  avatarFileInput?.addEventListener('change', async () => {
+    const file = avatarFileInput.files?.[0];
+    if (!file) return;
+
+    // 1. Validasi Ukuran (Maksimal 3 MB)
+    if (file.size > 3 * 1024 * 1024) {
+      setAvatarFeedback('Ukuran berkas melebihi batas 3 MB.', 'error');
+      avatarFileInput.value = '';
+      return;
+    }
+
+    // 2. Validasi Format Berkas
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setAvatarFeedback('Format berkas harus JPG, PNG, atau WebP.', 'error');
+      avatarFileInput.value = '';
+      return;
+    }
+
+    // 3. Pratinjau Lokal Instan
+    const previewUrl = URL.createObjectURL(file);
+    let avatarPreviewImg = document.getElementById('avatar-preview-img') as HTMLImageElement | null;
+    if (avatarPreviewImg) {
+      avatarPreviewImg.src = previewUrl;
+      avatarPreviewImg.style.display = 'block';
+      if (avatarFallbackBox) avatarFallbackBox.style.display = 'none';
+    } else if (avatarBox) {
+      avatarPreviewImg = document.createElement('img');
+      avatarPreviewImg.src = previewUrl;
+      avatarPreviewImg.alt = 'Foto Profil Baru';
+      avatarPreviewImg.className = 'avatar-photo-preview';
+      avatarPreviewImg.id = 'avatar-preview-img';
+      avatarPreviewImg.width = 140;
+      avatarPreviewImg.height = 140;
+      if (avatarChangeBtn) {
+        avatarBox.insertBefore(avatarPreviewImg, avatarChangeBtn);
+      } else {
+        avatarBox.appendChild(avatarPreviewImg);
+      }
+      if (avatarFallbackBox) avatarFallbackBox.style.display = 'none';
+    }
+
+    // 4. Unggah ke Server
+    setAvatarFeedback('Mengunggah foto...', 'info');
+    if (triggerUploadBtn) {
+      triggerUploadBtn.setAttribute('disabled', 'true');
+      triggerUploadBtn.innerHTML = `
+        <span class="material-symbols-outlined icon-btn-xs animate-spin">progress_activity</span>
+        <span>Mengunggah...</span>
+      `;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const res = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal mengunggah foto profil');
+      }
+
+      setAvatarFeedback('Foto berhasil diperbarui!', 'success');
+      if (removeAvatarBtn) {
+        removeAvatarBtn.classList.remove('hidden');
+      }
+
+      // Perbarui foto avatar yang tampil di sidebar dasbor
+      document.querySelectorAll<HTMLImageElement>('.user-avatar-img, .hero-avatar-img').forEach((img) => {
+        img.src = data.avatar_url;
+      });
+
+      window.dispatchEvent(
+        new CustomEvent('phinisi-toast', {
+          detail: { message: 'Foto profil berhasil diperbarui.', type: 'success' },
+        })
+      );
+
+      setTimeout(() => {
+        setAvatarFeedback('', 'none');
+      }, 3500);
+    } catch (uploadErr: any) {
+      console.error('Upload foto profil error:', uploadErr);
+      setAvatarFeedback(uploadErr.message || 'Gagal mengunggah foto.', 'error');
+      window.dispatchEvent(
+        new CustomEvent('phinisi-toast', {
+          detail: { message: uploadErr.message || 'Gagal mengunggah foto.', type: 'error' },
+        })
+      );
+    } finally {
+      if (triggerUploadBtn) {
+        triggerUploadBtn.removeAttribute('disabled');
+        triggerUploadBtn.innerHTML = `
+          <span class="material-symbols-outlined icon-btn-xs">upload</span>
+          <span>Ganti Foto</span>
+        `;
+      }
+      avatarFileInput.value = '';
+    }
+  });
+
+  // Hapus Foto Profil (Kembali ke inisial nama)
+  removeAvatarBtn?.addEventListener('click', async () => {
+    if (!confirm('Hapus foto profil kustom dan kembali ke inisial nama?')) {
+      return;
+    }
+
+    setAvatarFeedback('Menghapus foto...', 'info');
+    removeAvatarBtn.setAttribute('disabled', 'true');
+
+    try {
+      const res = await fetch('/api/user/avatar', {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal menghapus foto profil');
+      }
+
+      const currentImg = document.getElementById('avatar-preview-img');
+      if (currentImg) {
+        currentImg.style.display = 'none';
+      }
+      if (avatarFallbackBox) {
+        avatarFallbackBox.style.display = 'grid';
+      }
+
+      removeAvatarBtn.classList.add('hidden');
+      setAvatarFeedback('Foto profil berhasil dihapus.', 'success');
+
+      window.dispatchEvent(
+        new CustomEvent('phinisi-toast', {
+          detail: { message: 'Foto profil berhasil dihapus.', type: 'success' },
+        })
+      );
+
+      setTimeout(() => {
+        setAvatarFeedback('', 'none');
+      }, 3500);
+    } catch (delErr: any) {
+      console.error('Hapus foto error:', delErr);
+      setAvatarFeedback(delErr.message || 'Gagal menghapus foto.', 'error');
+    } finally {
+      removeAvatarBtn.removeAttribute('disabled');
+    }
+  });
 
   // Dinamisasi Provinsi & Kota Indonesia
   const geoDataScript = document.getElementById('geo-data-provinces');
@@ -691,12 +899,97 @@ const isProfileComplete = Boolean(
     font-size: 1.05rem;
   }
 
+  .avatar-action-cluster {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-avatar-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 140ms ease;
+  }
+
+  .btn-avatar-action.upload-action {
+    background: #eff6ff;
+    color: var(--color-primary);
+    border: 1px solid #bfdbfe;
+  }
+
+  .btn-avatar-action.upload-action:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+  }
+
+  .btn-avatar-action.remove-action {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .btn-avatar-action.remove-action:hover {
+    background: #fee2e2;
+  }
+
+  .avatar-feedback-pill {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .avatar-feedback-pill.info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
+  .avatar-feedback-pill.success {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+
+  .avatar-feedback-pill.error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   .avatar-caption {
     font-family: var(--font-heading);
     font-size: 0.86rem;
     font-weight: 700;
     color: var(--color-navy);
-    margin-top: 0.85rem;
+    margin-top: 0.65rem;
   }
 
   .avatar-note {

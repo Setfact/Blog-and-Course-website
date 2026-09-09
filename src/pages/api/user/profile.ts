@@ -46,6 +46,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const occupation = (body.occupation || '').trim();
   const institution_name = (body.institution_name || '').trim();
   const referral_source = (body.referral_source || '').trim();
+  const avatar_url = body.avatar_url !== undefined ? String(body.avatar_url).trim() : undefined;
 
   if (!full_name) {
     return new Response(JSON.stringify({ error: 'Nama lengkap resmi wajib diisi untuk penerbitan sertifikat.' }), {
@@ -110,6 +111,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   if (birth_date) {
     updatePayload.birth_date = birth_date;
+  }
+
+  if (avatar_url !== undefined) {
+    updatePayload.avatar_url = avatar_url;
   }
 
   try {
