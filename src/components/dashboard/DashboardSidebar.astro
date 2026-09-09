@@ -1,6 +1,8 @@
 ---
+import { getRankTier, type RankTier } from '../../lib/rank';
+
 interface Props {
-  activeTab: 'courses' | 'certificates' | 'profile';
+  activeTab: 'overview' | 'courses' | 'badges' | 'certificates' | 'profile';
   user: {
     full_name: string;
     email: string;
@@ -8,16 +10,30 @@ interface Props {
     xp?: number;
     role?: string;
   };
+  rankTier?: RankTier;
 }
 
-const { activeTab, user } = Astro.props;
+const { activeTab, user, rankTier: propRankTier } = Astro.props;
+const rankTier = propRankTier || getRankTier(user.xp || 0);
 
 const navItems = [
   {
+    id: 'overview',
+    label: 'Ringkasan Belajar',
+    href: '/dashboard',
+    icon: 'dashboard',
+  },
+  {
     id: 'courses',
     label: 'Kelas Saya',
-    href: '/dashboard',
+    href: '/dashboard/kelas',
     icon: 'school',
+  },
+  {
+    id: 'badges',
+    label: 'Lencana Biota Laut',
+    href: '/dashboard/lencana',
+    icon: 'military_tech',
   },
   {
     id: 'certificates',
@@ -45,7 +61,13 @@ const navItems = [
     </div>
     <div class="user-summary-text">
       <strong class="user-summary-name" title={user.full_name}>{user.full_name}</strong>
-      <span class="user-summary-role">{user.role === 'admin' ? 'Administrator' : 'Siswa Phinisi'}</span>
+      <div class="user-rank-indicator">
+        <span class="rank-badge-pill" style={`color: ${rankTier.badgeColor}; border-color: ${rankTier.badgeColor}33; background-color: ${rankTier.badgeColor}12;`}>
+          <span class="material-symbols-outlined icon-rank">{rankTier.icon}</span>
+          <span>{rankTier.name}</span>
+        </span>
+        <span class="xp-count-pill">{user.xp || 0} XP</span>
+      </div>
     </div>
   </div>
 
@@ -84,7 +106,7 @@ const navItems = [
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    padding: 1.1rem 1.2rem;
+    padding: 1.1rem 1.15rem;
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.15rem;
@@ -123,6 +145,7 @@ const navItems = [
   .user-summary-text {
     display: flex;
     flex-direction: column;
+    gap: 0.35rem;
     min-width: 0;
   }
 
@@ -136,10 +159,37 @@ const navItems = [
     text-overflow: ellipsis;
   }
 
-  .user-summary-role {
-    font-size: 0.74rem;
+  .user-rank-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .rank-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+  }
+
+  .rank-badge-pill .icon-rank {
+    font-size: 0.88rem;
+  }
+
+  .xp-count-pill {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--color-muted);
-    font-weight: 500;
+    background: #f1f5f9;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
   }
 
   .sidebar-nav {

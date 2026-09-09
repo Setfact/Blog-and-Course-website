@@ -1,0 +1,670 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DashboardSidebar from '../../components/dashboard/DashboardSidebar.astro';
+import Button from '../../components/ui/Button.astro';
+import { loadCourses } from '../../data/learning';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getRankTier } from '../../lib/rank';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/dashboard/kelas');
+}
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const completedLessonsSet = new Set<string>();
+
+if (supabase) {
+  try {
+    const { data } = await supabase
+      .from('user_lesson_progress')
+      .select('course_slug, lesson_id')
+      .eq('user_id', user.id);
+
+    if (data) {
+      data.forEach((r: { course_slug: string; lesson_id: string }) => {
+        completedLessonsSet.add(`${r.course_slug}/${r.lesson_id}`);
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching course progress:', err);
+  }
+}
+
+const courses = await loadCourses();
+const rankTier = getRankTier(user.xp);
+
+// Perhitungan ringkasan kelas
+const coursesWithProgress = courses.map((course) => {
+  const total = course.lessonCount || 1;
+  const completed = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${course.slug}/`)).length;
+  const percent = Math.min(100, Math.round((completed / total) * 100));
+  const isFinished = percent >= 100 && total > 0;
+  const isInProgress = completed > 0 && !isFinished;
+  return {
+    ...course,
+    totalLessons: total,
+    completedLessons: completed,
+    percent,
+    isFinished,
+    isInProgress,
+  };
+});
+
+const totalEnrolled = coursesWithProgress.length;
+const totalFinished = coursesWithProgress.filter((c) => c.isFinished).length;
+const totalInProgress = coursesWithProgress.filter((c) => c.isInProgress).length;
+---
+
+<BaseLayout title="Kelas Jaringan Saya" description="Pantau progres kurikulum pelatihan jaringan, laboratorium simulator, dan materi aktif Anda.">
+  <div class="dashboard-page-container fluid-layout">
+    
+    <!-- Breadcrumb Navigasi -->
+    <nav class="dashboard-breadcrumb" aria-label="Breadcrumb">
+      <a href="/dashboard" class="breadcrumb-link">Dasbor</a>
+      <span class="material-symbols-outlined breadcrumb-separator">chevron_right</span>
+      <span class="breadcrumb-current">Kelas Saya</span>
+    </nav>
+
+    <div class="dashboard-layout">
+      <!-- Sidebar Navigasi -->
+      <DashboardSidebar activeTab="courses" user={user} rankTier={rankTier} />
+
+      <!-- Area Konten Utama -->
+      <main class="dashboard-main-content">
+        <div class="courses-card">
+          
+          <!-- Header Halaman Kelas -->
+          <div class="courses-header-block">
+            <div class="header-text-group">
+              <h1 class="courses-main-title">Kelas Jaringan Saya</h1>
+              <p class="courses-main-subtitle">
+                Silabus pelatihan terstruktur dari pengenalan topologi dasar hingga simulasi konfigurasi tingkat enterprise.
+              </p>
+            </div>
+            
+            <div class="header-actions-group">
+              <Button href="/courses" variant="secondary" size="sm">
+                <span class="material-symbols-outlined icon-inline">explore</span>
+                <span>Katalog Semua Kursus</span>
+              </Button>
+            </div>
+          </div>
+
+          <!-- Statistik Ringkas Kelas -->
+          <div class="course-stats-bar">
+            <div class="stat-pill">
+              <span class="stat-num">{totalEnrolled}</span>
+              <span class="stat-text">Kursus Tersedia</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-pill">
+              <span class="stat-num text-accent">{totalInProgress}</span>
+              <span class="stat-text">Sedang Dipelajari</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-pill">
+              <span class="stat-num text-success">{totalFinished}</span>
+              <span class="stat-text">Kursus Selesai</span>
+            </div>
+          </div>
+
+          <!-- Grid Daftar Kursus -->
+          <div class="courses-grid">
+            {coursesWithProgress.map((course) => (
+              <article class="course-card-item">
+                <div class="course-card-top">
+                  <div class="course-tags-cluster">
+                    <span class="category-badge">{course.category.toUpperCase()}</span>
+                    <span class="level-badge">{course.level}</span>
+                  </div>
+                  {course.status === 'planned' ? (
+                    <span class="status-indicator planned">Segera Hadir</span>
+                  ) : course.isFinished ? (
+                    <span class="status-indicator completed">
+                      <span class="material-symbols-outlined icon-status">verified</span>
+                      <span>Selesai</span>
+                    </span>
+                  ) : course.isInProgress ? (
+                    <span class="status-indicator in-progress">
+                      <span class="material-symbols-outlined icon-status">play_arrow</span>
+                      <span>Aktif</span>
+                    </span>
+                  ) : (
+                    <span class="status-indicator not-started">Belum Dimulai</span>
+                  )}
+                </div>
+
+                <div class="course-card-body">
+                  <h2 class="course-title">
+                    <a href={`/courses/${course.slug}`}>{course.title}</a>
+                  </h2>
+                  <p class="course-desc">{course.description.id}</p>
+                </div>
+
+                <!-- Progres Bar Pembelajaran -->
+                <div class="course-progress-container">
+                  <div class="progress-info-row">
+                    <span class="progress-label">Capaian Materi</span>
+                    <strong class="progress-figures">
+                      {course.completedLessons}/{course.totalLessons} materi ({course.percent}%)
+                    </strong>
+                  </div>
+                  <div class="progress-track" role="progressbar" aria-valuenow={course.percent} aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill" style={`width: ${course.percent}%;`}></div>
+                  </div>
+                </div>
+
+                <div class="course-card-footer">
+                  <span class="lesson-meta-badge">
+                    <span class="material-symbols-outlined icon-mini">menu_book</span>
+                    <span>{course.lessonCount} modul pelajaran</span>
+                  </span>
+                  <a
+                    href={`/courses/${course.slug}`}
+                    class:list={['btn-course-action', { 'btn-continue': course.percent > 0 && !course.isFinished, 'btn-review': course.isFinished }]}
+                  >
+                    {course.status === 'planned' ? (
+                      <span>Pratinjau Silabus</span>
+                    ) : course.isFinished ? (
+                      <span>Tinjau Kembali</span>
+                    ) : course.percent > 0 ? (
+                      <>
+                        <span>Lanjutkan Belajar</span>
+                        <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Mulai Kursus</span>
+                        <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+                      </>
+                    )}
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <!-- Banner Fasilitas Laboratorium Simulator -->
+          <div class="lab-facility-banner">
+            <div class="lab-banner-icon-box">
+              <span class="material-symbols-outlined">terminal</span>
+            </div>
+            <div class="lab-banner-content">
+              <strong>Simulasi Praktik Cisco Packet Tracer</strong>
+              <p>
+                Setiap materi kurikulum dilengkapi studi kasus konfigurasi CLI nyata. Pastikan Anda telah menginstal aplikasi Cisco Packet Tracer untuk menjalankan simulasi topologi jaringan.
+              </p>
+            </div>
+            <div class="lab-banner-actions">
+              <a href="/courses" class="btn-lab-outline">
+                <span class="material-symbols-outlined icon-inline">download</span>
+                <span>Panduan Lab</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .dashboard-page-container.fluid-layout {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: clamp(1.25rem, 3vw, 3.5rem);
+    padding-block: clamp(1.5rem, 2.5vw, 3rem);
+    box-sizing: border-box;
+  }
+
+  .dashboard-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .breadcrumb-link {
+    color: var(--color-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 140ms ease;
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb-separator {
+    font-size: 1rem;
+    color: #94a3b8;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-navy);
+    font-weight: 700;
+  }
+
+  .dashboard-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.75rem;
+    width: 100%;
+  }
+
+  .dashboard-main-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .courses-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.5rem;
+    padding: clamp(1.5rem, 2.5vw, 2.5rem);
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .courses-header-block {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 1.5rem;
+  }
+
+  .courses-main-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-weight: 800;
+    color: var(--color-navy);
+    line-height: 1.2;
+    margin: 0 0 0.4rem 0;
+  }
+
+  .courses-main-subtitle {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .header-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .icon-inline {
+    font-size: 1.15rem;
+    vertical-align: middle;
+  }
+
+  .course-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .stat-num {
+    font-family: var(--font-heading);
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
+  .stat-num.text-accent {
+    color: var(--color-primary);
+  }
+
+  .stat-num.text-success {
+    color: #10b981;
+  }
+
+  .stat-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+  }
+
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .course-card-item {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  .course-card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(8, 26, 58, 0.08);
+    border-color: #cbd5e1;
+  }
+
+  .course-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .course-tags-cluster {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .category-badge {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: #eff6ff;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.45rem;
+    letter-spacing: 0.03em;
+  }
+
+  .level-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    background: #f1f5f9;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.45rem;
+  }
+
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .status-indicator .icon-status {
+    font-size: 0.88rem;
+  }
+
+  .status-indicator.completed {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+
+  .status-indicator.in-progress {
+    background: #eff6ff;
+    color: var(--color-primary);
+    border: 1px solid #bfdbfe;
+  }
+
+  .status-indicator.not-started {
+    background: #f8fafc;
+    color: var(--color-muted);
+    border: 1px solid #e2e8f0;
+  }
+
+  .status-indicator.planned {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .course-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .course-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .course-title a {
+    color: var(--color-navy);
+    text-decoration: none;
+    transition: color 140ms ease;
+  }
+
+  .course-title a:hover {
+    color: var(--color-primary);
+  }
+
+  .course-desc {
+    font-size: 0.88rem;
+    color: var(--color-ink);
+    opacity: 0.85;
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .course-progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    background: #f8fafc;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    border: 1px solid #f1f5f9;
+  }
+
+  .progress-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.76rem;
+  }
+
+  .progress-label {
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .progress-figures {
+    font-family: var(--font-heading);
+    color: var(--color-navy);
+    font-weight: 700;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary) 0%, #3b82f6 100%);
+    border-radius: 999px;
+    transition: width 300ms ease;
+  }
+
+  .course-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .lesson-meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .icon-mini {
+    font-size: 1rem;
+  }
+
+  .btn-course-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 0.7rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: var(--color-primary);
+    color: #ffffff;
+    transition: all 140ms ease;
+  }
+
+  .btn-course-action:hover {
+    background: #0f4bb5;
+    transform: translateY(-1px);
+  }
+
+  .btn-course-action.btn-continue {
+    background: #0284c7;
+  }
+
+  .btn-course-action.btn-continue:hover {
+    background: #0369a1;
+  }
+
+  .btn-course-action.btn-review {
+    background: #f1f5f9;
+    color: var(--color-navy);
+    border: 1px solid var(--color-line);
+  }
+
+  .btn-course-action.btn-review:hover {
+    background: #e2e8f0;
+  }
+
+  .lab-facility-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: #f0fdfa;
+    border: 1px solid #ccfbf1;
+    border-radius: 1.15rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .lab-banner-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0d9488;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .lab-banner-icon-box .material-symbols-outlined {
+    font-size: 1.5rem;
+  }
+
+  .lab-banner-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lab-banner-content strong {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    color: #134e4a;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .lab-banner-content p {
+    font-size: 0.84rem;
+    color: #115e59;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .btn-lab-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0d9488;
+    background: #ffffff;
+    border: 1px solid #99f6e4;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 140ms ease;
+  }
+
+  .btn-lab-outline:hover {
+    background: #ccfbf1;
+  }
+
+  @media (max-width: 860px) {
+    .dashboard-layout {
+      flex-direction: column;
+    }
+    .lab-facility-banner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

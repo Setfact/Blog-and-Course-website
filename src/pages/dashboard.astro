@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
+import DashboardSidebar from '../components/dashboard/DashboardSidebar.astro';
 import { loadCourses } from '../data/learning';
 import { createSupabaseServerClient } from '../lib/supabase';
 import { getRankTier, BADGE_DEFINITIONS, TIERS } from '../lib/rank';
@@ -24,7 +24,7 @@ const supabase = createSupabaseServerClient({
   cookies: Astro.cookies,
 });
 
-// Ambil progres belajar dan pengumuman dari database
+// Ambil data progres belajar dan pengumuman platform
 const completedLessonsSet = new Set<string>();
 let activeAnnouncement = null;
 
@@ -48,27 +48,40 @@ if (supabase) {
 
 const [courses, xpLedger] = await Promise.all([
   loadCourses(),
-  getXpHistory(supabase, user.id, 6),
+  getXpHistory(supabase, user.id, 8),
 ]);
+
 const rankTier = getRankTier(user.xp);
 
-// Hitung lencana yang terbuka
+// Evaluasi lencana biota laut
 const earnedBadges = new Set<string>();
-if (completedLessonsSet.size >= 1) earnedBadges.add('langkah-pertama');
+if (completedLessonsSet.size >= 1) earnedBadges.add('ikan-badut');
 const securityCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('security-fundamentals/')).length;
-if (securityCount >= 1) earnedBadges.add('security-starter');
-if (securityCount >= 5) earnedBadges.add('security-guardian');
+if (securityCount >= 1) earnedBadges.add('ikan-buntal');
+if (securityCount >= 5) earnedBadges.add('benteng-karang');
 const ccnaCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('ccna-fundamentals/')).length;
-if (ccnaCount >= 1) earnedBadges.add('ccna-explorer');
-if (user.streak >= 3) earnedBadges.add('streak-3');
-if (user.xp >= 900) earnedBadges.add('fleet-commander-badge');
-if (xpLedger.some((entry) => entry.source === 'community_solution')) earnedBadges.add('community-solver');
-if (xpLedger.some((entry) => entry.source === 'quiz_pass')) earnedBadges.add('quiz-master');
+if (ccnaCount >= 1) earnedBadges.add('ikan-pedang');
+if (user.streak >= 3) earnedBadges.add('pari-manta');
+if (user.xp >= 900) earnedBadges.add('taring-megalodon');
+if (xpLedger.some((entry) => entry.source === 'community_solution')) earnedBadges.add('lumba-lumba');
+if (xpLedger.some((entry) => entry.source === 'quiz_pass')) earnedBadges.add('kuda-laut');
 const anyCourseFinished = courses.some((c) => {
   const count = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
-  return count >= (c.lessonCount || 1);
+  return count >= (c.lessonCount || 1) && (c.lessonCount || 0) > 0;
 });
-if (anyCourseFinished) earnedBadges.add('course-finisher');
+if (anyCourseFinished) earnedBadges.add('mutiara-kraken');
+
+// Kursus aktif terakhir untuk quick preview
+const activeCourse = courses.find((c) => {
+  const count = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
+  return count > 0 && count < (c.lessonCount || 1);
+}) || courses[0];
+
+const activeCourseCompleted = activeCourse
+  ? Array.from(completedLessonsSet).filter((k) => k.startsWith(`${activeCourse.slug}/`)).length
+  : 0;
+const activeCourseTotal = activeCourse?.lessonCount || 1;
+const activeCoursePercent = Math.min(100, Math.round((activeCourseCompleted / activeCourseTotal) * 100));
 
 const isProfileComplete = Boolean(
   user.is_profile_complete ||
@@ -76,364 +89,387 @@ const isProfileComplete = Boolean(
 );
 ---
 
-<BaseLayout title="Dashboard Siswa" description="Pantau progres belajar jaringan, koleksi XP, dan lencana pencapaian Anda.">
-  <div class="dashboard-container page-shell">
+<BaseLayout title="Ringkasan Belajar Siswa" description="Pantau evolusi pangkat biota laut, perolehan XP, dan aktivitas belajar jaringan Anda.">
+  <div class="dashboard-page-container fluid-layout">
     
-    <!-- Platform Announcement Banner If Active -->
-    {activeAnnouncement && (
-      <aside class:list={['announcement-banner', `announce-${activeAnnouncement.type}`]}>
-        <div class="announce-icon-wrap">
-          <span class="material-symbols-outlined">campaign</span>
-        </div>
-        <div class="announce-content">
-          <strong>Pengumuman Platform</strong>
-          <p>{activeAnnouncement.message}</p>
-        </div>
-      </aside>
-    )}
+    <!-- Breadcrumb Navigasi -->
+    <nav class="dashboard-breadcrumb" aria-label="Breadcrumb">
+      <span class="breadcrumb-current">Dasbor</span>
+      <span class="material-symbols-outlined breadcrumb-separator">chevron_right</span>
+      <span class="breadcrumb-sub">Ringkasan Belajar</span>
+    </nav>
 
-    <!-- Notice Banner If Redirected with Error -->
-    {errorNotice && (
-      <aside class="dashboard-notice-banner" role="alert">
-        <div class="notice-icon-wrap">
-          <span class="material-symbols-outlined">lock</span>
-        </div>
-        <div class="notice-content">
-          <strong>Akses Dibatasi</strong>
-          <p>{errorNotice}</p>
-        </div>
-      </aside>
-    )}
+    <div class="dashboard-layout">
+      <!-- Sidebar Navigasi -->
+      <DashboardSidebar activeTab="overview" user={user} rankTier={rankTier} />
 
-    <!-- Notice Banner for Profile Completeness & Certification Prerequisite -->
-    {!isProfileComplete ? (
-      <aside class="cert-profile-notice pending" role="status">
-        <div class="cert-notice-icon-wrap">
-          <span class="material-symbols-outlined">badge</span>
-        </div>
-        <div class="cert-notice-content">
-          <div class="cert-notice-title-row">
-            <strong>Profil Resmi Belum Lengkap</strong>
-            <span class="cert-status-tag pending">Prasyarat Klaim Sertifikat</span>
+      <!-- Area Konten Utama -->
+      <main class="dashboard-main-content">
+        
+        <!-- Platform Announcement Banner If Active -->
+        {activeAnnouncement && (
+          <aside class:list={['announcement-banner', `announce-${activeAnnouncement.type}`]}>
+            <div class="announce-icon-wrap">
+              <span class="material-symbols-outlined">campaign</span>
+            </div>
+            <div class="announce-content">
+              <strong>Pengumuman Platform</strong>
+              <p>{activeAnnouncement.message}</p>
+            </div>
+          </aside>
+        )}
+
+        <!-- Notice Banner If Redirected with Error -->
+        {errorNotice && (
+          <aside class="dashboard-notice-banner" role="alert">
+            <div class="notice-icon-wrap">
+              <span class="material-symbols-outlined">lock</span>
+            </div>
+            <div class="notice-content">
+              <strong>Akses Dibatasi</strong>
+              <p>{errorNotice}</p>
+            </div>
+          </aside>
+        )}
+
+        <!-- Banner Status Kelengkapan Profil untuk Sertifikat -->
+        {!isProfileComplete ? (
+          <aside class="cert-profile-notice pending" role="status">
+            <div class="cert-notice-icon-wrap">
+              <span class="material-symbols-outlined">badge</span>
+            </div>
+            <div class="cert-notice-content">
+              <div class="cert-notice-title-row">
+                <strong>Data Profil Resmi Belum Lengkap</strong>
+                <span class="cert-status-tag pending">Prasyarat E-Sertifikat</span>
+              </div>
+              <p>Lengkapi nama resmi, no. WhatsApp, dan asal instansi Anda di pengaturan akun agar e-sertifikat kelulusan dapat diterbitkan secara sah.</p>
+            </div>
+            <a href="/dashboard/profil" class="btn-complete-profile">
+              <span>Lengkapi Profil</span>
+              <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+            </a>
+          </aside>
+        ) : (
+          <aside class="cert-profile-notice verified" role="status">
+            <div class="cert-notice-icon-wrap">
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+            <div class="cert-notice-content">
+              <div class="cert-notice-title-row">
+                <strong>Profil Terverifikasi untuk Penerbitan Sertifikat</strong>
+                <span class="cert-status-tag active">Siap Terbit</span>
+              </div>
+              <p>Nama resmi terdaftar: <strong>{user.full_name}</strong> {user.institution_name ? `(${user.institution_name})` : ''} &middot; Domisili: {user.city ? `${user.city}, ` : ''}{user.province || 'Indonesia'}.</p>
+            </div>
+            <a href="/dashboard/profil" class="btn-view-profile">
+              <span>Pengaturan Profil</span>
+            </a>
+          </aside>
+        )}
+
+        <!-- Hero Header Ringkasan Siswa -->
+        <header class="overview-hero-card">
+          <div class="hero-left">
+            <div class="hero-avatar-box">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} class="hero-avatar-img" width="68" height="68" />
+              ) : (
+                <div class="hero-avatar-fallback">{user.full_name.slice(0, 2).toUpperCase()}</div>
+              )}
+            </div>
+            <div class="hero-text-box">
+              <div class="hero-badge-row">
+                <span class="role-pill">{user.role === 'admin' ? 'Administrator' : 'Siswa Phinisi'}</span>
+                <span class="location-pill">
+                  <span class="material-symbols-outlined icon-micro">location_on</span>
+                  <span>{user.city ? `${user.city}, ${user.province || 'ID'}` : 'Indonesia'}</span>
+                </span>
+              </div>
+              <h1 class="hero-title">Selamat Datang, {user.full_name}</h1>
+              <p class="hero-bio">
+                {user.bio || 'Pelajar aktif arsitektur jaringan komputer dan infrastruktur digital Phinisi Learn.'}
+              </p>
+            </div>
           </div>
-          <p>Lengkapi nama resmi, nomor kontak, dan data asal instansi Anda agar nama tercetak dengan benar saat Anda mengklaim E-Sertifikat kelulusan kursus dan capaian lab.</p>
-        </div>
-        <a href="/dashboard/profil" class="btn-complete-profile" id="banner-open-edit-btn">
-          <span>Lengkapi Profil</span>
-          <span class="material-symbols-outlined icon-inline">arrow_forward</span>
-        </a>
-      </aside>
-    ) : (
-      <aside class="cert-profile-notice verified" role="status">
-        <div class="cert-notice-icon-wrap">
-          <span class="material-symbols-outlined">verified</span>
-        </div>
-        <div class="cert-notice-content">
-          <div class="cert-notice-title-row">
-            <strong>Profil Terverifikasi untuk Sertifikat</strong>
-            <span class="cert-status-tag active">Siap Terbit E-Sertifikat</span>
-          </div>
-          <p>Nama resmi terdaftar: <strong>{user.full_name}</strong> {user.institution_name ? `(${user.institution_name})` : ''} &middot; Domisili: {user.city ? `${user.city}, ` : ''}{user.country || 'Indonesia'}.</p>
-        </div>
-        <a href="/dashboard/profil" class="btn-view-profile" id="banner-view-edit-btn">
-          <span>Pengaturan Profil</span>
-        </a>
-      </aside>
-    )}
 
-    <!-- User Profile Header -->
-    <header class="profile-hero">
-      <div class="profile-info">
-        <div class="avatar-wrap">
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.full_name} class="avatar-img" width="84" height="84" />
-          ) : (
-            <div class="avatar-fallback">{user.full_name.slice(0, 2).toUpperCase()}</div>
-          )}
-        </div>
-        <div class="user-meta">
-          <div class="user-name-row">
-            <h1 class="user-name" id="display-user-name">{user.full_name}</h1>
-            {user.role === 'admin' ? (
-              <span class="role-badge role-admin">Administrator</span>
-            ) : (
-              <span class="role-badge role-student">Siswa</span>
+          <div class="hero-right-actions">
+            <a href="/dashboard/kelas" class="btn-hero-primary">
+              <span class="material-symbols-outlined icon-btn">school</span>
+              <span>Kelas Jaringan Saya</span>
+            </a>
+            <a href="/community" class="btn-hero-secondary">
+              <span class="material-symbols-outlined icon-btn">forum</span>
+              <span>Forum Komunitas</span>
+            </a>
+            {user.role === 'admin' && (
+              <a href="/admin" class="btn-hero-admin">
+                <span class="material-symbols-outlined icon-btn">admin_panel_settings</span>
+                <span>Panel Admin</span>
+              </a>
             )}
-            <span class="tier-pill">
-              <span class="material-symbols-outlined tier-pill-icon">{rankTier.icon}</span>
-              <span>{rankTier.name}</span>
-            </span>
           </div>
-          <p class="user-email">{user.email}</p>
-          <p class="user-bio" id="display-user-bio">
-            {user.bio || 'Belum ada bio. Buka pengaturan akun untuk menambahkan bio Anda.'}
-          </p>
-        </div>
-      </div>
+        </header>
 
-      <div class="profile-actions">
-        <a href="/dashboard/profil" class="edit-profile-trigger">
-          <span class="material-symbols-outlined icon-inline">manage_accounts</span>
-          <span>Pengaturan Akun</span>
-        </a>
-        <a href="/dashboard/sertifikat" class="edit-profile-trigger cert-trigger-link">
-          <span class="material-symbols-outlined icon-inline">workspace_premium</span>
-          <span>List Sertifikat</span>
-        </a>
-        {user.role === 'admin' && (
-          <Button href="/admin" variant="primary" size="sm" class="admin-cta-btn">
-            <span class="material-symbols-outlined icon-inline">admin_panel_settings</span>
-            <span>Buka Panel Admin</span>
-          </Button>
-        )}
-        <Button href="/community" variant="secondary" size="sm">
-          <span class="material-symbols-outlined icon-inline">forum</span>
-          <span>Komunitas Siswa</span>
-        </Button>
-        <a href="/api/auth/signout" class="signout-link">Keluar</a>
-      </div>
-    </header>
-
-    <!-- Nautical Rank Tier Card -->
-    <section class="rank-card" aria-label="Tingkatan Pangkat Belajar">
-      <div class="rank-card-header">
-        <div class="rank-title-group">
-          <div class="rank-icon-wrap" style={`background: ${rankTier.badgeColor};`}>
-            <span class="material-symbols-outlined">{rankTier.icon}</span>
-          </div>
-          <div class="rank-title-box">
-            <span class="rank-kicker">Tingkatan Pangkat Maritim</span>
-            <h2 class="rank-name">{rankTier.name}</h2>
-            <span class="rank-subtitle">{rankTier.title}</span>
-          </div>
-        </div>
-        <div class="rank-header-right">
-          <button type="button" class="btn-guide-modal" id="open-ranks-modal-btn" title="Buka panduan tingkatan pangkat dan hak istimewa siswa">
-            <span class="material-symbols-outlined icon-btn-sm">military_tech</span>
-            <span>Panduan Pangkat & Keuntungan</span>
-          </button>
-          <div class="rank-xp-badge">
-            <strong>{user.xp}</strong>
-            <span>Total XP</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="rank-progress-wrap">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" style={`width: ${rankTier.progressPercent}%; background: ${rankTier.badgeColor};`}></div>
-        </div>
-        <div class="progress-labels">
-          <span>{rankTier.minXp} XP ({rankTier.name})</span>
-          {rankTier.nextTierName ? (
-            <span>{rankTier.remainingXp} XP lagi menuju {rankTier.nextTierName} ({rankTier.maxXp} XP)</span>
-          ) : (
-            <span>Pangkat Tertinggi Tercapai!</span>
-          )}
-        </div>
-      </div>
-
-      <!-- Active Perks for Current Tier -->
-      <div class="active-perks-box">
-        <div class="perks-header-line">
-          <span class="material-symbols-outlined icon-perk-title">verified</span>
-          <strong class="perks-heading">Keuntungan Aktif Pangkat {rankTier.name}:</strong>
-        </div>
-        <ul class="perks-list">
-          {rankTier.perks.map((perk) => (
-            <li>
-              <span class="material-symbols-outlined icon-perk-check">check_circle</span>
-              <span>{perk}</span>
-            </li>
-          ))}
-        </ul>
-
-        {rankTier.downloadableAssets && rankTier.downloadableAssets.length > 0 && (
-          <div class="perks-downloads-row">
-            <span class="downloads-label">Aset Lab Terbuka:</span>
-            {rankTier.downloadableAssets.map((asset) => (
-              <span class="asset-pill" title={asset.description}>
-                <span class="material-symbols-outlined icon-asset">download</span>
-                <span>{asset.name} ({asset.type})</span>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-
-    <!-- Stats Grid -->
-    <section class="stats-grid" aria-label="Statistik Belajar">
-      <div class="stat-card">
-        <div class="stat-icon stat-xp">
-          <span class="material-symbols-outlined">bolt</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Total Pengalaman</span>
-          <strong class="stat-value">{user.xp} XP</strong>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon stat-streak">
-          <span class="material-symbols-outlined">local_fire_department</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Hari Streak Belajar</span>
-          <strong class="stat-value">{user.streak} Hari</strong>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon stat-lessons">
-          <span class="material-symbols-outlined">task_alt</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Materi Diselesaikan</span>
-          <strong class="stat-value">{completedLessonsSet.size} Modul</strong>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon stat-role">
-          <span class="material-symbols-outlined">verified_user</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Status Akun</span>
-          <strong class="stat-value text-capitalize">{user.status}</strong>
-        </div>
-      </div>
-    </section>
-
-    <!-- XP Activity Ledger Section -->
-    <section class="ledger-section" aria-label="Riwayat Perolehan XP">
-      <div class="section-header">
-        <div>
-          <h2 class="section-title">Buku Besar Riwayat XP (Activity Ledger)</h2>
-          <p class="section-desc">Catatan perolehan poin pengalaman dari materi kurikulum, evaluasi kuis, dan kontribusi komunitas.</p>
-        </div>
-        <span class="ledger-count-pill">{xpLedger.length} Mutasi Terakhir</span>
-      </div>
-
-      <div class="ledger-list">
-        {xpLedger.map((entry) => (
-          <div class="ledger-item">
-            <div class:list={['ledger-badge', `source-${entry.source}`]}>
-              <span class="material-symbols-outlined icon-ledger">
-                {entry.source === 'community_solution'
-                  ? 'verified'
-                  : entry.source === 'course_completion'
-                    ? 'school'
-                    : entry.source === 'quiz_pass'
-                      ? 'psychology'
-                      : 'task_alt'}
-              </span>
-              <span>+{entry.amount} XP</span>
+        <!-- Kartu Pangkat Biota Laut & Progres XP Utama -->
+        <section class="rank-ocean-card" aria-label="Tingkatan Pangkat Biota Laut">
+          <div class="rank-card-top">
+            <div class="rank-identity-cluster">
+              <div class="rank-avatar-seal" style={`background: ${rankTier.badgeColor};`}>
+                <span class="material-symbols-outlined">{rankTier.icon}</span>
+              </div>
+              <div class="rank-meta-details">
+                <span class="rank-badge-kicker">Tingkatan Evolusi Samudra</span>
+                <h2 class="rank-animal-name">{rankTier.name}</h2>
+                <span class="rank-philosophical-title">{rankTier.title}</span>
+              </div>
             </div>
-            <div class="ledger-info">
-              <strong class="ledger-title">{entry.title}</strong>
-              <span class="ledger-time">
-                {new Date(entry.created_at).toLocaleDateString('id-ID', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
+
+            <div class="rank-xp-header-box">
+              <button type="button" class="btn-open-evolution-guide" id="open-ranks-modal-btn">
+                <span class="material-symbols-outlined icon-btn">explore</span>
+                <span>Panduan 6 Jenjang Biota Laut</span>
+              </button>
+              <div class="xp-score-capsule">
+                <span class="material-symbols-outlined icon-bolt">bolt</span>
+                <div class="xp-score-text">
+                  <strong class="xp-amount">{user.xp}</strong>
+                  <span class="xp-label">Total XP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar Evolusi -->
+          <div class="rank-evolution-progress">
+            <div class="progress-track-shell">
+              <div
+                class="progress-fill-glow"
+                style={`width: ${rankTier.progressPercent}%; background: ${rankTier.badgeColor};`}
+              ></div>
+            </div>
+            <div class="progress-info-split">
+              <span class="current-tier-xp">{rankTier.minXp} XP ({rankTier.name})</span>
+              {rankTier.nextTierName ? (
+                <span class="next-tier-target">
+                  Kurang <strong>{rankTier.remainingXp} XP</strong> menuju evolusi <strong>{rankTier.nextTierName}</strong> ({rankTier.maxXp} XP)
+                </span>
+              ) : (
+                <span class="max-tier-congrats">Tingkatan Evolusi Tertinggi Tercapai! (Penguasa Samudra)</span>
+              )}
+            </div>
+          </div>
+
+          <!-- Active Perks Box -->
+          <div class="rank-perks-box">
+            <div class="perks-title-line">
+              <span class="material-symbols-outlined icon-perk-header">verified</span>
+              <strong class="perks-headline">Keuntungan Aktif Pangkat {rankTier.name}:</strong>
+            </div>
+            <ul class="perks-clean-list">
+              {rankTier.perks.map((perk) => (
+                <li>
+                  <span class="material-symbols-outlined icon-check">check_circle</span>
+                  <span>{perk}</span>
+                </li>
+              ))}
+            </ul>
+
+            {rankTier.downloadableAssets && rankTier.downloadableAssets.length > 0 && (
+              <div class="unlocked-assets-strip">
+                <span class="assets-label">Aset Lab Terbuka:</span>
+                <div class="assets-list-row">
+                  {rankTier.downloadableAssets.map((asset) => (
+                    <span class="asset-capsule" title={asset.description}>
+                      <span class="material-symbols-outlined icon-capsule">download</span>
+                      <span>{asset.name} ({asset.type})</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <!-- Stats Grid Belajar Siswa -->
+        <section class="stats-counter-grid" aria-label="Statistik Belajar">
+          <div class="stat-counter-card">
+            <div class="stat-icon-wrap stat-xp">
+              <span class="material-symbols-outlined">bolt</span>
+            </div>
+            <div class="stat-meta">
+              <span class="stat-caption">Total Pengalaman</span>
+              <strong class="stat-value">{user.xp} XP</strong>
+            </div>
+          </div>
+
+          <div class="stat-counter-card">
+            <div class="stat-icon-wrap stat-streak">
+              <span class="material-symbols-outlined">local_fire_department</span>
+            </div>
+            <div class="stat-meta">
+              <span class="stat-caption">Hari Streak Belajar</span>
+              <strong class="stat-value">{user.streak} Hari</strong>
+            </div>
+          </div>
+
+          <div class="stat-counter-card">
+            <div class="stat-icon-wrap stat-lessons">
+              <span class="material-symbols-outlined">task_alt</span>
+            </div>
+            <div class="stat-meta">
+              <span class="stat-caption">Materi Diselesaikan</span>
+              <strong class="stat-value">{completedLessonsSet.size} Modul</strong>
+            </div>
+          </div>
+
+          <div class="stat-counter-card">
+            <div class="stat-icon-wrap stat-badges">
+              <span class="material-symbols-outlined">military_tech</span>
+            </div>
+            <div class="stat-meta">
+              <span class="stat-caption">Lencana Koleksi</span>
+              <strong class="stat-value">{earnedBadges.size}/{BADGE_DEFINITIONS.length} Lencana</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Grid 2 Kolom: Quick Action (Kelas Terakhir & Lencana) + Riwayat Aktivitas & XP -->
+        <div class="overview-dual-grid">
+          
+          <!-- Kolom Kiri: Quick Preview Kelas Aktif & Lencana -->
+          <div class="dual-left-col">
+            
+            <!-- Quick Card: Kelas Saya -->
+            <div class="quick-module-card">
+              <div class="card-header-line">
+                <div class="card-header-text">
+                  <span class="card-kicker">Lanjutkan Kursus</span>
+                  <h3 class="card-heading">{activeCourse.title}</h3>
+                </div>
+                <a href="/dashboard/kelas" class="card-more-link">Semua Kelas</a>
+              </div>
+
+              <p class="quick-course-desc">{activeCourse.description.id}</p>
+
+              <div class="quick-progress-block">
+                <div class="quick-progress-meta">
+                  <span class="qp-label">Progres Pembelajaran</span>
+                  <strong class="qp-val">{activeCourseCompleted}/{activeCourseTotal} modul ({activeCoursePercent}%)</strong>
+                </div>
+                <div class="quick-progress-track">
+                  <div class="quick-progress-fill" style={`width: ${activeCoursePercent}%;`}></div>
+                </div>
+              </div>
+
+              <div class="quick-card-action">
+                <a href={`/courses/${activeCourse.slug}`} class="btn-quick-primary">
+                  <span>{activeCoursePercent > 0 ? 'Lanjutkan Modul' : 'Mulai Belajar'}</span>
+                  <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Quick Card: Lencana Biota Laut -->
+            <div class="quick-module-card">
+              <div class="card-header-line">
+                <div class="card-header-text">
+                  <span class="card-kicker">Pencapaian Biota Laut</span>
+                  <h3 class="card-heading">Lencana Koleksi Anda</h3>
+                </div>
+                <a href="/dashboard/lencana" class="card-more-link">Lihat Semua</a>
+              </div>
+
+              <p class="quick-badge-desc">
+                Raih lencana bertema biota laut dari <strong>Ikan Badut</strong> hingga <strong>Mutiara Kraken</strong> dengan menyelesaikan studi kasus lab.
+              </p>
+
+              <div class="quick-badges-strip">
+                {BADGE_DEFINITIONS.slice(0, 5).map((badge) => {
+                  const isEarned = earnedBadges.has(badge.id);
+                  return (
+                    <div
+                      class:list={['mini-badge-bubble', isEarned ? 'earned' : 'locked']}
+                      title={`${badge.name}: ${badge.description} (${isEarned ? 'Tercapai' : 'Terkunci'})`}
+                    >
+                      <span class="material-symbols-outlined icon-mini-badge">
+                        {isEarned ? badge.icon : 'lock'}
+                      </span>
+                    </div>
+                  );
                 })}
-              </span>
+                <div class="mini-badge-bubble more">
+                  <span>+{BADGE_DEFINITIONS.length - 5}</span>
+                </div>
+              </div>
+
+              <div class="quick-card-action">
+                <a href="/dashboard/lencana" class="btn-quick-secondary">
+                  <span>Buka Galeri Lencana</span>
+                  <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+                </a>
+              </div>
             </div>
+
           </div>
-        ))}
-      </div>
-    </section>
 
-    <!-- Badges Showcase Section -->
-    <section class="badges-section" aria-label="Lencana Pencapaian">
-      <div class="section-header">
-        <div>
-          <h2 class="section-title">Lencana Pencapaian Belajar</h2>
-          <p class="section-desc">Koleksi lencana yang diperoleh dari menyelesaikan materi dan tantangan lab teknis.</p>
-        </div>
-        <span class="badge-count-pill">{earnedBadges.size} dari {BADGE_DEFINITIONS.length} Terbuka</span>
-      </div>
-
-      <div class="badges-grid">
-        {BADGE_DEFINITIONS.map((badge) => {
-          const isUnlocked = earnedBadges.has(badge.id);
-          return (
-            <div class:list={['badge-card', isUnlocked ? 'badge-unlocked' : 'badge-locked']}>
-              <div class="badge-icon-box">
-                <span class="material-symbols-outlined">
-                  {isUnlocked ? badge.icon : 'lock'}
-                </span>
+          <!-- Kolom Kanan: Riwayat Aktivitas & XP (Clean Feed) -->
+          <div class="dual-right-col">
+            <section class="activity-history-card" aria-label="Riwayat Aktivitas & XP">
+              <div class="history-header">
+                <div>
+                  <h3 class="history-title">Riwayat Aktivitas & XP</h3>
+                  <p class="history-desc">Catatan perolehan poin pengalaman dari modul materi, evaluasi kuis, dan kontribusi komunitas.</p>
+                </div>
+                <span class="history-count-tag">{xpLedger.length} Mutasi Terakhir</span>
               </div>
-              <div class="badge-info">
-                <strong class="badge-title">{badge.name}</strong>
-                <p class="badge-desc">{badge.description}</p>
-                <span class="badge-status-tag">
-                  {isUnlocked ? 'Tercapai' : 'Terkunci'}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
 
-    <!-- Courses Continue Section with Real Progress -->
-    <section class="learning-section">
-      <div class="section-header">
-        <div>
-          <h2 class="section-title">Kurikulum Pembelajaran Anda</h2>
-          <p class="section-desc">Pilih modul materi dan selesaikan tantangan untuk menaikkan peringkat maritim Anda.</p>
-        </div>
-        <Button href="/courses" variant="secondary" size="sm">Lihat Katalog Lengkap</Button>
-      </div>
-
-      <div class="courses-preview-grid">
-        {courses.map((c) => {
-          const totalInCourse = c.lessonCount || 1;
-          const userCompletedInCourse = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
-          const coursePercent = Math.min(100, Math.round((userCompletedInCourse / totalInCourse) * 100));
-
-          return (
-            <div class="course-mini-card">
-              <div class="course-mini-header">
-                <span class="course-category-tag">{c.category.toUpperCase()}</span>
-                <span class="course-level-tag">{c.level}</span>
-                {c.status === 'planned' && (
-                  <span class="course-status-pill planned">Segera Hadir</span>
+              <div class="history-timeline-list">
+                {xpLedger.length === 0 ? (
+                  <div class="empty-history-box">
+                    <span class="material-symbols-outlined icon-empty">history</span>
+                    <p>Belum ada aktivitas tercatat. Mulai pelajari materi pertama Anda di silabus!</p>
+                  </div>
+                ) : (
+                  xpLedger.map((entry) => (
+                    <div class="history-timeline-item">
+                      <div class:list={['history-icon-box', `source-${entry.source}`]}>
+                        <span class="material-symbols-outlined">
+                          {entry.source === 'community_solution'
+                            ? 'verified'
+                            : entry.source === 'course_completion'
+                              ? 'school'
+                              : entry.source === 'quiz_pass'
+                                ? 'psychology'
+                                : 'task_alt'}
+                        </span>
+                      </div>
+                      <div class="history-content-box">
+                        <strong class="history-item-title">{entry.title}</strong>
+                        <span class="history-item-time">
+                          {new Date(entry.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <div class="history-xp-badge">
+                        <span>+{entry.amount} XP</span>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
-              <h3 class="course-mini-title">{c.title}</h3>
-              <p class="course-mini-desc">{c.description.id}</p>
-              
-              <!-- Real Course Progress Bar -->
-              <div class="course-progress-block">
-                <div class="course-prog-meta">
-                  <span class="prog-label">Progres Kursus</span>
-                  <strong class="prog-val">{userCompletedInCourse}/{totalInCourse} materi ({coursePercent}%)</strong>
-                </div>
-                <div class="course-prog-track">
-                  <div class="course-prog-fill" style={`width: ${coursePercent}%;`}></div>
-                </div>
-              </div>
+            </section>
+          </div>
 
-              <div class="course-mini-footer">
-                <span class="lesson-count-badge">
-                  <span class="material-symbols-outlined icon-xs">menu_book</span>
-                  <span>{c.lessonCount} materi</span>
-                </span>
-                <Button href={`/courses/${c.slug}`} size="sm" variant={c.status === 'planned' ? 'secondary' : 'primary'}>
-                  {c.status === 'planned' ? 'Detail Kursus' : coursePercent > 0 ? 'Lanjutkan Belajar' : 'Mulai Kursus'}
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+        </div>
 
+      </main>
+    </div>
   </div>
 
   <!-- Ranks & Perks Guide Modal Dialog -->
@@ -441,1139 +477,1322 @@ const isProfileComplete = Boolean(
     <div class="guide-modal-card">
       <div class="modal-header">
         <div class="guide-title-box">
-          <span class="guide-kicker">SISTEM PANGKAT & HAK ISTIMEWA</span>
-          <h3 class="modal-title">Jenjang Pangkat Maritim & Keuntungan Siswa</h3>
+          <span class="guide-kicker">SISTEM EVOLUSI SAMUDRA</span>
+          <h3 class="modal-title">Jenjang Pangkat Biota Laut & Hak Istimewa Siswa</h3>
         </div>
         <button type="button" class="modal-close-btn" id="close-ranks-modal-btn" aria-label="Tutup panduan">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
 
-      <div class="guide-tiers-list">
-        {TIERS.map((t) => {
-          const isCurrent = rankTier.id === t.id;
-          return (
-            <div class:list={['tier-card', { 'is-current-tier': isCurrent }]} style={`--tier-color: ${t.badgeColor};`}>
-              <div class="tier-card-header">
-                <div class="tier-icon-wrap" style={`background-color: ${t.badgeColor};`}>
-                  <span class="material-symbols-outlined">{t.icon}</span>
+      <div class="modal-body-scroll">
+        <p class="modal-intro-text">
+          Di Phinisi Learn, tingkatan pangkat siswa bertransformasi mengikuti metamorfosis kehidupan laut. Naikkan akumulasi XP Anda dari perenang kecil pesisir hingga menjadi penguasa palung mitologis samudera!
+        </p>
+
+        <div class="tier-cards-container">
+          {TIERS.map((tier, idx) => (
+            <div class:list={['tier-guide-item', { 'current-user-tier': tier.id === rankTier.id }]}>
+              <div class="tier-badge-column">
+                <div class="tier-seal" style={`background: ${tier.badgeColor};`}>
+                  <span class="material-symbols-outlined">{tier.icon}</span>
                 </div>
-                <div class="tier-title-wrap">
-                  <div class="tier-name-line">
-                    <strong class="tier-name">{t.name}</strong>
-                    {isCurrent && <span class="current-tier-tag">Pangkat Anda Saat Ini</span>}
+                <span class="tier-level-index">Tingkat {idx + 1}</span>
+              </div>
+
+              <div class="tier-body-column">
+                <div class="tier-name-row">
+                  <div>
+                    <h4 class="tier-name-text">{tier.name}</h4>
+                    <span class="tier-title-text">{tier.title}</span>
                   </div>
-                  <span class="tier-xp-range">{t.minXp} - {t.maxXp === Infinity ? '3000+' : t.maxXp} XP · {t.title}</span>
+                  <div class="tier-xp-range">
+                    {tier.maxXp === Infinity ? (
+                      <span class="range-pill">{tier.minXp}+ XP</span>
+                    ) : (
+                      <span class="range-pill">{tier.minXp} - {tier.maxXp} XP</span>
+                    )}
+                  </div>
+                </div>
+
+                <div class="tier-perks-section">
+                  <strong class="perks-subheading">Hak Istimewa & Fasilitas:</strong>
+                  <ul class="tier-perks-bullets">
+                    {tier.perks.map((p) => (
+                      <li>
+                        <span class="material-symbols-outlined bullet-check">check</span>
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-              <ul class="tier-perks-list">
-                {t.perks.map((p) => (
-                  <li>
-                    <span class="material-symbols-outlined icon-tier-check">done</span>
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   </dialog>
+
+  <!-- Modal Script Handler -->
+  <script>
+    const modal = document.getElementById('ranks-guide-modal') as HTMLDialogElement | null;
+    const openBtn = document.getElementById('open-ranks-modal-btn');
+    const closeBtn = document.getElementById('close-ranks-modal-btn');
+
+    openBtn?.addEventListener('click', () => {
+      modal?.showModal();
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      modal?.close();
+    });
+
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.close();
+      }
+    });
+  </script>
 </BaseLayout>
 
-<script>
-  // Modal Panduan Pangkat Script
-  const ranksModal = document.getElementById('ranks-guide-modal') as HTMLDialogElement | null;
-  const openRanksBtn = document.getElementById('open-ranks-modal-btn');
-  const closeRanksBtn = document.getElementById('close-ranks-modal-btn');
-
-  if (openRanksBtn && ranksModal) {
-    openRanksBtn.addEventListener('click', () => ranksModal.showModal());
-  }
-  if (closeRanksBtn && ranksModal) {
-    closeRanksBtn.addEventListener('click', () => ranksModal.close());
-  }
-  if (ranksModal) {
-    ranksModal.addEventListener('click', (e) => {
-      if (e.target === ranksModal) ranksModal.close();
-    });
-  }
-</script>
-
 <style>
-  .dashboard-container {
-    padding-block: 2.5rem 4rem;
+  .dashboard-page-container.fluid-layout {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: clamp(1.25rem, 3vw, 3.5rem);
+    padding-block: clamp(1.5rem, 2.5vw, 3rem);
+    box-sizing: border-box;
+  }
+
+  .dashboard-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .breadcrumb-separator {
+    font-size: 1rem;
+    color: #94a3b8;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .breadcrumb-sub {
+    color: var(--color-navy);
+    font-weight: 700;
+  }
+
+  .dashboard-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.75rem;
+    width: 100%;
+  }
+
+  .dashboard-main-content {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
   }
 
-  /* Announcement Banner */
+  /* Notice Banners */
   .announcement-banner {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    padding: 1.15rem 1.4rem;
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.04);
-  }
-  .announce-info {
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
-    color: #1e3a8a;
-  }
-  .announce-warning {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #78350f;
-  }
-  .announce-success {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #14532d;
-  }
-  .announce-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 0.85rem;
-    display: grid;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.8);
-    flex-shrink: 0;
-  }
-  .announce-content strong {
-    display: block;
-    font-size: 0.9rem;
-    font-family: var(--font-heading);
-    font-weight: 800;
-  }
-  .announce-content p {
-    margin: 0.2rem 0 0 0;
-    font-size: 0.85rem;
+    color: #1e40af;
   }
 
-  /* Notice Banner */
+  .announce-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
   .dashboard-notice-banner {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    padding: 1.15rem 1.4rem;
-    border-radius: 1.25rem;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #78350f;
-    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.04);
-  }
-  .notice-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 0.85rem;
-    display: grid;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.8);
-    flex-shrink: 0;
-    color: #b45309;
-  }
-  .notice-content strong {
-    display: block;
-    font-size: 0.9rem;
-    font-family: var(--font-heading);
-    font-weight: 800;
-  }
-  .notice-content p {
-    margin: 0.2rem 0 0 0;
-    font-size: 0.85rem;
-    line-height: 1.45;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
   }
 
-  /* Certificate Readiness Notice Banner */
+  .notice-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
   .cert-profile-notice {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.25rem;
-    padding: 1.15rem 1.4rem;
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.04);
+    padding: 1.15rem 1.5rem;
+    border-radius: 1.15rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
+    flex-wrap: wrap;
   }
+
   .cert-profile-notice.pending {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    border: 1px solid #fcd34d;
-    color: #78350f;
+    border-color: #fde68a;
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
   }
+
   .cert-profile-notice.verified {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 1px solid #86efac;
-    color: #14532d;
+    border-color: #bbf7d0;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
   }
+
   .cert-notice-icon-wrap {
     width: 44px;
     height: 44px;
-    border-radius: 0.85rem;
+    border-radius: 50%;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.9);
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
+
   .cert-profile-notice.pending .cert-notice-icon-wrap {
+    background: #fef3c7;
     color: #d97706;
   }
+
   .cert-profile-notice.verified .cert-notice-icon-wrap {
+    background: #dcfce7;
     color: #16a34a;
   }
+
   .cert-notice-content {
     flex: 1;
+    min-width: 0;
+  }
+
+  .cert-notice-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .cert-notice-title-row strong {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    color: var(--color-navy);
+  }
+
+  .cert-status-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .cert-status-tag.pending {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  .cert-status-tag.active {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .cert-notice-content p {
+    font-size: 0.84rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .btn-complete-profile, .btn-view-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 140ms ease;
+  }
+
+  .btn-complete-profile {
+    background: var(--color-primary);
+    color: #ffffff;
+  }
+
+  .btn-complete-profile:hover {
+    background: #0f4bb5;
+  }
+
+  .btn-view-profile {
+    background: #f1f5f9;
+    color: var(--color-navy);
+    border: 1px solid var(--color-line);
+  }
+
+  .btn-view-profile:hover {
+    background: #e2e8f0;
+  }
+
+  /* Overview Hero Card */
+  .overview-hero-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.35rem;
+    padding: 1.5rem 1.75rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-avatar-box {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 14px rgba(8, 26, 58, 0.1);
+  }
+
+  .hero-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .hero-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+  }
+
+  .hero-text-box {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.3rem;
+    min-width: 0;
   }
-  .cert-notice-title-row {
+
+  .hero-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .role-pill {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: #eff6ff;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .location-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .icon-micro {
+    font-size: 0.85rem;
+  }
+
+  .hero-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.35rem, 1.8vw, 1.7rem);
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .hero-bio {
+    font-size: 0.86rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .hero-right-actions {
     display: flex;
     align-items: center;
     gap: 0.65rem;
     flex-wrap: wrap;
   }
-  .cert-notice-title-row strong {
-    font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: inherit;
-  }
-  .cert-status-tag {
-    display: inline-block;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-  .cert-status-tag.pending {
-    background: #fef08a;
-    color: #854d0e;
-    border: 1px solid #fde047;
-  }
-  .cert-status-tag.active {
-    background: #bbf7d0;
-    color: #166534;
-    border: 1px solid #86efac;
-  }
-  .cert-notice-content p {
-    margin: 0;
-    font-size: 0.84rem;
-    line-height: 1.45;
-    opacity: 0.95;
-  }
-  .btn-complete-profile {
+
+  .btn-hero-primary, .btn-hero-secondary, .btn-hero-admin {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.65rem 1.15rem;
-    border: none;
-    border-radius: 0.85rem;
-    background: #d97706;
-    color: #ffffff;
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 150ms ease;
-    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
-  }
-  .btn-complete-profile:hover {
-    background: #b45309;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
-  }
-  .btn-view-profile {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.55rem 1rem;
-    border: 1px solid #86efac;
-    border-radius: 0.85rem;
-    background: #ffffff;
-    color: #166534;
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
     font-family: var(--font-heading);
     font-size: 0.82rem;
     font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 150ms ease;
-  }
-  .btn-view-profile:hover {
-    background: #f0fdf4;
-    border-color: #4ade80;
+    text-decoration: none;
+    transition: all 140ms ease;
   }
 
-  /* Profile Hero */
-  .profile-hero {
+  .btn-hero-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+  }
+
+  .btn-hero-primary:hover {
+    background: #0f4bb5;
+  }
+
+  .btn-hero-secondary {
+    background: #f1f5f9;
+    color: var(--color-navy);
+    border: 1px solid var(--color-line);
+  }
+
+  .btn-hero-secondary:hover {
+    background: #e2e8f0;
+  }
+
+  .btn-hero-admin {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .icon-btn {
+    font-size: 1.05rem;
+  }
+
+  /* Rank Ocean Card */
+  .rank-ocean-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.35rem;
+    padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .rank-card-top {
+    display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 2rem;
-    border: 1px solid var(--color-line);
-    border-radius: 1.5rem;
-    background: #ffffff;
-    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
-  }
-  .profile-info {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-  }
-  .avatar-wrap {
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--color-phinisi-100);
-    border: 3px solid var(--color-phinisi-200);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .avatar-fallback {
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--color-phinisi-700);
-  }
-  .user-name-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     flex-wrap: wrap;
-  }
-  .user-name {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0;
-  }
-  .role-badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .role-admin {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-  .role-student {
-    background: var(--color-phinisi-100);
-    color: var(--color-phinisi-800);
-  }
-  .tier-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: #fef3c7;
-    color: #92400e;
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 0.2rem 0.65rem;
-    border-radius: 999px;
-    letter-spacing: 0.03em;
-  }
-  .tier-pill-icon {
-    font-size: 0.95rem;
-  }
-  .user-email {
-    margin: 0.25rem 0 0 0;
-    color: var(--color-muted);
-    font-size: 0.88rem;
-  }
-  .user-bio {
-    margin: 0.4rem 0 0 0;
-    color: var(--color-ink);
-    font-size: 0.85rem;
-    max-width: 600px;
-  }
-  .profile-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .edit-profile-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    border: 1px solid var(--color-line);
-    background: #ffffff;
-    color: var(--color-navy);
-    font-family: var(--font-heading);
-    font-size: 0.84rem;
-    font-weight: 700;
-    padding: 0.5rem 0.9rem;
-    border-radius: 0.65rem;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 150ms ease;
-  }
-  .edit-profile-trigger:hover {
-    background: var(--color-section);
-    border-color: var(--color-phinisi-300);
-  }
-  .icon-inline {
-    font-size: 1.05rem;
-  }
-  .signout-link {
-    font-family: var(--font-heading);
-    font-weight: 600;
-    font-size: 0.86rem;
-    color: var(--color-danger);
-    text-decoration: none;
-    padding: 0.5rem 0.85rem;
-    border-radius: 0.65rem;
-    transition: background 150ms ease;
-  }
-  .signout-link:hover {
-    background: var(--color-danger-soft);
   }
 
-  /* Nautical Rank Card */
-  .rank-card {
-    background: linear-gradient(135deg, #081a3a 0%, #0d2757 100%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 1.5rem;
-    padding: 1.75rem 2rem;
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    box-shadow: 0 10px 30px rgba(8, 26, 58, 0.15);
-  }
-  .rank-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem;
-    flex-wrap: wrap;
-  }
-  .rank-title-group {
+  .rank-identity-cluster {
     display: flex;
     align-items: center;
     gap: 1.15rem;
   }
-  .rank-icon-wrap {
-    width: 54px;
-    height: 54px;
-    border-radius: 1.1rem;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+
+  .rank-avatar-seal {
+    width: 60px;
+    height: 60px;
+    border-radius: 1.15rem;
+    color: #ffffff;
     display: grid;
     place-items: center;
-    color: #fbbf24;
+    box-shadow: 0 6px 16px rgba(8, 26, 58, 0.15);
     flex-shrink: 0;
-  }
-  .rank-icon-wrap .material-symbols-outlined {
-    font-size: 1.85rem;
-  }
-  .rank-title-box {
-    display: flex;
-    flex-direction: column;
-  }
-  .rank-kicker {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-  }
-  .rank-name {
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    font-weight: 900;
-    margin: 0.15rem 0 0 0;
-    color: #ffffff;
-  }
-  .rank-xp-badge {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-  }
-  .rank-xp-badge strong {
-    font-family: var(--font-heading);
-    font-size: 1.65rem;
-    font-weight: 900;
-    color: #fbbf24;
-    line-height: 1;
-  }
-  .rank-xp-badge span {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    margin-top: 0.2rem;
-  }
-  .rank-progress-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .progress-bar-bg {
-    width: 100%;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #38bdf8, #fbbf24);
-    border-radius: 999px;
-    transition: width 400ms ease;
-  }
-  .progress-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.76rem;
-    color: rgba(255, 255, 255, 0.8);
-  }
-  .rank-subtitle {
-    font-size: 0.82rem;
-    color: #94a3b8;
-    margin-top: 0.15rem;
-    font-weight: 500;
-  }
-  .rank-header-right {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    flex-wrap: wrap;
-  }
-  .btn-guide-modal {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: #ffffff;
-    font-family: var(--font-heading);
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 0.45rem 0.85rem;
-    border-radius: 0.65rem;
-    cursor: pointer;
-    transition: all 150ms ease;
-  }
-  .btn-guide-modal:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: translateY(-1px);
-  }
-  .icon-btn-sm {
-    font-size: 1.1rem;
-    color: #fbbf24;
-  }
-  .active-perks-box {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1rem;
-    padding: 1rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .perks-header-line {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .icon-perk-title {
-    font-size: 1.1rem;
-    color: #38bdf8;
-  }
-  .perks-heading {
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #e2e8f0;
-    letter-spacing: 0.02em;
-  }
-  .perks-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 0.5rem 1rem;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .perks-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.45rem;
-    font-size: 0.8rem;
-    color: #cbd5e1;
-    line-height: 1.4;
-  }
-  .icon-perk-check {
-    font-size: 1rem;
-    color: #4ade80;
-    flex-shrink: 0;
-    margin-top: 0.1rem;
-  }
-  .perks-downloads-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding-top: 0.65rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    flex-wrap: wrap;
-  }
-  .downloads-label {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: #94a3b8;
-  }
-  .downloads-badges-list {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  .asset-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.28);
-    color: #7dd3fc;
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-  }
-  .icon-asset {
-    font-size: 0.95rem;
   }
 
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+  .rank-avatar-seal .material-symbols-outlined {
+    font-size: 2rem;
   }
-  .stat-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.25rem 1.5rem;
-    border: 1px solid var(--color-line);
-    border-radius: 1.25rem;
-    background: #ffffff;
-  }
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 1rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .stat-xp { background: var(--color-gold-soft); color: #b45309; }
-  .stat-streak { background: #ffedd5; color: #c2410c; }
-  .stat-lessons { background: #e0e7ff; color: #4338ca; }
-  .stat-role { background: var(--color-phinisi-50); color: var(--color-phinisi-700); }
-  .stat-content {
+
+  .rank-meta-details {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
   }
-  .stat-label {
-    font-size: 0.78rem;
+
+  .rank-badge-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .rank-animal-name {
+    font-family: var(--font-heading);
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .rank-philosophical-title {
+    font-size: 0.88rem;
     color: var(--color-muted);
     font-weight: 600;
   }
+
+  .rank-xp-header-box {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .btn-open-evolution-guide {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+
+  .btn-open-evolution-guide:hover {
+    background: #e2e8f0;
+  }
+
+  .xp-score-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 0.85rem;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .icon-bolt {
+    font-size: 1.5rem;
+    color: #d97706;
+  }
+
+  .xp-score-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .xp-amount {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #92400e;
+  }
+
+  .xp-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #b45309;
+    text-transform: uppercase;
+  }
+
+  .rank-evolution-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .progress-track-shell {
+    width: 100%;
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .progress-fill-glow {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 350ms ease;
+  }
+
+  .progress-info-split {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+  }
+
+  .current-tier-xp {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .next-tier-target strong {
+    color: var(--color-navy);
+  }
+
+  .max-tier-congrats {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: #059669;
+  }
+
+  .rank-perks-box {
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 1.25rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .perks-title-line {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .icon-perk-header {
+    font-size: 1.15rem;
+    color: var(--color-primary);
+  }
+
+  .perks-headline {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
+  .perks-clean-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.6rem 1.25rem;
+  }
+
+  .perks-clean-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    color: var(--color-ink);
+    line-height: 1.4;
+  }
+
+  .icon-check {
+    font-size: 1rem;
+    color: #10b981;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .unlocked-assets-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+  }
+
+  .assets-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .assets-list-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .asset-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-navy);
+  }
+
+  .icon-capsule {
+    font-size: 0.95rem;
+    color: var(--color-primary);
+  }
+
+  /* Stats Counter Grid */
+  .stats-counter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .stat-counter-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stat-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 1rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .stat-xp {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .stat-streak {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .stat-lessons {
+    background: #eff6ff;
+    color: var(--color-primary);
+  }
+
+  .stat-badges {
+    background: #ecfdf5;
+    color: #059669;
+  }
+
+  .stat-meta {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-caption {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
   .stat-value {
     font-family: var(--font-heading);
     font-size: 1.25rem;
     font-weight: 800;
     color: var(--color-navy);
   }
-  .text-capitalize {
-    text-transform: capitalize;
-  }
 
-  /* Badges Section */
-  .badges-section {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-  .badge-count-pill {
-    background: var(--color-section);
-    border: 1px solid var(--color-line);
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-navy);
-  }
-  .badges-grid {
+  /* Overview Dual Grid */
+  .overview-dual-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-  }
-  .badge-card {
-    display: flex;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 1.5rem;
     align-items: flex-start;
-    gap: 0.95rem;
-    padding: 1.25rem;
-    border-radius: 1.15rem;
-    border: 1px solid var(--color-line);
-    background: #ffffff;
-    transition: all 180ms ease;
   }
-  .badge-card.badge-unlocked {
-    border-color: #fde68a;
-    background: #fffdf5;
-    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
-  }
-  .badge-card.badge-locked {
-    opacity: 0.65;
-    background: #f8fafc;
-  }
-  .badge-icon-box {
-    width: 44px;
-    height: 44px;
-    border-radius: 0.85rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .badge-unlocked .badge-icon-box {
-    background: #fef3c7;
-    color: #b45309;
-  }
-  .badge-locked .badge-icon-box {
-    background: #e2e8f0;
-    color: #64748b;
-  }
-  .badge-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .badge-title {
-    font-family: var(--font-heading);
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--color-navy);
-  }
-  .badge-desc {
-    font-size: 0.74rem;
-    color: var(--color-muted);
-    margin: 0;
-    line-height: 1.4;
-  }
-  .badge-status-tag {
-    display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-top: 0.35rem;
-    letter-spacing: 0.03em;
-  }
-  .badge-unlocked .badge-status-tag { color: #15803d; }
-  .badge-locked .badge-status-tag { color: #94a3b8; }
 
-  /* Learning Section */
-  .learning-section {
+  .dual-left-col, .dual-right-col {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem;
   }
-  .section-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .section-title {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0;
-  }
-  .section-desc {
-    margin: 0.25rem 0 0 0;
-    color: var(--color-muted);
-    font-size: 0.88rem;
-  }
-  .courses-preview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-  .course-mini-card {
-    display: flex;
-    flex-direction: column;
-    padding: 1.35rem;
+
+  /* Quick Module Cards */
+  .quick-module-card {
+    background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.25rem;
-    background: #ffffff;
+    padding: 1.35rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card-header-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 0.75rem;
   }
-  .course-mini-header {
+
+  .card-header-text {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
   }
-  .course-category-tag {
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--color-phinisi-700);
-    background: var(--color-phinisi-50);
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.4rem;
-  }
-  .course-level-tag {
+
+  .card-kicker {
     font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--color-muted);
-    text-transform: capitalize;
   }
-  .course-status-pill.planned {
-    font-size: 0.68rem;
-    font-weight: 750;
-    color: #b45309;
-    background: #fef3c7;
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    padding: 0.18rem 0.5rem;
-    border-radius: 999px;
-    letter-spacing: 0.02em;
-  }
-  .course-mini-title {
+
+  .card-heading {
     font-family: var(--font-heading);
     font-size: 1.05rem;
     font-weight: 800;
     color: var(--color-navy);
     margin: 0;
   }
-  .course-mini-desc {
-    color: var(--color-muted);
-    font-size: 0.82rem;
-    line-height: 1.5;
-    margin: 0;
-    flex: 1;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+
+  .card-more-link {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-decoration: none;
   }
 
-  /* Progress Bar Block */
-  .course-progress-block {
+  .card-more-link:hover {
+    text-decoration: underline;
+  }
+
+  .quick-course-desc, .quick-badge-desc {
+    font-size: 0.84rem;
+    color: var(--color-ink);
+    opacity: 0.85;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .quick-progress-block {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    background: var(--color-section);
-    padding: 0.75rem 0.95rem;
-    border-radius: 0.85rem;
-    border: 1px solid var(--color-line);
+    gap: 0.4rem;
+    background: #f8fafc;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
   }
-  .course-prog-meta {
+
+  .quick-progress-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
     font-size: 0.76rem;
   }
-  .prog-label {
+
+  .qp-label {
     color: var(--color-muted);
     font-weight: 600;
   }
-  .prog-val {
+
+  .qp-val {
+    font-family: var(--font-heading);
     color: var(--color-navy);
     font-weight: 700;
   }
-  .course-prog-track {
+
+  .quick-progress-track {
     width: 100%;
-    height: 8px;
-    background: #dce7f5;
+    height: 6px;
+    background: #e2e8f0;
     border-radius: 999px;
     overflow: hidden;
   }
-  .course-prog-fill {
+
+  .quick-progress-fill {
     height: 100%;
-    background: var(--color-primary);
+    background: linear-gradient(90deg, var(--color-primary) 0%, #3b82f6 100%);
     border-radius: 999px;
-    transition: width 300ms ease;
   }
 
-  .course-mini-footer {
+  .quick-badges-strip {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-line);
+    gap: 0.5rem;
   }
-  .lesson-count-badge {
+
+  .mini-badge-bubble {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-line);
+    cursor: default;
+  }
+
+  .mini-badge-bubble.earned {
+    background: #eff6ff;
+    color: var(--color-primary);
+    border-color: #bfdbfe;
+  }
+
+  .mini-badge-bubble.locked {
+    background: #f8fafc;
+    color: #94a3b8;
+  }
+
+  .mini-badge-bubble.more {
+    background: #f1f5f9;
+    color: var(--color-navy);
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .icon-mini-badge {
+    font-size: 1.15rem;
+  }
+
+  .quick-card-action {
     display: flex;
+  }
+
+  .btn-quick-primary, .btn-quick-secondary {
+    display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: var(--color-muted);
-    font-size: 0.78rem;
-  }
-  .icon-xs {
-    font-size: 0.95rem;
-  }
-
-  @media (max-width: 640px) {
-    .cert-profile-notice {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .btn-complete-profile, .btn-view-profile {
-      width: 100%;
-      justify-content: center;
-    }
+    padding: 0.55rem 0.95rem;
+    border-radius: 0.7rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 140ms ease;
   }
 
-  /* XP Ledger Section */
-  .ledger-section {
+  .btn-quick-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+  }
+
+  .btn-quick-primary:hover {
+    background: #0f4bb5;
+  }
+
+  .btn-quick-secondary {
+    background: #f1f5f9;
+    color: var(--color-navy);
+    border: 1px solid var(--color-line);
+  }
+
+  .btn-quick-secondary:hover {
+    background: #e2e8f0;
+  }
+
+  /* Riwayat Aktivitas & XP */
+  .activity-history-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    padding: 1.35rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
   }
-  .ledger-count-pill {
-    background: var(--color-section);
-    border: 1px solid var(--color-line);
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-navy);
-  }
-  .ledger-list {
+
+  .history-header {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .ledger-item {
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 1rem;
-    padding: 0.9rem 1.25rem;
-    background: #ffffff;
-    border: 1px solid var(--color-line);
-    border-radius: 1rem;
-    transition: transform 150ms ease, box-shadow 150ms ease;
-  }
-  .ledger-item:hover {
-    transform: translateX(3px);
-    box-shadow: 0 4px 12px rgba(8, 26, 58, 0.04);
-  }
-  .ledger-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 0.65rem;
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-  .source-course_completion {
-    background: #fef3c7;
-    color: #b45309;
-    border: 1px solid #fde68a;
-  }
-  .source-quiz_pass {
-    background: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid #bae6fd;
-  }
-  .source-community_solution {
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-  }
-  .source-lesson_complete {
-    background: #f1f5f9;
-    color: #334155;
-    border: 1px solid #e2e8f0;
-  }
-  .icon-ledger {
-    font-size: 1.1rem;
-  }
-  .ledger-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    flex: 1;
-  }
-  .ledger-title {
-    font-family: var(--font-heading);
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--color-navy);
-  }
-  .ledger-time {
-    font-size: 0.74rem;
-    color: var(--color-muted);
-  }
-  .ledger-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1.5rem;
-    background: #ffffff;
-    border: 1px dashed var(--color-line);
-    border-radius: 1.25rem;
-    color: var(--color-muted);
-    text-align: center;
-    gap: 0.5rem;
-  }
-  .icon-ledger-empty {
-    font-size: 2.2rem;
-    color: var(--color-muted);
-    opacity: 0.7;
-  }
-  .ledger-empty p {
-    margin: 0;
-    font-size: 0.85rem;
-    max-width: 480px;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 1rem;
   }
 
-  /* Ranks Guide Modal */
+  .history-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0 0 0.2rem 0;
+  }
+
+  .history-desc {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .history-count-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: #eff6ff;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.45rem;
+    white-space: nowrap;
+  }
+
+  .history-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .history-timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.65rem 0.85rem;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 0.85rem;
+    transition: all 140ms ease;
+  }
+
+  .history-timeline-item:hover {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+
+  .history-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.65rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .history-icon-box.source-lesson_complete {
+    background: #eff6ff;
+    color: var(--color-primary);
+  }
+
+  .history-icon-box.source-quiz_pass {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .history-icon-box.source-community_solution {
+    background: #ecfdf5;
+    color: #059669;
+  }
+
+  .history-icon-box.source-course_completion {
+    background: #f3e8ff;
+    color: #7c3aed;
+  }
+
+  .history-content-box {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .history-item-title {
+    font-family: var(--font-heading);
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-item-time {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+  }
+
+  .history-xp-badge {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #10b981;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .empty-history-box {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--color-muted);
+  }
+
+  .icon-empty {
+    font-size: 2.5rem;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Guide Modal Dialog */
   .guide-modal {
     border: none;
     border-radius: 1.5rem;
     padding: 0;
+    max-width: 820px;
+    width: 92vw;
+    box-shadow: 0 25px 50px -12px rgba(8, 26, 58, 0.25);
     background: transparent;
-    max-width: 680px;
-    width: 92%;
-    box-shadow: 0 25px 50px -12px rgba(8, 26, 58, 0.35);
   }
+
   .guide-modal::backdrop {
-    background: rgba(9, 26, 58, 0.65);
-    backdrop-filter: blur(5px);
+    background: rgba(8, 26, 58, 0.6);
+    backdrop-filter: blur(4px);
   }
+
   .guide-modal-card {
     background: #ffffff;
     border-radius: 1.5rem;
-    padding: 1.75rem 2rem;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
     max-height: 85vh;
-    overflow-y: auto;
   }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.75rem;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--color-line);
+  }
+
   .guide-title-box {
     display: flex;
     flex-direction: column;
   }
+
   .guide-kicker {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 800;
-    letter-spacing: 0.05em;
-    color: var(--color-primary);
-    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
   }
-  .guide-tiers-list {
+
+  .modal-title {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+  }
+
+  .modal-close-btn {
+    border: none;
+    background: #ffffff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    border: 1px solid var(--color-line);
+    color: var(--color-muted);
+    transition: all 140ms ease;
+  }
+
+  .modal-close-btn:hover {
+    background: #f1f5f9;
+    color: var(--color-navy);
+  }
+
+  .modal-body-scroll {
+    padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .modal-intro-text {
+    font-size: 0.88rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .tier-cards-container {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
-  .tier-card {
+
+  .tier-guide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: #f8fafc;
     border: 1px solid var(--color-line);
     border-radius: 1.15rem;
-    padding: 1.15rem 1.25rem;
-    background: #ffffff;
+    transition: all 140ms ease;
+  }
+
+  .tier-guide-item.current-user-tier {
+    border: 2px solid var(--color-primary);
+    background: #eff6ff;
+    box-shadow: 0 4px 14px rgba(20, 91, 215, 0.08);
+  }
+
+  .tier-badge-column {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
-    transition: all 150ms ease;
-    position: relative;
-  }
-  .tier-card.is-current-tier {
-    border: 2px solid var(--tier-color, var(--color-primary));
-    background: #f8fafc;
-    box-shadow: 0 4px 16px rgba(8, 26, 58, 0.06);
-  }
-  .tier-card-header {
-    display: flex;
     align-items: center;
-    gap: 0.95rem;
-  }
-  .tier-icon-wrap {
-    width: 44px;
-    height: 44px;
-    border-radius: 0.9rem;
-    display: grid;
-    place-items: center;
-    color: #ffffff;
+    gap: 0.35rem;
     flex-shrink: 0;
   }
-  .tier-icon-wrap .material-symbols-outlined {
-    font-size: 1.4rem;
+
+  .tier-seal {
+    width: 50px;
+    height: 50px;
+    border-radius: 1rem;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 10px rgba(8, 26, 58, 0.12);
   }
-  .tier-title-wrap {
+
+  .tier-seal .material-symbols-outlined {
+    font-size: 1.65rem;
+  }
+
+  .tier-level-index {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+
+  .tier-body-column {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    flex: 1;
-  }
-  .tier-name-line {
-    display: flex;
-    align-items: center;
     gap: 0.65rem;
-    flex-wrap: wrap;
   }
-  .tier-name {
+
+  .tier-name-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .tier-name-text {
     font-family: var(--font-heading);
     font-size: 1.05rem;
     font-weight: 800;
     color: var(--color-navy);
+    margin: 0;
   }
-  .current-tier-tag {
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: var(--color-primary);
-    color: #ffffff;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-  }
-  .tier-xp-range {
-    font-size: 0.76rem;
+
+  .tier-title-text {
+    font-size: 0.8rem;
     color: var(--color-muted);
     font-weight: 600;
   }
-  .tier-perks-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 0.4rem 0.85rem;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border-top: 1px solid var(--color-line);
-    padding-top: 0.75rem;
+
+  .range-pill {
+    font-family: var(--font-heading);
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    color: var(--color-navy);
   }
-  .tier-perks-list li {
+
+  .tier-perks-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .perks-subheading {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+  }
+
+  .tier-perks-bullets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .tier-perks-bullets li {
     display: flex;
     align-items: flex-start;
     gap: 0.4rem;
@@ -1581,10 +1800,46 @@ const isProfileComplete = Boolean(
     color: var(--color-ink);
     line-height: 1.4;
   }
-  .icon-tier-check {
-    font-size: 1rem;
-    color: #16a34a;
+
+  .bullet-check {
+    font-size: 0.95rem;
+    color: #10b981;
     flex-shrink: 0;
-    margin-top: 0.1rem;
+    margin-top: 1px;
+  }
+
+  @media (max-width: 960px) {
+    .overview-dual-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .dashboard-layout {
+      flex-direction: column;
+    }
+    .overview-hero-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .hero-left {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .hero-right-actions {
+      width: 100%;
+    }
+    .btn-hero-primary, .btn-hero-secondary, .btn-hero-admin {
+      flex: 1;
+      justify-content: center;
+    }
+    .rank-card-top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .rank-xp-header-box {
+      width: 100%;
+      justify-content: space-between;
+    }
   }
 </style>

@@ -5,7 +5,7 @@ const { courseSlug, totalLessons } = Astro.props;
 
 <aside class="learning-status" data-learning-status data-course={courseSlug} data-total-lessons={totalLessons} aria-label="Progress belajar lokal">
   <div class="rank-status-row">
-    <span class="rank-badge-mini" data-rank-badge>Deck Cadet</span>
+    <span class="rank-badge-mini" data-rank-badge>Ikan Teri</span>
     <span class="rank-xp-mini"><strong data-xp>0</strong> XP</span>
   </div>
   <div class="status-heading">
@@ -28,10 +28,24 @@ const { courseSlug, totalLessons } = Astro.props;
   import { getRankTier } from '../lib/rank';
 
   const badgeLabels: Record<string, string> = {
-    'langkah-pertama': 'First Step',
-    'security-starter': 'Security Starter',
-    'security-guardian': 'Fortress Guardian',
-    'streak-3': 'Consistency Flame',
+    'ikan-badut': 'Ikan Badut (Clownfish)',
+    'langkah-pertama': 'Ikan Badut (Clownfish)',
+    'ikan-buntal': 'Ikan Buntal (Pufferfish)',
+    'security-starter': 'Ikan Buntal (Pufferfish)',
+    'benteng-karang': 'Benteng Karang Buntal',
+    'security-guardian': 'Benteng Karang Buntal',
+    'pari-manta': 'Pari Manta (Manta Ray)',
+    'streak-3': 'Pari Manta (Manta Ray)',
+    'ikan-pedang': 'Ikan Pedang (Swordfish)',
+    'ccna-explorer': 'Ikan Pedang (Swordfish)',
+    'lumba-lumba': 'Lumba-Lumba (Dolphin)',
+    'community-solver': 'Lumba-Lumba (Dolphin)',
+    'kuda-laut': 'Kuda Laut (Seahorse)',
+    'quiz-master': 'Kuda Laut (Seahorse)',
+    'mutiara-kraken': "Mutiara Kraken (Kraken's Pearl)",
+    'course-finisher': "Mutiara Kraken (Kraken's Pearl)",
+    'taring-megalodon': 'Taring Megalodon',
+    'fleet-commander-badge': 'Taring Megalodon',
   };
 
   const renderLearningStatus = (root: HTMLElement) => {

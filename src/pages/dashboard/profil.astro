@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DashboardSidebar from '../../components/dashboard/DashboardSidebar.astro';
-import { COUNTRIES, INDONESIA_PROVINCES, OCCUPATIONS, REFERRAL_SOURCES, GENDERS } from '../../data/geo-regions';
+import { INDONESIA_PROVINCES, OCCUPATIONS, REFERRAL_SOURCES, GENDERS } from '../../data/geo-regions';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -117,25 +117,16 @@ const isProfileComplete = Boolean(
 
                     <div class="form-group">
                       <label for="input-phone" class="form-label">No. Handphone / WhatsApp</label>
-                      <div class="phone-input-cluster">
-                        <select id="select-dial-code" name="dial_code" class="dial-select">
-                          {COUNTRIES.map((c) => (
-                            <option value={c.dialCode} selected={c.dialCode === (user.dial_code || '+62')}>
-                              {c.code} ({c.dialCode})
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="tel"
-                          id="input-phone"
-                          name="phone_number"
-                          value={user.phone_number || ''}
-                          placeholder="81234567890"
-                          class="form-control phone-control"
-                          maxlength="20"
-                        />
-                      </div>
-                      <small class="control-hint">Format tanpa angka 0 di depan, contoh: 81234567890</small>
+                      <input
+                        type="tel"
+                        id="input-phone"
+                        name="phone_number"
+                        value={user.phone_number || ''}
+                        placeholder="Contoh: 081234567890"
+                        class="form-control"
+                        maxlength="20"
+                      />
+                      <small class="control-hint">Format nomor WhatsApp aktif (contoh: 081234567890 atau 6281234567890).</small>
                     </div>
                   </div>
 
@@ -164,41 +155,33 @@ const isProfileComplete = Boolean(
                     </div>
                   </div>
 
+                  <!-- Hidden Input untuk Default Indonesia -->
+                  <input type="hidden" id="input-country" name="country" value="Indonesia" />
+                  <input type="hidden" id="input-country-code" name="country_code" value="ID" />
+                  <input type="hidden" id="input-dial-code" name="dial_code" value="+62" />
+
                   <div class="form-row-2">
                     <div class="form-group">
-                      <label for="select-country" class="form-label">Negara / Country <span class="required-star">*</span></label>
-                      <select id="select-country" name="country" class="form-control form-select" required>
-                        {COUNTRIES.map((c) => (
-                          <option
-                            value={c.name}
-                            data-code={c.code}
-                            data-dial={c.dialCode}
-                            selected={c.name === (user.country || 'Indonesia')}
-                          >
-                            {c.name} ({c.dialCode})
+                      <label for="select-province" class="form-label">Provinsi Asal <span class="required-star">*</span></label>
+                      <select id="select-province" name="province" class="form-control form-select" required>
+                        <option value="">-- Pilih Provinsi --</option>
+                        {INDONESIA_PROVINCES.map((p) => (
+                          <option value={p.name} selected={p.name === user.province}>
+                            {p.name}
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    <div
-                      id="province-slot-container"
-                      class="form-group"
-                      data-selected-province={user.province || ''}
-                    >
-                      <!-- Diisi dinamis via JavaScript sesuai negara yang dipilih -->
+                    <div class="form-group">
+                      <label for="select-city" class="form-label">Kota / Kabupaten <span class="required-star">*</span></label>
+                      <select id="select-city" name="city" class="form-control form-select" required data-initial-city={user.city || ''}>
+                        <option value="">-- Pilih Kota / Kabupaten --</option>
+                      </select>
                     </div>
                   </div>
 
                   <div class="form-row-2">
-                    <div
-                      id="city-slot-container"
-                      class="form-group"
-                      data-selected-city={user.city || ''}
-                    >
-                      <!-- Diisi dinamis via JavaScript sesuai provinsi yang dipilih -->
-                    </div>
-
                     <div class="form-group">
                       <label for="select-occupation" class="form-label">Status Profesi <span class="required-star">*</span></label>
                       <select id="select-occupation" name="occupation" class="form-control form-select" required>
@@ -210,11 +193,9 @@ const isProfileComplete = Boolean(
                         ))}
                       </select>
                     </div>
-                  </div>
 
-                  <div class="form-row-2">
                     <div class="form-group">
-                      <label for="input-institution" class="form-label">Sekolah Dimana? / Kampus / Kantor <span class="required-star">*</span></label>
+                      <label for="input-institution" class="form-label">Sekolah / Kampus / Kantor <span class="required-star">*</span></label>
                       <input
                         type="text"
                         id="input-institution"
@@ -226,8 +207,10 @@ const isProfileComplete = Boolean(
                         required
                       />
                     </div>
+                  </div>
 
-                    <div class="form-group">
+                  <div class="form-row-2">
+                    <div class="form-group full-width">
                       <label for="select-referral" class="form-label">Tahu Phinisi Learn Dari Mana?</label>
                       <select id="select-referral" name="referral_source" class="form-control form-select">
                         <option value="">-- Pilih Sumber Rekomendasi --</option>
@@ -353,20 +336,16 @@ const isProfileComplete = Boolean(
   tabProfileBtn?.addEventListener('click', () => switchTab('profile'));
   tabSecurityBtn?.addEventListener('click', () => switchTab('security'));
 
-  // Dinamisasi Provinsi & Kota Berdasarkan Negara
+  // Dinamisasi Provinsi & Kota Indonesia
   const geoDataScript = document.getElementById('geo-data-provinces');
   const provincesList: Array<{ name: string; cities: string[] }> = geoDataScript ? JSON.parse(geoDataScript.textContent || '[]') : [];
 
-  const countrySelect = document.getElementById('select-country') as HTMLSelectElement | null;
-  const dialSelect = document.getElementById('select-dial-code') as HTMLSelectElement | null;
-  const provinceContainer = document.getElementById('province-slot-container');
-  const cityContainer = document.getElementById('city-slot-container');
+  const provSelect = document.getElementById('select-province') as HTMLSelectElement | null;
+  const citySelect = document.getElementById('select-city') as HTMLSelectElement | null;
+  const initialCity = citySelect?.dataset.initialCity || '';
 
-  const initialProvince = provinceContainer?.dataset.selectedProvince || '';
-  const initialCity = cityContainer?.dataset.selectedCity || '';
-
-  const renderCityDropdown = (provinceName: string, selectedCity: string) => {
-    if (!cityContainer) return;
+  const updateCityDropdown = (provinceName: string, selectedCity = '') => {
+    if (!citySelect) return;
     const prov = provincesList.find((p) => p.name === provinceName);
     const cities = prov ? prov.cities : [];
 
@@ -376,80 +355,15 @@ const isProfileComplete = Boolean(
       optionsHtml += `<option value="${cityName}" ${isSelected}>${cityName}</option>`;
     });
 
-    cityContainer.innerHTML = `
-      <label for="select-city" class="form-label">Kota / Kabupaten <span class="required-star">*</span></label>
-      <select id="select-city" name="city" class="form-control form-select" required>
-        ${optionsHtml}
-      </select>
-    `;
+    citySelect.innerHTML = optionsHtml;
   };
 
-  const updateLocationSlots = (countryName: string, selectedProvince: string, selectedCity: string) => {
-    if (!provinceContainer || !cityContainer) return;
-
-    if (countryName === 'Indonesia') {
-      let provOptions = '<option value="">-- Pilih Provinsi --</option>';
-      provincesList.forEach((p) => {
-        const isSelected = p.name === selectedProvince ? 'selected' : '';
-        provOptions += `<option value="${p.name}" ${isSelected}>${p.name}</option>`;
-      });
-
-      provinceContainer.innerHTML = `
-        <label for="select-province" class="form-label">Provinsi <span class="required-star">*</span></label>
-        <select id="select-province" name="province" class="form-control form-select" required>
-          ${provOptions}
-        </select>
-      `;
-
-      renderCityDropdown(selectedProvince, selectedCity);
-
-      const provSelectEl = document.getElementById('select-province') as HTMLSelectElement | null;
-      if (provSelectEl) {
-        provSelectEl.addEventListener('change', () => {
-          renderCityDropdown(provSelectEl.value, '');
-        });
-      }
-    } else {
-      provinceContainer.innerHTML = `
-        <label for="input-province" class="form-label">Provinsi / State / Bagian</label>
-        <input
-          type="text"
-          id="input-province"
-          name="province"
-          value="${selectedProvince}"
-          placeholder="Contoh: Selangor, California, Tokyo..."
-          class="form-control"
-          maxlength="80"
-        />
-      `;
-
-      cityContainer.innerHTML = `
-        <label for="input-city" class="form-label">Kota / City</label>
-        <input
-          type="text"
-          id="input-city"
-          name="city"
-          value="${selectedCity}"
-          placeholder="Contoh: Petaling Jaya, Los Angeles, Shibuya..."
-          class="form-control"
-          maxlength="80"
-        />
-      `;
+  if (provSelect) {
+    if (provSelect.value) {
+      updateCityDropdown(provSelect.value, initialCity);
     }
-  };
-
-  // Inisialisasi awal lokasi
-  updateLocationSlots(countrySelect?.value || 'Indonesia', initialProvince, initialCity);
-
-  // Listener perubahan negara
-  if (countrySelect) {
-    countrySelect.addEventListener('change', () => {
-      const selectedOption = countrySelect.options[countrySelect.selectedIndex];
-      const dialCode = selectedOption?.dataset.dial;
-      if (dialCode && dialSelect) {
-        dialSelect.value = dialCode;
-      }
-      updateLocationSlots(countrySelect.value, '', '');
+    provSelect.addEventListener('change', () => {
+      updateCityDropdown(provSelect.value, '');
     });
   }
 
@@ -469,9 +383,8 @@ const isProfileComplete = Boolean(
       const dial_code = String(formData.get('dial_code') || '+62').trim();
       const birth_date = String(formData.get('birth_date') || '').trim();
       const gender = String(formData.get('gender') || '').trim();
-      const country = String(formData.get('country') || 'Indonesia').trim();
-      const selectedCountryOpt = countrySelect?.options[countrySelect.selectedIndex];
-      const country_code = selectedCountryOpt?.dataset.code || 'ID';
+      const country = 'Indonesia';
+      const country_code = 'ID';
       const province = String(formData.get('province') || '').trim();
       const city = String(formData.get('city') || '').trim();
       const occupation = String(formData.get('occupation') || '').trim();
@@ -873,33 +786,6 @@ const isProfileComplete = Boolean(
     resize: vertical;
   }
 
-  .phone-input-cluster {
-    display: flex;
-    gap: 0.45rem;
-  }
-
-  .dial-select {
-    width: 110px;
-    flex-shrink: 0;
-    border: 1px solid var(--color-line);
-    border-radius: 0.8rem;
-    padding: 0.7rem 0.5rem;
-    font-family: var(--font-body);
-    font-size: 0.84rem;
-    background: #f8fafc;
-    color: var(--color-navy);
-    font-weight: 600;
-  }
-
-  .dial-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.12);
-  }
-
-  .phone-control {
-    flex: 1;
-  }
 
   .control-hint {
     font-size: 0.73rem;

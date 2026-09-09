@@ -1,0 +1,609 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DashboardSidebar from '../../components/dashboard/DashboardSidebar.astro';
+import { loadCourses } from '../../data/learning';
+import { createSupabaseServerClient } from '../../lib/supabase';
+import { getRankTier, BADGE_DEFINITIONS } from '../../lib/rank';
+import { getXpHistory } from '../../lib/xp';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/dashboard/lencana');
+}
+
+const supabase = createSupabaseServerClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const completedLessonsSet = new Set<string>();
+
+if (supabase) {
+  try {
+    const { data } = await supabase
+      .from('user_lesson_progress')
+      .select('course_slug, lesson_id')
+      .eq('user_id', user.id);
+
+    if (data) {
+      data.forEach((r: { course_slug: string; lesson_id: string }) => {
+        completedLessonsSet.add(`${r.course_slug}/${r.lesson_id}`);
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching badge progress:', err);
+  }
+}
+
+const [courses, xpLedger] = await Promise.all([
+  loadCourses(),
+  getXpHistory(supabase, user.id, 10),
+]);
+
+const rankTier = getRankTier(user.xp);
+
+// Evaluasi pencapaian lencana biota laut
+const earnedBadges = new Set<string>();
+
+// 1. Ikan Badut: Modul materi / lab pertama
+if (completedLessonsSet.size >= 1) {
+  earnedBadges.add('ikan-badut');
+  earnedBadges.add('langkah-pertama');
+}
+
+// 2. Ikan Buntal: Modul Network Security dasar
+const securityCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('security-fundamentals/')).length;
+if (securityCount >= 1) {
+  earnedBadges.add('ikan-buntal');
+  earnedBadges.add('security-starter');
+}
+
+// 3. Benteng Karang Buntal: 5 materi keamanan
+if (securityCount >= 5) {
+  earnedBadges.add('benteng-karang');
+  earnedBadges.add('security-guardian');
+}
+
+// 4. Pari Manta: Streak belajar 3 hari
+if (user.streak >= 3) {
+  earnedBadges.add('pari-manta');
+  earnedBadges.add('streak-3');
+}
+
+// 5. Ikan Pedang: CCNA routing & switching
+const ccnaCount = Array.from(completedLessonsSet).filter((k) => k.startsWith('ccna-fundamentals/')).length;
+if (ccnaCount >= 1) {
+  earnedBadges.add('ikan-pedang');
+  earnedBadges.add('ccna-explorer');
+}
+
+// 6. Lumba-Lumba: Solusi terbaik komunitas
+if (xpLedger.some((entry) => entry.source === 'community_solution')) {
+  earnedBadges.add('lumba-lumba');
+  earnedBadges.add('community-solver');
+}
+
+// 7. Kuda Laut: Kuis nilai 100%
+if (xpLedger.some((entry) => entry.source === 'quiz_pass')) {
+  earnedBadges.add('kuda-laut');
+  earnedBadges.add('quiz-master');
+}
+
+// 8. Mutiara Kraken: Menyelesaikan 1 kursus penuh
+const anyCourseFinished = courses.some((c) => {
+  const count = Array.from(completedLessonsSet).filter((k) => k.startsWith(`${c.slug}/`)).length;
+  return count >= (c.lessonCount || 1) && (c.lessonCount || 0) > 0;
+});
+if (anyCourseFinished) {
+  earnedBadges.add('mutiara-kraken');
+  earnedBadges.add('course-finisher');
+}
+
+// 9. Taring Megalodon: Pangkat 900+ XP
+if (user.xp >= 900) {
+  earnedBadges.add('taring-megalodon');
+  earnedBadges.add('fleet-commander-badge');
+}
+
+const totalBadges = BADGE_DEFINITIONS.length;
+const earnedCount = BADGE_DEFINITIONS.filter((b) => earnedBadges.has(b.id)).length;
+---
+
+<BaseLayout title="Lencana Biota Laut" description="Koleksi lencana pencapaian belajar dan penguasaan teknik jaringan di Phinisi Learn.">
+  <div class="dashboard-page-container fluid-layout">
+    
+    <!-- Breadcrumb Navigasi -->
+    <nav class="dashboard-breadcrumb" aria-label="Breadcrumb">
+      <a href="/dashboard" class="breadcrumb-link">Dasbor</a>
+      <span class="material-symbols-outlined breadcrumb-separator">chevron_right</span>
+      <span class="breadcrumb-current">Lencana Biota Laut</span>
+    </nav>
+
+    <div class="dashboard-layout">
+      <!-- Sidebar Navigasi -->
+      <DashboardSidebar activeTab="badges" user={user} rankTier={rankTier} />
+
+      <!-- Area Konten Utama -->
+      <main class="dashboard-main-content">
+        <div class="badges-card">
+          
+          <!-- Header Halaman Lencana -->
+          <div class="badges-header-block">
+            <div class="header-text-group">
+              <h1 class="badges-main-title">Koleksi Lencana Biota Laut</h1>
+              <p class="badges-main-subtitle">
+                Tanda kehormatan penguasaan kompetensi jaringan yang diperoleh dari penaklukan materi silabus, uji kuis, dan keaktifan komunitas.
+              </p>
+            </div>
+            
+            <div class="header-counter-badge">
+              <span class="counter-num">{earnedCount} dari {totalBadges}</span>
+              <span class="counter-text">Lencana Terbuka</span>
+            </div>
+          </div>
+
+          <!-- Tingkatan Pangkat Terkini Pelajar -->
+          <div class="rank-quick-strip">
+            <div class="rank-strip-left">
+              <div class="rank-icon-bubble" style={`background-color: ${rankTier.badgeColor};`}>
+                <span class="material-symbols-outlined">{rankTier.icon}</span>
+              </div>
+              <div class="rank-strip-meta">
+                <span class="strip-kicker">Pangkat Biota Laut Saat Ini</span>
+                <strong class="strip-name">{rankTier.name} &mdash; <span class="strip-title">{rankTier.title}</span></strong>
+              </div>
+            </div>
+            <div class="rank-strip-right">
+              <div class="strip-xp-box">
+                <span class="material-symbols-outlined icon-bolt">bolt</span>
+                <strong>{user.xp} XP</strong>
+              </div>
+              <a href="/dashboard" class="btn-strip-view">
+                <span>Lihat Panduan Evolusi</span>
+                <span class="material-symbols-outlined icon-inline">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Grid Koleksi Lencana Biota Laut -->
+          <div class="badges-display-grid">
+            {BADGE_DEFINITIONS.map((badge) => {
+              const isUnlocked = earnedBadges.has(badge.id);
+              return (
+                <div class:list={['badge-item-card', isUnlocked ? 'unlocked' : 'locked']}>
+                  <div class="badge-icon-disc">
+                    <span class="material-symbols-outlined badge-symbol">
+                      {isUnlocked ? badge.icon : 'lock'}
+                    </span>
+                  </div>
+
+                  <div class="badge-details-box">
+                    <div class="badge-headline-row">
+                      <h2 class="badge-item-name">{badge.name}</h2>
+                      <span class:list={['badge-status-pill', isUnlocked ? 'pill-achieved' : 'pill-locked']}>
+                        <span class="material-symbols-outlined icon-status">
+                          {isUnlocked ? 'verified' : 'lock'}
+                        </span>
+                        <span>{isUnlocked ? 'Tercapai' : 'Terkunci'}</span>
+                      </span>
+                    </div>
+
+                    <p class="badge-item-desc">{badge.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <!-- Banner Filosofi Gamifikasi Samudra -->
+          <div class="ocean-lore-banner">
+            <div class="lore-icon-circle">
+              <span class="material-symbols-outlined">waves</span>
+            </div>
+            <div class="lore-content">
+              <strong>Filosofi Ekosistem Samudra Phinisi Learn</strong>
+              <p>
+                Setiap pelajar memulai perjalanannya sebagai perenang kecil pesisir dan berproses menembus samudra luas hingga menjadi penguasa palung terdalam. Selesaikan tantangan konfigurasi jaringan dan raih seluruh lencana biota laut untuk membuktikan dedikasi Anda.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .dashboard-page-container.fluid-layout {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: clamp(1.25rem, 3vw, 3.5rem);
+    padding-block: clamp(1.5rem, 2.5vw, 3rem);
+    box-sizing: border-box;
+  }
+
+  .dashboard-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .breadcrumb-link {
+    color: var(--color-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 140ms ease;
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb-separator {
+    font-size: 1rem;
+    color: #94a3b8;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-navy);
+    font-weight: 700;
+  }
+
+  .dashboard-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.75rem;
+    width: 100%;
+  }
+
+  .dashboard-main-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .badges-card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.5rem;
+    padding: clamp(1.5rem, 2.5vw, 2.5rem);
+    box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .badges-header-block {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 1.5rem;
+  }
+
+  .badges-main-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-weight: 800;
+    color: var(--color-navy);
+    line-height: 1.2;
+    margin: 0 0 0.4rem 0;
+  }
+
+  .badges-main-subtitle {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .header-counter-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 1rem;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .counter-num {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+  }
+
+  .counter-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .rank-quick-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 1rem 1.35rem;
+  }
+
+  .rank-strip-left {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .rank-icon-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(8, 26, 58, 0.12);
+  }
+
+  .rank-icon-bubble .material-symbols-outlined {
+    font-size: 1.4rem;
+  }
+
+  .rank-strip-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .strip-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+  }
+
+  .strip-name {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-navy);
+  }
+
+  .strip-title {
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .rank-strip-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .strip-xp-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 0.65rem;
+    padding: 0.4rem 0.8rem;
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    color: var(--color-navy);
+  }
+
+  .icon-bolt {
+    font-size: 1.1rem;
+    color: #f59e0b;
+  }
+
+  .btn-strip-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: all 140ms ease;
+  }
+
+  .btn-strip-view:hover {
+    color: #0f4bb5;
+  }
+
+  .icon-inline {
+    font-size: 1rem;
+  }
+
+  .badges-display-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .badge-item-card {
+    border-radius: 1.15rem;
+    padding: 1.35rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.15rem;
+    transition: all 180ms ease;
+  }
+
+  .badge-item-card.unlocked {
+    background: #ffffff;
+    border: 1.5px solid #bfdbfe;
+    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.08);
+  }
+
+  .badge-item-card.unlocked:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.14);
+    border-color: #93c5fd;
+  }
+
+  .badge-item-card.locked {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    opacity: 0.72;
+  }
+
+  .badge-item-card.locked:hover {
+    opacity: 0.9;
+  }
+
+  .badge-icon-disc {
+    width: 52px;
+    height: 52px;
+    border-radius: 1rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .badge-item-card.unlocked .badge-icon-disc {
+    background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  }
+
+  .badge-item-card.locked .badge-icon-disc {
+    background: #e2e8f0;
+    color: #94a3b8;
+  }
+
+  .badge-symbol {
+    font-size: 1.65rem;
+  }
+
+  .badge-details-box {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .badge-headline-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .badge-item-name {
+    font-family: var(--font-heading);
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .badge-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  .badge-status-pill .icon-status {
+    font-size: 0.85rem;
+  }
+
+  .badge-status-pill.pill-achieved {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+
+  .badge-status-pill.pill-locked {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .badge-item-desc {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .ocean-lore-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 1.15rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .lore-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0284c7;
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .lore-icon-circle .material-symbols-outlined {
+    font-size: 1.5rem;
+  }
+
+  .lore-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lore-content strong {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    color: #0369a1;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .lore-content p {
+    font-size: 0.84rem;
+    color: #075985;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  @media (max-width: 860px) {
+    .dashboard-layout {
+      flex-direction: column;
+    }
+    .ocean-lore-banner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .rank-quick-strip {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
