@@ -26,6 +26,14 @@ export const getSupabaseAnonKey = (): string => {
   ).trim();
 };
 
+export const getGoogleClientId = (): string => {
+  return (
+    process.env.PUBLIC_GOOGLE_CLIENT_ID ||
+    import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ||
+    '410822825901-tdt0t970sriliv590uup2p8e4dfmkjhh.apps.googleusercontent.com'
+  ).trim();
+};
+
 export const isSupabaseConfigured = (): boolean => {
   const url = getSupabaseUrl();
   const key = getSupabaseAnonKey();
