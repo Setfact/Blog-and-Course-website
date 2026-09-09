@@ -12,6 +12,20 @@ const isProfileComplete = Boolean(
   user.is_profile_complete ||
   (user.full_name && user.country && (user.province || user.city) && user.institution_name)
 );
+
+const currentGenderObj = GENDERS.find((g) => g.id === user.gender);
+const currentGenderLabel = currentGenderObj ? currentGenderObj.label : '-- Pilih Gender --';
+
+const currentProvinceObj = INDONESIA_PROVINCES.find((p) => p.name === user.province);
+const currentProvinceLabel = currentProvinceObj ? currentProvinceObj.name : '-- Pilih Provinsi --';
+const currentCities = currentProvinceObj ? currentProvinceObj.cities : [];
+const currentCityLabel = user.city || '-- Pilih Kota / Kabupaten --';
+
+const currentOccupationObj = OCCUPATIONS.find((o) => o.id === user.occupation);
+const currentOccupationLabel = currentOccupationObj ? currentOccupationObj.label : '-- Pilih Status Profesi --';
+
+const currentReferralObj = REFERRAL_SOURCES.find((r) => r.id === user.referral_source);
+const currentReferralLabel = currentReferralObj ? currentReferralObj.label : '-- Pilih Sumber Rekomendasi --';
 ---
 
 <BaseLayout title="Pengaturan Profil Siswa" description="Kelola data pribadi, kontak, dan identitas resmi untuk penerbitan E-Sertifikat Phinisi Learn.">
@@ -182,15 +196,22 @@ const isProfileComplete = Boolean(
                     </div>
 
                     <div class="form-group">
-                      <label for="select-gender" class="form-label">Gender</label>
-                      <select id="select-gender" name="gender" class="form-control form-select">
-                        <option value="">-- Pilih Gender --</option>
-                        {GENDERS.map((g) => (
-                          <option value={g.id} selected={g.id === user.gender}>
-                            {g.label}
-                          </option>
-                        ))}
-                      </select>
+                      <label class="form-label">Gender</label>
+                      <div class="custom-select-wrapper" id="wrap-gender">
+                        <input type="hidden" name="gender" id="input-gender" value={user.gender || ''} />
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                          <span class:list={['custom-select-label', { 'is-placeholder': !user.gender }]}>{currentGenderLabel}</span>
+                          <span class="material-symbols-outlined custom-select-chevron">expand_more</span>
+                        </button>
+                        <div class="custom-select-dropdown" role="listbox">
+                          <div class:list={['custom-select-option', 'is-placeholder-option', { 'is-selected': !user.gender }]} data-value="">-- Pilih Gender --</div>
+                          {GENDERS.map((g) => (
+                            <div class:list={['custom-select-option', { 'is-selected': g.id === user.gender }]} data-value={g.id}>
+                              {g.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -201,36 +222,62 @@ const isProfileComplete = Boolean(
 
                   <div class="form-row-2">
                     <div class="form-group">
-                      <label for="select-province" class="form-label">Provinsi Asal <span class="required-star">*</span></label>
-                      <select id="select-province" name="province" class="form-control form-select">
-                        <option value="">-- Pilih Provinsi --</option>
-                        {INDONESIA_PROVINCES.map((p) => (
-                          <option value={p.name} selected={p.name === user.province}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
+                      <label class="form-label">Provinsi Asal <span class="required-star">*</span></label>
+                      <div class="custom-select-wrapper" id="wrap-province">
+                        <input type="hidden" name="province" id="input-province" value={user.province || ''} />
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                          <span class:list={['custom-select-label', { 'is-placeholder': !user.province }]}>{currentProvinceLabel}</span>
+                          <span class="material-symbols-outlined custom-select-chevron">expand_more</span>
+                        </button>
+                        <div class="custom-select-dropdown" role="listbox">
+                          <div class:list={['custom-select-option', 'is-placeholder-option', { 'is-selected': !user.province }]} data-value="">-- Pilih Provinsi --</div>
+                          {INDONESIA_PROVINCES.map((p) => (
+                            <div class:list={['custom-select-option', { 'is-selected': p.name === user.province }]} data-value={p.name}>
+                              {p.name}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     <div class="form-group">
-                      <label for="select-city" class="form-label">Kota / Kabupaten <span class="required-star">*</span></label>
-                      <select id="select-city" name="city" class="form-control form-select" data-initial-city={user.city || ''}>
-                        <option value="">-- Pilih Kota / Kabupaten --</option>
-                      </select>
+                      <label class="form-label">Kota / Kabupaten <span class="required-star">*</span></label>
+                      <div class="custom-select-wrapper" id="wrap-city">
+                        <input type="hidden" name="city" id="input-city" value={user.city || ''} />
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                          <span class:list={['custom-select-label', { 'is-placeholder': !user.city }]}>{currentCityLabel}</span>
+                          <span class="material-symbols-outlined custom-select-chevron">expand_more</span>
+                        </button>
+                        <div class="custom-select-dropdown" role="listbox" id="city-dropdown-list">
+                          <div class:list={['custom-select-option', 'is-placeholder-option', { 'is-selected': !user.city }]} data-value="">-- Pilih Kota / Kabupaten --</div>
+                          {currentCities.map((cityName) => (
+                            <div class:list={['custom-select-option', { 'is-selected': cityName === user.city }]} data-value={cityName}>
+                              {cityName}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div class="form-row-2">
                     <div class="form-group">
-                      <label for="select-occupation" class="form-label">Status Profesi <span class="required-star">*</span></label>
-                      <select id="select-occupation" name="occupation" class="form-control form-select">
-                        <option value="">-- Pilih Status Profesi --</option>
-                        {OCCUPATIONS.map((occ) => (
-                          <option value={occ.id} selected={occ.id === user.occupation}>
-                            {occ.label}
-                          </option>
-                        ))}
-                      </select>
+                      <label class="form-label">Status Profesi <span class="required-star">*</span></label>
+                      <div class="custom-select-wrapper" id="wrap-occupation">
+                        <input type="hidden" name="occupation" id="input-occupation" value={user.occupation || ''} />
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                          <span class:list={['custom-select-label', { 'is-placeholder': !user.occupation }]}>{currentOccupationLabel}</span>
+                          <span class="material-symbols-outlined custom-select-chevron">expand_more</span>
+                        </button>
+                        <div class="custom-select-dropdown" role="listbox">
+                          <div class:list={['custom-select-option', 'is-placeholder-option', { 'is-selected': !user.occupation }]} data-value="">-- Pilih Status Profesi --</div>
+                          {OCCUPATIONS.map((occ) => (
+                            <div class:list={['custom-select-option', { 'is-selected': occ.id === user.occupation }]} data-value={occ.id}>
+                              {occ.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     <div class="form-group">
@@ -250,15 +297,22 @@ const isProfileComplete = Boolean(
 
                   <div class="form-row-2">
                     <div class="form-group full-width">
-                      <label for="select-referral" class="form-label">Tahu Phinisi Learn Dari Mana?</label>
-                      <select id="select-referral" name="referral_source" class="form-control form-select">
-                        <option value="">-- Pilih Sumber Rekomendasi --</option>
-                        {REFERRAL_SOURCES.map((ref) => (
-                          <option value={ref.id} selected={ref.id === user.referral_source}>
-                            {ref.label}
-                          </option>
-                        ))}
-                      </select>
+                      <label class="form-label">Tahu Phinisi Learn Dari Mana?</label>
+                      <div class="custom-select-wrapper" id="wrap-referral">
+                        <input type="hidden" name="referral_source" id="input-referral" value={user.referral_source || ''} />
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                          <span class:list={['custom-select-label', { 'is-placeholder': !user.referral_source }]}>{currentReferralLabel}</span>
+                          <span class="material-symbols-outlined custom-select-chevron">expand_more</span>
+                        </button>
+                        <div class="custom-select-dropdown" role="listbox">
+                          <div class:list={['custom-select-option', 'is-placeholder-option', { 'is-selected': !user.referral_source }]} data-value="">-- Pilih Sumber Rekomendasi --</div>
+                          {REFERRAL_SOURCES.map((ref) => (
+                            <div class:list={['custom-select-option', { 'is-selected': ref.id === user.referral_source }]} data-value={ref.id}>
+                              {ref.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -562,164 +616,97 @@ const isProfileComplete = Boolean(
     }
   });
 
-  // Custom Dropdown Engine untuk Mengeliminasi Bug Popup Native di Browser / Wayland
-  const customSelectInstances = new Map<HTMLSelectElement, () => void>();
+  // Setup Custom Select Interactivity (Template-Driven)
+  const geoDataScript = document.getElementById('geo-data-provinces');
+  const provincesList: Array<{ name: string; cities: string[] }> = geoDataScript ? JSON.parse(geoDataScript.textContent || '[]') : [];
 
-  const initCustomSelect = (selectEl: HTMLSelectElement) => {
-    if (selectEl.dataset.customized === 'true') return;
-    selectEl.dataset.customized = 'true';
+  const updateCityOptions = (provinceName: string) => {
+    const cityWrap = document.getElementById('wrap-city');
+    const cityInput = document.getElementById('input-city') as HTMLInputElement | null;
+    const cityLabel = cityWrap?.querySelector('.custom-select-label');
+    const cityDropdown = document.getElementById('city-dropdown-list');
+    if (!cityDropdown || !cityInput || !cityLabel) return;
 
-    // Buat wrapper komponen dropdown
-    const wrapper = document.createElement('div');
-    wrapper.className = 'custom-select-wrapper';
+    const prov = provincesList.find((p) => p.name === provinceName);
+    const cities = prov ? prov.cities : [];
 
-    selectEl.parentNode?.insertBefore(wrapper, selectEl);
-    wrapper.appendChild(selectEl);
-    selectEl.classList.add('custom-select-native', 'sr-only');
-    selectEl.setAttribute('tabindex', '-1');
-    selectEl.setAttribute('aria-hidden', 'true');
+    cityInput.value = '';
+    cityLabel.textContent = '-- Pilih Kota / Kabupaten --';
+    cityLabel.classList.add('is-placeholder');
 
-    // Tombol trigger interaktif
-    const trigger = document.createElement('button');
-    trigger.type = 'button';
-    trigger.className = 'custom-select-trigger';
-    trigger.setAttribute('aria-haspopup', 'listbox');
-    trigger.setAttribute('aria-expanded', 'false');
+    let html = '<div class="custom-select-option is-placeholder-option is-selected" data-value="">-- Pilih Kota / Kabupaten --</div>';
+    cities.forEach((cityName) => {
+      html += `<div class="custom-select-option" data-value="${cityName}">${cityName}</div>`;
+    });
+    cityDropdown.innerHTML = html;
+  };
 
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'custom-select-label';
+  const setupCustomSelect = (wrapper: HTMLElement, onSelect?: (val: string, label: string) => void) => {
+    const trigger = wrapper.querySelector('.custom-select-trigger') as HTMLButtonElement | null;
+    const labelSpan = wrapper.querySelector('.custom-select-label') as HTMLSpanElement | null;
+    const input = wrapper.querySelector('input[type="hidden"]') as HTMLInputElement | null;
+    const dropdown = wrapper.querySelector('.custom-select-dropdown') as HTMLElement | null;
+    if (!trigger || !dropdown || !input || !labelSpan) return;
 
-    const chevron = document.createElement('span');
-    chevron.className = 'material-symbols-outlined custom-select-chevron';
-    chevron.textContent = 'expand_more';
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = wrapper.classList.contains('is-open');
 
-    trigger.appendChild(labelSpan);
-    trigger.appendChild(chevron);
-    wrapper.appendChild(trigger);
-
-    // Panel daftar pilihan opsi
-    const dropdown = document.createElement('div');
-    dropdown.className = 'custom-select-dropdown';
-    dropdown.setAttribute('role', 'listbox');
-    wrapper.appendChild(dropdown);
-
-    const closeMenu = () => {
-      wrapper.classList.remove('is-open');
-      trigger.setAttribute('aria-expanded', 'false');
-    };
-
-    const openMenu = () => {
       document.querySelectorAll('.custom-select-wrapper.is-open').forEach((other) => {
         if (other !== wrapper) {
           other.classList.remove('is-open');
           other.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
         }
       });
-      wrapper.classList.add('is-open');
-      trigger.setAttribute('aria-expanded', 'true');
 
-      // Scroll ke opsi yang sedang aktif jika ada
-      const activeOpt = dropdown.querySelector('.custom-select-option.is-selected') as HTMLElement | null;
-      if (activeOpt) {
-        dropdown.scrollTop = activeOpt.offsetTop - dropdown.offsetTop - 40;
+      if (isOpen) {
+        wrapper.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        wrapper.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        const active = dropdown.querySelector('.custom-select-option.is-selected') as HTMLElement | null;
+        if (active) {
+          dropdown.scrollTop = active.offsetTop - dropdown.offsetTop - 30;
+        }
       }
-    };
+    });
 
-    const renderOptions = () => {
-      dropdown.innerHTML = '';
-      const selectedOption = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
-      const isPlaceholder = !selectEl.value;
+    dropdown.addEventListener('click', (e) => {
+      const opt = (e.target as HTMLElement).closest('.custom-select-option') as HTMLElement | null;
+      if (!opt) return;
+      e.stopPropagation();
 
-      labelSpan.textContent = selectedOption ? (selectedOption.textContent || '') : '';
-      if (isPlaceholder) {
+      const val = opt.dataset.value || '';
+      const text = opt.textContent?.trim() || '';
+
+      input.value = val;
+      labelSpan.textContent = text;
+      if (!val) {
         labelSpan.classList.add('is-placeholder');
       } else {
         labelSpan.classList.remove('is-placeholder');
       }
 
-      Array.from(selectEl.options).forEach((opt) => {
-        const optionEl = document.createElement('div');
-        optionEl.className = 'custom-select-option';
-        const isCurrent = opt.value === selectEl.value;
+      dropdown.querySelectorAll('.custom-select-option').forEach((o) => o.classList.remove('is-selected'));
+      opt.classList.add('is-selected');
 
-        if (isCurrent) {
-          optionEl.classList.add('is-selected');
-          optionEl.setAttribute('aria-selected', 'true');
-        } else {
-          optionEl.setAttribute('aria-selected', 'false');
-        }
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
 
-        if (!opt.value) {
-          optionEl.classList.add('is-placeholder-option');
-        }
+      if (onSelect) onSelect(val, text);
+    });
+  };
 
-        optionEl.textContent = opt.textContent;
-        optionEl.dataset.value = opt.value;
-
-        optionEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectEl.value = opt.value;
-          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-          closeMenu();
-          renderOptions();
-        });
-
-        dropdown.appendChild(optionEl);
+  document.querySelectorAll<HTMLElement>('.custom-select-wrapper').forEach((wrap) => {
+    if (wrap.id === 'wrap-province') {
+      setupCustomSelect(wrap, (selectedProvince) => {
+        updateCityOptions(selectedProvince);
       });
-    };
-
-    trigger.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (wrapper.classList.contains('is-open')) {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    });
-
-    renderOptions();
-    customSelectInstances.set(selectEl, renderOptions);
-  };
-
-  // Dinamisasi Provinsi & Kota Indonesia
-  const geoDataScript = document.getElementById('geo-data-provinces');
-  const provincesList: Array<{ name: string; cities: string[] }> = geoDataScript ? JSON.parse(geoDataScript.textContent || '[]') : [];
-
-  const provSelect = document.getElementById('select-province') as HTMLSelectElement | null;
-  const citySelect = document.getElementById('select-city') as HTMLSelectElement | null;
-  const initialCity = citySelect?.dataset.initialCity || '';
-
-  const updateCityDropdown = (provinceName: string, selectedCity = '') => {
-    if (!citySelect) return;
-    const prov = provincesList.find((p) => p.name === provinceName);
-    const cities = prov ? prov.cities : [];
-
-    let optionsHtml = '<option value="">-- Pilih Kota / Kabupaten --</option>';
-    cities.forEach((cityName) => {
-      const isSelected = cityName === selectedCity ? 'selected' : '';
-      optionsHtml += `<option value="${cityName}" ${isSelected}>${cityName}</option>`;
-    });
-
-    citySelect.innerHTML = optionsHtml;
-
-    // Sinkronkan custom select Kota
-    const refreshCity = customSelectInstances.get(citySelect);
-    if (refreshCity) refreshCity();
-  };
-
-  if (provSelect) {
-    if (provSelect.value) {
-      updateCityDropdown(provSelect.value, initialCity);
+    } else {
+      setupCustomSelect(wrap);
     }
-    provSelect.addEventListener('change', () => {
-      updateCityDropdown(provSelect.value, '');
-    });
-  }
-
-  // Inisialisasi seluruh elemen select di halaman profil
-  document.querySelectorAll<HTMLSelectElement>('select.form-select').forEach((sel) => {
-    initCustomSelect(sel);
   });
 
   // Tutup dropdown saat klik di luar
@@ -1441,7 +1428,8 @@ const isProfileComplete = Boolean(
     }
   }
 
-  .custom-select-option {
+  .custom-select-option,
+  :global(.custom-select-option) {
     padding: 0.65rem 1rem;
     font-family: var(--font-body);
     font-size: 0.85rem;
@@ -1453,18 +1441,21 @@ const isProfileComplete = Boolean(
     justify-content: space-between;
   }
 
-  .custom-select-option:hover {
+  .custom-select-option:hover,
+  :global(.custom-select-option:hover) {
     background-color: #f1f5f9;
     color: var(--color-navy);
   }
 
-  .custom-select-option.is-selected {
+  .custom-select-option.is-selected,
+  :global(.custom-select-option.is-selected) {
     background-color: #eff6ff;
     color: var(--color-primary);
     font-weight: 700;
   }
 
-  .custom-select-option.is-placeholder-option {
+  .custom-select-option.is-placeholder-option,
+  :global(.custom-select-option.is-placeholder-option) {
     color: var(--color-muted);
     font-style: italic;
   }
