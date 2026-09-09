@@ -43,17 +43,69 @@ export const sanitizeRedirectPath = safeRedirect;
 export const routeMatches = (pathname: string, prefix: string): boolean =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);
 
-export const assertSameOrigin = (request: Request): void => {
-  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
-  const origin = request.headers.get('origin');
-  const site = request.headers.get('sec-fetch-site');
-  const expectedOrigin = new URL(request.url).origin;
+export const getTrustedOrigins = (request?: Request): Set<string> => {
+  const trusted = new Set<string>();
 
-  if (origin && origin !== expectedOrigin) {
-    throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+  // Domain resmi produksi
+  trusted.add('https://phinisilearn.web.id');
+  trusted.add('https://www.phinisilearn.web.id');
+  trusted.add('http://phinisilearn.web.id');
+  trusted.add('http://www.phinisilearn.web.id');
+
+  // Lingkungan pengembangan lokal
+  trusted.add('http://localhost:3000');
+  trusted.add('http://localhost:4321');
+  trusted.add('http://127.0.0.1:3000');
+  trusted.add('http://127.0.0.1:4321');
+
+  const envUrl = process.env.PUBLIC_SITE_URL || (import.meta as any).env?.PUBLIC_SITE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
+    try {
+      trusted.add(new URL(envUrl).origin);
+    } catch {}
   }
 
-  if (site && site !== 'same-origin' && site !== 'none') {
+  if (request) {
+    try {
+      trusted.add(new URL(request.url).origin);
+    } catch {}
+
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    if (host) {
+      trusted.add(`${proto}://${host}`);
+      trusted.add(`https://${host}`);
+      trusted.add(`http://${host}`);
+    }
+  }
+
+  return trusted;
+};
+
+export const assertSameOrigin = (request: Request): void => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
+
+  const trustedOrigins = getTrustedOrigins(request);
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const site = request.headers.get('sec-fetch-site');
+
+  if (origin) {
+    if (!trustedOrigins.has(origin)) {
+      throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+    }
+  } else if (referer) {
+    try {
+      const refererOrigin = new URL(referer).origin;
+      if (!trustedOrigins.has(refererOrigin)) {
+        throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+      }
+    } catch {
+      throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+    }
+  }
+
+  if (site && site === 'cross-site') {
     throw new HttpError(403, 'Asal permintaan tidak diizinkan');
   }
 };
