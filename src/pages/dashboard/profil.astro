@@ -76,7 +76,7 @@ const isProfileComplete = Boolean(
             </div>
 
             <!-- Formulir Edit Profil -->
-            <form id="settings-profile-form" class="profile-editor-form">
+            <form id="settings-profile-form" class="profile-editor-form" novalidate>
               <div class="editor-grid-wrapper">
                 
                 <!-- Kolom Kiri: Foto Profil Siswa -->
@@ -202,7 +202,7 @@ const isProfileComplete = Boolean(
                   <div class="form-row-2">
                     <div class="form-group">
                       <label for="select-province" class="form-label">Provinsi Asal <span class="required-star">*</span></label>
-                      <select id="select-province" name="province" class="form-control form-select" required>
+                      <select id="select-province" name="province" class="form-control form-select">
                         <option value="">-- Pilih Provinsi --</option>
                         {INDONESIA_PROVINCES.map((p) => (
                           <option value={p.name} selected={p.name === user.province}>
@@ -214,7 +214,7 @@ const isProfileComplete = Boolean(
 
                     <div class="form-group">
                       <label for="select-city" class="form-label">Kota / Kabupaten <span class="required-star">*</span></label>
-                      <select id="select-city" name="city" class="form-control form-select" required data-initial-city={user.city || ''}>
+                      <select id="select-city" name="city" class="form-control form-select" data-initial-city={user.city || ''}>
                         <option value="">-- Pilih Kota / Kabupaten --</option>
                       </select>
                     </div>
@@ -223,7 +223,7 @@ const isProfileComplete = Boolean(
                   <div class="form-row-2">
                     <div class="form-group">
                       <label for="select-occupation" class="form-label">Status Profesi <span class="required-star">*</span></label>
-                      <select id="select-occupation" name="occupation" class="form-control form-select" required>
+                      <select id="select-occupation" name="occupation" class="form-control form-select">
                         <option value="">-- Pilih Status Profesi --</option>
                         {OCCUPATIONS.map((occ) => (
                           <option value={occ.id} selected={occ.id === user.occupation}>
@@ -562,6 +562,126 @@ const isProfileComplete = Boolean(
     }
   });
 
+  // Custom Dropdown Engine untuk Mengeliminasi Bug Popup Native di Browser / Wayland
+  const customSelectInstances = new Map<HTMLSelectElement, () => void>();
+
+  const initCustomSelect = (selectEl: HTMLSelectElement) => {
+    if (selectEl.dataset.customized === 'true') return;
+    selectEl.dataset.customized = 'true';
+
+    // Buat wrapper komponen dropdown
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+
+    selectEl.parentNode?.insertBefore(wrapper, selectEl);
+    wrapper.appendChild(selectEl);
+    selectEl.classList.add('custom-select-native', 'sr-only');
+    selectEl.setAttribute('tabindex', '-1');
+    selectEl.setAttribute('aria-hidden', 'true');
+
+    // Tombol trigger interaktif
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'custom-select-label';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'material-symbols-outlined custom-select-chevron';
+    chevron.textContent = 'expand_more';
+
+    trigger.appendChild(labelSpan);
+    trigger.appendChild(chevron);
+    wrapper.appendChild(trigger);
+
+    // Panel daftar pilihan opsi
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+    wrapper.appendChild(dropdown);
+
+    const closeMenu = () => {
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      document.querySelectorAll('.custom-select-wrapper.is-open').forEach((other) => {
+        if (other !== wrapper) {
+          other.classList.remove('is-open');
+          other.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+        }
+      });
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+
+      // Scroll ke opsi yang sedang aktif jika ada
+      const activeOpt = dropdown.querySelector('.custom-select-option.is-selected') as HTMLElement | null;
+      if (activeOpt) {
+        dropdown.scrollTop = activeOpt.offsetTop - dropdown.offsetTop - 40;
+      }
+    };
+
+    const renderOptions = () => {
+      dropdown.innerHTML = '';
+      const selectedOption = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
+      const isPlaceholder = !selectEl.value;
+
+      labelSpan.textContent = selectedOption ? (selectedOption.textContent || '') : '';
+      if (isPlaceholder) {
+        labelSpan.classList.add('is-placeholder');
+      } else {
+        labelSpan.classList.remove('is-placeholder');
+      }
+
+      Array.from(selectEl.options).forEach((opt) => {
+        const optionEl = document.createElement('div');
+        optionEl.className = 'custom-select-option';
+        const isCurrent = opt.value === selectEl.value;
+
+        if (isCurrent) {
+          optionEl.classList.add('is-selected');
+          optionEl.setAttribute('aria-selected', 'true');
+        } else {
+          optionEl.setAttribute('aria-selected', 'false');
+        }
+
+        if (!opt.value) {
+          optionEl.classList.add('is-placeholder-option');
+        }
+
+        optionEl.textContent = opt.textContent;
+        optionEl.dataset.value = opt.value;
+
+        optionEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectEl.value = opt.value;
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+          closeMenu();
+          renderOptions();
+        });
+
+        dropdown.appendChild(optionEl);
+      });
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (wrapper.classList.contains('is-open')) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    renderOptions();
+    customSelectInstances.set(selectEl, renderOptions);
+  };
+
   // Dinamisasi Provinsi & Kota Indonesia
   const geoDataScript = document.getElementById('geo-data-provinces');
   const provincesList: Array<{ name: string; cities: string[] }> = geoDataScript ? JSON.parse(geoDataScript.textContent || '[]') : [];
@@ -582,6 +702,10 @@ const isProfileComplete = Boolean(
     });
 
     citySelect.innerHTML = optionsHtml;
+
+    // Sinkronkan custom select Kota
+    const refreshCity = customSelectInstances.get(citySelect);
+    if (refreshCity) refreshCity();
   };
 
   if (provSelect) {
@@ -593,7 +717,33 @@ const isProfileComplete = Boolean(
     });
   }
 
-  // Form Submission Handler
+  // Inisialisasi seluruh elemen select di halaman profil
+  document.querySelectorAll<HTMLSelectElement>('select.form-select').forEach((sel) => {
+    initCustomSelect(sel);
+  });
+
+  // Tutup dropdown saat klik di luar
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.custom-select-wrapper')) {
+      document.querySelectorAll('.custom-select-wrapper.is-open').forEach((wrap) => {
+        wrap.classList.remove('is-open');
+        wrap.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  // Tutup dropdown saat tombol Escape ditekan
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.custom-select-wrapper.is-open').forEach((wrap) => {
+        wrap.classList.remove('is-open');
+        wrap.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  // Form Submission Handler dengan Validasi Mandiri
   const form = document.getElementById('settings-profile-form') as HTMLFormElement | null;
   const saveBtn = document.getElementById('btn-save-profile') as HTMLButtonElement | null;
   const errorAlert = document.getElementById('form-error-alert');
@@ -618,15 +768,57 @@ const isProfileComplete = Boolean(
       const referral_source = String(formData.get('referral_source') || '').trim();
       const bio = String(formData.get('bio') || '').trim();
 
+      if (errorAlert) {
+        errorAlert.textContent = '';
+        errorAlert.classList.add('hidden');
+      }
+
+      // Validasi Client-Side
+      if (!full_name) {
+        if (errorAlert) {
+          errorAlert.textContent = 'Nama lengkap resmi wajib diisi untuk penerbitan sertifikat.';
+          errorAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (!province) {
+        if (errorAlert) {
+          errorAlert.textContent = 'Silakan pilih Provinsi Asal Anda.';
+          errorAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (!city) {
+        if (errorAlert) {
+          errorAlert.textContent = 'Silakan pilih Kota / Kabupaten Asal Anda.';
+          errorAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (!occupation) {
+        if (errorAlert) {
+          errorAlert.textContent = 'Silakan pilih Status Profesi Anda.';
+          errorAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (!institution_name) {
+        if (errorAlert) {
+          errorAlert.textContent = 'Nama Sekolah / Kampus / Kantor wajib diisi.';
+          errorAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
       saveBtn.disabled = true;
       saveBtn.innerHTML = `
         <span class="material-symbols-outlined icon-btn animate-spin">progress_activity</span>
         <span>Menyimpan Profil...</span>
       `;
-      if (errorAlert) {
-        errorAlert.textContent = '';
-        errorAlert.classList.add('hidden');
-      }
 
       try {
         const res = await fetch('/api/user/profile', {
@@ -1152,23 +1344,143 @@ const isProfileComplete = Boolean(
   }
 
   .form-select {
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-color: #ffffff;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.85rem center;
-    background-size: 1.15rem 1.15rem;
-    padding-right: 2.5rem;
-    transition: border-color 140ms ease;
+    display: none;
   }
 
-  .form-select:focus {
+  /* Custom Dropdown UI Components */
+  .custom-select-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .custom-select-trigger {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.8rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--color-ink);
+    background: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    text-align: left;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .custom-select-trigger:hover {
+    border-color: #93c5fd;
+  }
+
+  .custom-select-trigger:focus,
+  .custom-select-wrapper.is-open .custom-select-trigger {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: none;
+    box-shadow: 0 0 0 3px rgba(20, 91, 215, 0.12);
+  }
+
+  .custom-select-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.88rem;
+    flex: 1;
+  }
+
+  .custom-select-label.is-placeholder {
+    color: var(--color-muted);
+  }
+
+  .custom-select-chevron {
+    font-size: 1.25rem;
+    color: #64748b;
+    transition: transform 180ms ease, color 140ms ease;
+    flex-shrink: 0;
+  }
+
+  .custom-select-wrapper.is-open .custom-select-chevron {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+  }
+
+  .custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 0.85rem;
+    box-shadow: 0 12px 32px rgba(8, 26, 58, 0.14);
+    z-index: 100;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 0.4rem 0;
+    display: none;
+  }
+
+  .custom-select-wrapper.is-open .custom-select-dropdown {
+    display: block;
+    animation: dropdownFadeIn 120ms ease;
+  }
+
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .custom-select-option {
+    padding: 0.65rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: background-color 100ms ease, color 100ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .custom-select-option:hover {
+    background-color: #f1f5f9;
+    color: var(--color-navy);
+  }
+
+  .custom-select-option.is-selected {
+    background-color: #eff6ff;
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .custom-select-option.is-placeholder-option {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .custom-select-dropdown::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-select-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-select-dropdown::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+  .custom-select-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 
   .form-textarea {
