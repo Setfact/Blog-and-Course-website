@@ -48,7 +48,7 @@ const finishedCourses = courses.filter((c) => {
 ---
 
 <BaseLayout title="List Sertifikat Siswa" description="Daftar e-sertifikat kelulusan kursus dan verifikasi keahlian jaringan Phinisi Learn.">
-  <div class="dashboard-page-container page-shell">
+  <div class="dashboard-page-container fluid-layout">
     
     <!-- Top Breadcrumb -->
     <nav class="dashboard-breadcrumb" aria-label="Breadcrumb">
@@ -159,11 +159,14 @@ const finishedCourses = courses.filter((c) => {
 </BaseLayout>
 
 <style>
-  .dashboard-page-container {
-    padding-block: 2rem 4rem;
+  .dashboard-page-container.fluid-layout {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.75rem clamp(1.25rem, 3vw, 3.5rem) 4rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    box-sizing: border-box;
   }
 
   .dashboard-breadcrumb {
@@ -197,7 +200,8 @@ const finishedCourses = courses.filter((c) => {
   .dashboard-layout {
     display: flex;
     align-items: flex-start;
-    gap: 1.75rem;
+    gap: 2rem;
+    width: 100%;
   }
 
   .dashboard-main-content {
@@ -209,11 +213,13 @@ const finishedCourses = courses.filter((c) => {
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.35rem;
-    padding: 2rem;
+    padding: 2.25rem clamp(1.5rem, 2.5vw, 3rem);
     box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .cert-card-header {

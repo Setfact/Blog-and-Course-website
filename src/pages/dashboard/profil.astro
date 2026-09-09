@@ -15,7 +15,7 @@ const isProfileComplete = Boolean(
 ---
 
 <BaseLayout title="Pengaturan Profil Siswa" description="Kelola data pribadi, kontak, dan identitas resmi untuk penerbitan E-Sertifikat Phinisi Learn.">
-  <div class="dashboard-page-container page-shell">
+  <div class="dashboard-page-container fluid-layout">
     
     <!-- Top Breadcrumb / Navigation Hierarchy -->
     <nav class="dashboard-breadcrumb" aria-label="Breadcrumb">
@@ -541,11 +541,14 @@ const isProfileComplete = Boolean(
 </script>
 
 <style>
-  .dashboard-page-container {
-    padding-block: 2rem 4rem;
+  .dashboard-page-container.fluid-layout {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.75rem clamp(1.25rem, 3vw, 3.5rem) 4rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    box-sizing: border-box;
   }
 
   /* Breadcrumb Navigation */
@@ -582,7 +585,8 @@ const isProfileComplete = Boolean(
   .dashboard-layout {
     display: flex;
     align-items: flex-start;
-    gap: 1.75rem;
+    gap: 2rem;
+    width: 100%;
   }
 
   .dashboard-main-content {
@@ -594,11 +598,13 @@ const isProfileComplete = Boolean(
     background: #ffffff;
     border: 1px solid var(--color-line);
     border-radius: 1.35rem;
-    padding: 2rem;
+    padding: 2.25rem clamp(1.5rem, 2.5vw, 3rem);
     box-shadow: 0 4px 20px rgba(8, 26, 58, 0.04);
     display: flex;
     flex-direction: column;
     gap: 1.75rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* Sub-tabs Header */
@@ -703,12 +709,12 @@ const isProfileComplete = Boolean(
   .editor-grid-wrapper {
     display: flex;
     align-items: flex-start;
-    gap: 2.25rem;
+    gap: clamp(2rem, 3.5vw, 3.5rem);
     margin-top: 1.5rem;
   }
 
   .avatar-column {
-    width: 160px;
+    width: 170px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -718,8 +724,8 @@ const isProfileComplete = Boolean(
 
   .avatar-box {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 150px;
+    height: 150px;
     border-radius: 1.25rem;
     overflow: hidden;
     background: #ffffff;
@@ -740,7 +746,7 @@ const isProfileComplete = Boolean(
     background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
     color: #ffffff;
     font-family: var(--font-heading);
-    font-size: 2.5rem;
+    font-size: 2.75rem;
     font-weight: 800;
     display: grid;
     place-items: center;
@@ -750,8 +756,8 @@ const isProfileComplete = Boolean(
     position: absolute;
     bottom: 8px;
     right: 8px;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #145bd7;
     color: #ffffff;
@@ -769,19 +775,19 @@ const isProfileComplete = Boolean(
   }
 
   .avatar-edit-badge .material-symbols-outlined {
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
 
   .avatar-caption {
     font-family: var(--font-heading);
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     font-weight: 700;
     color: var(--color-navy);
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
   }
 
   .avatar-note {
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: var(--color-muted);
     line-height: 1.35;
     margin-top: 0.25rem;
@@ -792,14 +798,14 @@ const isProfileComplete = Boolean(
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.15rem;
+    gap: 1.25rem;
     min-width: 0;
   }
 
   .form-row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.15rem;
+    gap: 1.25rem clamp(1.25rem, 2.5vw, 2.25rem);
   }
 
   .form-group {
