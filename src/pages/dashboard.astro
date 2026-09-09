@@ -5,7 +5,6 @@ import { loadCourses } from '../data/learning';
 import { createSupabaseServerClient } from '../lib/supabase';
 import { getRankTier, BADGE_DEFINITIONS, TIERS } from '../lib/rank';
 import { getXpHistory } from '../lib/xp';
-import { COUNTRIES, INDONESIA_PROVINCES, OCCUPATIONS, REFERRAL_SOURCES, GENDERS } from '../data/geo-regions';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -119,10 +118,10 @@ const isProfileComplete = Boolean(
           </div>
           <p>Lengkapi nama resmi, nomor kontak, dan data asal instansi Anda agar nama tercetak dengan benar saat Anda mengklaim E-Sertifikat kelulusan kursus dan capaian lab.</p>
         </div>
-        <button type="button" class="btn-complete-profile" id="banner-open-edit-btn">
+        <a href="/dashboard/profil" class="btn-complete-profile" id="banner-open-edit-btn">
           <span>Lengkapi Profil</span>
           <span class="material-symbols-outlined icon-inline">arrow_forward</span>
-        </button>
+        </a>
       </aside>
     ) : (
       <aside class="cert-profile-notice verified" role="status">
@@ -136,9 +135,9 @@ const isProfileComplete = Boolean(
           </div>
           <p>Nama resmi terdaftar: <strong>{user.full_name}</strong> {user.institution_name ? `(${user.institution_name})` : ''} &middot; Domisili: {user.city ? `${user.city}, ` : ''}{user.country || 'Indonesia'}.</p>
         </div>
-        <button type="button" class="btn-view-profile" id="banner-view-edit-btn">
-          <span>Ubah Data</span>
-        </button>
+        <a href="/dashboard/profil" class="btn-view-profile" id="banner-view-edit-btn">
+          <span>Pengaturan Profil</span>
+        </a>
       </aside>
     )}
 
@@ -167,16 +166,20 @@ const isProfileComplete = Boolean(
           </div>
           <p class="user-email">{user.email}</p>
           <p class="user-bio" id="display-user-bio">
-            {user.bio || 'Belum ada bio. Klik tombol edit profil untuk menambahkan bio Anda.'}
+            {user.bio || 'Belum ada bio. Buka pengaturan akun untuk menambahkan bio Anda.'}
           </p>
         </div>
       </div>
 
       <div class="profile-actions">
-        <button type="button" class="edit-profile-trigger" id="open-edit-modal-btn">
-          <span class="material-symbols-outlined icon-inline">edit</span>
-          <span>Edit Profil</span>
-        </button>
+        <a href="/dashboard/profil" class="edit-profile-trigger">
+          <span class="material-symbols-outlined icon-inline">manage_accounts</span>
+          <span>Pengaturan Akun</span>
+        </a>
+        <a href="/dashboard/sertifikat" class="edit-profile-trigger cert-trigger-link">
+          <span class="material-symbols-outlined icon-inline">workspace_premium</span>
+          <span>List Sertifikat</span>
+        </a>
         {user.role === 'admin' && (
           <Button href="/admin" variant="primary" size="sm" class="admin-cta-btn">
             <span class="material-symbols-outlined icon-inline">admin_panel_settings</span>
@@ -477,220 +480,6 @@ const isProfileComplete = Boolean(
       </div>
     </div>
   </dialog>
-
-  <!-- Hidden JSON dataset 38 Provinsi Indonesia -->
-  <script id="geo-provinces-data" type="application/json" is:inline set:html={JSON.stringify(INDONESIA_PROVINCES)} />
-
-  <!-- Edit Profile Modal Dialog (Global-Ready & Certification Data) -->
-  <dialog id="edit-profile-modal" class="edit-modal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-header-titles">
-          <h3 class="modal-title">Pengaturan Profil Siswa</h3>
-          <p class="modal-subtitle">Lengkapi identitas resmi dan domisili Anda untuk verifikasi penerbitan E-Sertifikat.</p>
-        </div>
-        <button type="button" class="modal-close-btn" id="close-edit-modal-btn" aria-label="Tutup modal">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <!-- Notice: Nama Resmi untuk Sertifikat -->
-      <div class="cert-modal-callout">
-        <span class="material-symbols-outlined icon-callout">verified_user</span>
-        <div>
-          <strong>Identitas Resmi E-Sertifikat</strong>
-          <p>Nama lengkap yang Anda simpan akan dicetak secara permanen pada E-Sertifikat kelulusan kursus dan capaian lab Phinisi Learn. Pastikan sesuai dengan identitas resmi (KTP/Ijazah).</p>
-        </div>
-      </div>
-
-      <form id="edit-profile-form" class="modal-form">
-        <!-- 1. Identitas Resmi -->
-        <div class="form-section-title">
-          <span class="material-symbols-outlined">badge</span>
-          <span>1. Identitas Pribadi & Kontak</span>
-        </div>
-
-        <div class="form-field full-width">
-          <label for="edit-fullname" class="field-label">Nama Lengkap Resmi *</label>
-          <input
-            type="text"
-            id="edit-fullname"
-            name="full_name"
-            value={user.full_name}
-            required
-            maxlength="80"
-            placeholder="Contoh: Calvin Umboh"
-            class="text-input"
-          />
-          <small class="field-hint">Nama ini akan dicetak pada seluruh sertifikat yang Anda raih.</small>
-        </div>
-
-        <div class="form-grid-2">
-          <div class="form-field">
-            <label for="edit-phone" class="field-label">Nomor Handphone / WhatsApp</label>
-            <div class="phone-input-group">
-              <select id="edit-dial-code" name="dial_code" class="dial-code-select">
-                {COUNTRIES.map((c) => (
-                  <option value={c.dialCode} selected={c.dialCode === (user.dial_code || '+62')}>
-                    {c.code} ({c.dialCode})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                id="edit-phone"
-                name="phone_number"
-                value={user.phone_number || ''}
-                placeholder="81234567890"
-                class="text-input phone-text-input"
-                maxlength="20"
-              />
-            </div>
-            <small class="field-hint">Format tanpa awalan 0, contoh: 81234567890</small>
-          </div>
-
-          <div class="form-field">
-            <label for="edit-birthdate" class="field-label">Tanggal Lahir</label>
-            <input
-              type="date"
-              id="edit-birthdate"
-              name="birth_date"
-              value={user.birth_date || ''}
-              class="text-input"
-            />
-          </div>
-        </div>
-
-        <div class="form-grid-2">
-          <div class="form-field">
-            <label for="edit-gender" class="field-label">Gender</label>
-            <select id="edit-gender" name="gender" class="select-input">
-              <option value="">-- Pilih Gender --</option>
-              {GENDERS.map((g) => (
-                <option value={g.id} selected={g.id === user.gender}>
-                  {g.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="edit-country" class="field-label">Negara / Country *</label>
-            <select id="edit-country" name="country" class="select-input" required>
-              {COUNTRIES.map((c) => (
-                <option
-                  value={c.name}
-                  data-code={c.code}
-                  data-dial={c.dialCode}
-                  selected={c.name === (user.country || 'Indonesia')}
-                >
-                  {c.name} ({c.dialCode})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <!-- 2. Wilayah Domisili (Dinamis: Indonesia vs Luar Negeri) -->
-        <div class="form-section-title">
-          <span class="material-symbols-outlined">map</span>
-          <span>2. Wilayah Asal & Domisili</span>
-        </div>
-
-        <div class="form-grid-2">
-          <div
-            id="province-field-container"
-            class="form-field"
-            data-selected-province={user.province || ''}
-          >
-            <!-- Diisi via JavaScript sesuai negara terpilih -->
-          </div>
-
-          <div
-            id="city-field-container"
-            class="form-field"
-            data-selected-city={user.city || ''}
-          >
-            <!-- Diisi via JavaScript sesuai provinsi terpilih -->
-          </div>
-        </div>
-
-        <!-- 3. Latar Belakang & Profesi -->
-        <div class="form-section-title">
-          <span class="material-symbols-outlined">school</span>
-          <span>3. Latar Belakang & Asal Kampus/Sekolah</span>
-        </div>
-
-        <div class="form-grid-2">
-          <div class="form-field">
-            <label for="edit-occupation" class="field-label">Status Profesi *</label>
-            <select id="edit-occupation" name="occupation" class="select-input" required>
-              <option value="">-- Pilih Status Profesi --</option>
-              {OCCUPATIONS.map((occ) => (
-                <option value={occ.id} selected={occ.id === user.occupation}>
-                  {occ.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="edit-institution" class="field-label">Nama Sekolah / Kampus / Kantor *</label>
-            <input
-              type="text"
-              id="edit-institution"
-              name="institution_name"
-              value={user.institution_name || ''}
-              placeholder="Contoh: SMK TI Bulukumba, Universitas Hasanuddin, PT XYZ..."
-              class="text-input"
-              maxlength="120"
-              required
-            />
-          </div>
-        </div>
-
-        <div class="form-field full-width">
-          <label for="edit-referral" class="field-label">Tahu Phinisi Learn Dari Mana?</label>
-          <select id="edit-referral" name="referral_source" class="select-input">
-            <option value="">-- Pilih Sumber Rekomendasi --</option>
-            {REFERRAL_SOURCES.map((ref) => (
-              <option value={ref.id} selected={ref.id === user.referral_source}>
-                {ref.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <!-- 4. Bio Komunitas -->
-        <div class="form-section-title">
-          <span class="material-symbols-outlined">person</span>
-          <span>4. Bio Siswa</span>
-        </div>
-
-        <div class="form-field full-width">
-          <label for="edit-bio" class="field-label">Bio Singkat</label>
-          <textarea
-            id="edit-bio"
-            name="bio"
-            rows="3"
-            maxlength="300"
-            placeholder="Tuliskan minat belajar Anda, sertifikasi yang sedang dipersiapkan, atau fokus keahlian..."
-            class="textarea-input"
-          >{user.bio}</textarea>
-          <small class="field-hint">Maksimal 300 karakter.</small>
-        </div>
-
-        <div id="modal-error-msg" class="modal-error hidden"></div>
-
-        <div class="modal-actions">
-          <button type="button" class="cancel-modal-btn" id="cancel-edit-btn">Batal</button>
-          <button type="submit" class="save-modal-btn" id="save-profile-btn">
-            <span>Simpan Profil Resmi</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </dialog>
 </BaseLayout>
 
 <script>
@@ -708,218 +497,6 @@ const isProfileComplete = Boolean(
   if (ranksModal) {
     ranksModal.addEventListener('click', (e) => {
       if (e.target === ranksModal) ranksModal.close();
-    });
-  }
-
-  // Modal Edit Profil Script
-  const modal = document.getElementById('edit-profile-modal') as HTMLDialogElement | null;
-  const openBtn = document.getElementById('open-edit-modal-btn');
-  const bannerOpenBtn = document.getElementById('banner-open-edit-btn');
-  const bannerViewBtn = document.getElementById('banner-view-edit-btn');
-  const closeBtn = document.getElementById('close-edit-modal-btn');
-  const cancelBtn = document.getElementById('cancel-edit-btn');
-  const form = document.getElementById('edit-profile-form') as HTMLFormElement | null;
-  const errorMsg = document.getElementById('modal-error-msg');
-  const saveBtn = document.getElementById('save-profile-btn') as HTMLButtonElement | null;
-
-  const countrySelect = document.getElementById('edit-country') as HTMLSelectElement | null;
-  const dialCodeSelect = document.getElementById('edit-dial-code') as HTMLSelectElement | null;
-  const provinceContainer = document.getElementById('province-field-container');
-  const cityContainer = document.getElementById('city-field-container');
-
-  let provincesData: any[] = [];
-  try {
-    const rawGeoData = document.getElementById('geo-provinces-data')?.textContent;
-    if (rawGeoData) provincesData = JSON.parse(rawGeoData);
-  } catch (e) {
-    console.error('Error parsing geo provinces data:', e);
-  }
-
-  const initialProvince = provinceContainer?.dataset.selectedProvince || '';
-  const initialCity = cityContainer?.dataset.selectedCity || '';
-
-  const updateLocationInputs = (country: string, selectedProvince = '', selectedCity = '') => {
-    if (!provinceContainer || !cityContainer) return;
-
-    if (country === 'Indonesia') {
-      let provOptions = '<option value="">-- Pilih Provinsi --</option>';
-      provincesData.forEach((prov: any) => {
-        const sel = prov.name === selectedProvince ? 'selected' : '';
-        provOptions += `<option value="${prov.name}" ${sel}>${prov.name}</option>`;
-      });
-
-      provinceContainer.innerHTML = `
-        <label for="edit-province" class="field-label">Provinsi *</label>
-        <select id="edit-province" name="province" class="select-input" required>
-          ${provOptions}
-        </select>
-      `;
-
-      const updateCities = (provName: string, cityToSelect = '') => {
-        const found = provincesData.find((p: any) => p.name === provName);
-        let cityOptions = '<option value="">-- Pilih Kota / Kabupaten --</option>';
-        if (found && found.cities) {
-          found.cities.forEach((c: string) => {
-            const sel = c === cityToSelect ? 'selected' : '';
-            cityOptions += `<option value="${c}" ${sel}>${c}</option>`;
-          });
-        }
-        cityContainer.innerHTML = `
-          <label for="edit-city" class="field-label">Kota / Kabupaten *</label>
-          <select id="edit-city" name="city" class="select-input" required>
-            ${cityOptions}
-          </select>
-        `;
-      };
-
-      const provSel = document.getElementById('edit-province') as HTMLSelectElement | null;
-      updateCities(selectedProvince || (provSel?.value || ''), selectedCity);
-
-      provSel?.addEventListener('change', () => {
-        updateCities(provSel.value, '');
-      });
-    } else {
-      provinceContainer.innerHTML = `
-        <label for="edit-province" class="field-label">State / Province / Region</label>
-        <input
-          type="text"
-          id="edit-province"
-          name="province"
-          value="${selectedProvince}"
-          placeholder="Contoh: Selangor, California, Tokyo..."
-          class="text-input"
-          maxlength="80"
-        />
-      `;
-
-      cityContainer.innerHTML = `
-        <label for="edit-city" class="field-label">Kota / City</label>
-        <input
-          type="text"
-          id="edit-city"
-          name="city"
-          value="${selectedCity}"
-          placeholder="Contoh: Petaling Jaya, Los Angeles, Shibuya..."
-          class="text-input"
-          maxlength="80"
-        />
-      `;
-    }
-  };
-
-  // Setup awal lokasi
-  updateLocationInputs(countrySelect?.value || 'Indonesia', initialProvince, initialCity);
-
-  // Listener perubahan negara
-  if (countrySelect) {
-    countrySelect.addEventListener('change', () => {
-      const selectedOption = countrySelect.options[countrySelect.selectedIndex];
-      const dialCode = selectedOption?.dataset.dial;
-      if (dialCode && dialCodeSelect) {
-        dialCodeSelect.value = dialCode;
-      }
-      updateLocationInputs(countrySelect.value, '', '');
-    });
-  }
-
-  const openModalHandler = () => {
-    if (errorMsg) {
-      errorMsg.textContent = '';
-      errorMsg.classList.add('hidden');
-    }
-    if (modal) modal.showModal();
-  };
-
-  if (openBtn) openBtn.addEventListener('click', openModalHandler);
-  if (bannerOpenBtn) bannerOpenBtn.addEventListener('click', openModalHandler);
-  if (bannerViewBtn) bannerViewBtn.addEventListener('click', openModalHandler);
-
-  const closeModal = () => {
-    if (modal) modal.close();
-  };
-
-  if (closeBtn) closeBtn.addEventListener('click', closeModal);
-  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!saveBtn) return;
-
-      const formData = new FormData(form);
-      const full_name = String(formData.get('full_name') || '').trim();
-      const phone_number = String(formData.get('phone_number') || '').trim();
-      const dial_code = String(formData.get('dial_code') || '+62').trim();
-      const birth_date = String(formData.get('birth_date') || '').trim();
-      const gender = String(formData.get('gender') || '').trim();
-      const country = String(formData.get('country') || 'Indonesia').trim();
-      const selectedCountryOpt = countrySelect?.options[countrySelect.selectedIndex];
-      const country_code = selectedCountryOpt?.dataset.code || 'ID';
-      const province = String(formData.get('province') || '').trim();
-      const city = String(formData.get('city') || '').trim();
-      const occupation = String(formData.get('occupation') || '').trim();
-      const institution_name = String(formData.get('institution_name') || '').trim();
-      const referral_source = String(formData.get('referral_source') || '').trim();
-      const bio = String(formData.get('bio') || '').trim();
-
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Menyimpan Profil...';
-      if (errorMsg) {
-        errorMsg.textContent = '';
-        errorMsg.classList.add('hidden');
-      }
-
-      try {
-        const res = await fetch('/api/user/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            full_name,
-            phone_number,
-            dial_code,
-            birth_date,
-            gender,
-            country,
-            country_code,
-            province,
-            city,
-            occupation,
-            institution_name,
-            referral_source,
-            bio,
-          }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Gagal menyimpan profil');
-        }
-
-        // Perbarui tampilan di layar
-        const nameEl = document.getElementById('display-user-name');
-        const bioEl = document.getElementById('display-user-bio');
-        if (nameEl) nameEl.textContent = full_name;
-        if (bioEl) bioEl.textContent = bio || 'Belum ada bio. Klik tombol edit profil untuk menambahkan bio Anda.';
-
-        window.dispatchEvent(
-          new CustomEvent('phinisi-toast', {
-            detail: { message: 'Profil resmi dan data sertifikasi berhasil disimpan', type: 'success' },
-          })
-        );
-
-        closeModal();
-        setTimeout(() => {
-          window.location.reload();
-        }, 600);
-      } catch (err: any) {
-        if (errorMsg) {
-          errorMsg.textContent = err.message || 'Terjadi kesalahan sistem';
-          errorMsg.classList.remove('hidden');
-        }
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Simpan Profil Resmi';
-      }
     });
   }
 </script>
@@ -1246,6 +823,7 @@ const isProfileComplete = Boolean(
     padding: 0.5rem 0.9rem;
     border-radius: 0.65rem;
     cursor: pointer;
+    text-decoration: none;
     transition: all 150ms ease;
   }
   .edit-profile-trigger:hover {
@@ -1759,233 +1337,7 @@ const isProfileComplete = Boolean(
     font-size: 0.95rem;
   }
 
-  /* Modal Edit Profil */
-  .edit-modal {
-    border: none;
-    border-radius: 1.5rem;
-    padding: 0;
-    background: transparent;
-    max-width: 680px;
-    width: 94%;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  }
-  .edit-modal::backdrop {
-    background: rgba(9, 26, 58, 0.6);
-    backdrop-filter: blur(4px);
-  }
-  .modal-card {
-    background: #ffffff;
-    border-radius: 1.5rem;
-    padding: 1.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  .modal-header-titles {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .modal-title {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--color-navy);
-    margin: 0;
-  }
-  .modal-subtitle {
-    margin: 0;
-    font-size: 0.82rem;
-    color: var(--color-muted);
-    line-height: 1.4;
-  }
-  .modal-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-muted);
-    cursor: pointer;
-    border-radius: 0.5rem;
-    padding: 0.25rem;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .modal-close-btn:hover {
-    background: var(--color-section);
-    color: var(--color-navy);
-  }
-  .cert-modal-callout {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 0.85rem;
-    color: #1e40af;
-  }
-  .cert-modal-callout .icon-callout {
-    font-size: 1.35rem;
-    color: #2563eb;
-    margin-top: 0.1rem;
-    flex-shrink: 0;
-  }
-  .cert-modal-callout strong {
-    display: block;
-    font-size: 0.85rem;
-    font-family: var(--font-heading);
-    font-weight: 800;
-    margin-bottom: 0.15rem;
-  }
-  .cert-modal-callout p {
-    margin: 0;
-    font-size: 0.78rem;
-    line-height: 1.45;
-    color: #1e3a8a;
-  }
-  .modal-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.15rem;
-  }
-  .form-section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--color-line);
-    font-family: var(--font-heading);
-    font-size: 0.88rem;
-    font-weight: 800;
-    color: var(--color-navy);
-  }
-  .form-section-title .material-symbols-outlined {
-    font-size: 1.15rem;
-    color: var(--color-primary);
-  }
-  .form-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-  .full-width {
-    width: 100%;
-  }
-  .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-  .field-label {
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--color-navy);
-  }
-  .phone-input-group {
-    display: flex;
-    gap: 0.4rem;
-  }
-  .dial-code-select {
-    width: 120px;
-    flex-shrink: 0;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    padding: 0.65rem 0.5rem;
-    font-family: var(--font-body);
-    font-size: 0.82rem;
-    background: #f8fafc;
-    color: var(--color-navy);
-    font-weight: 600;
-  }
-  .phone-text-input {
-    flex: 1;
-  }
-  .text-input, .textarea-input, .select-input {
-    width: 100%;
-    border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
-    padding: 0.65rem 0.85rem;
-    font-family: var(--font-body);
-    font-size: 0.88rem;
-    background: #ffffff;
-    box-sizing: border-box;
-    transition: border-color 150ms ease;
-  }
-  .text-input:focus, .textarea-input:focus, .select-input:focus, .dial-code-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-  .textarea-input {
-    resize: vertical;
-  }
-  .field-hint {
-    font-size: 0.72rem;
-    color: var(--color-muted);
-  }
-  .modal-error {
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-    padding: 0.65rem 0.85rem;
-    border-radius: 0.75rem;
-    font-size: 0.82rem;
-  }
-  .modal-error.hidden {
-    display: none;
-  }
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-  }
-  .cancel-modal-btn {
-    padding: 0.65rem 1.15rem;
-    border: 1px solid var(--color-line);
-    background: #ffffff;
-    color: var(--color-ink);
-    border-radius: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.84rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .cancel-modal-btn:hover {
-    background: var(--color-section);
-  }
-  .save-modal-btn {
-    padding: 0.65rem 1.25rem;
-    border: none;
-    background: var(--color-primary);
-    color: #ffffff;
-    border-radius: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.84rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 150ms ease;
-  }
-  .save-modal-btn:hover {
-    background: #0e4ca9;
-  }
-  .save-modal-btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-
   @media (max-width: 640px) {
-    .form-grid-2 {
-      grid-template-columns: 1fr;
-    }
     .cert-profile-notice {
       flex-direction: column;
       align-items: flex-start;

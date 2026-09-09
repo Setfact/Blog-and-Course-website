@@ -1,0 +1,223 @@
+---
+interface Props {
+  activeTab: 'courses' | 'certificates' | 'profile';
+  user: {
+    full_name: string;
+    email: string;
+    avatar_url?: string | null;
+    xp?: number;
+    role?: string;
+  };
+}
+
+const { activeTab, user } = Astro.props;
+
+const navItems = [
+  {
+    id: 'courses',
+    label: 'Kelas Saya',
+    href: '/dashboard',
+    icon: 'school',
+  },
+  {
+    id: 'certificates',
+    label: 'List Sertifikat',
+    href: '/dashboard/sertifikat',
+    icon: 'workspace_premium',
+  },
+  {
+    id: 'profile',
+    label: 'Pengaturan Akun',
+    href: '/dashboard/profil',
+    icon: 'manage_accounts',
+  },
+];
+---
+
+<aside class="dashboard-sidebar" aria-label="Navigasi Dasbor Siswa">
+  <div class="user-summary-card">
+    <div class="user-avatar-wrap">
+      {user.avatar_url ? (
+        <img src={user.avatar_url} alt={user.full_name} class="user-avatar-img" width="56" height="56" />
+      ) : (
+        <div class="user-avatar-fallback">{user.full_name.slice(0, 2).toUpperCase()}</div>
+      )}
+    </div>
+    <div class="user-summary-text">
+      <strong class="user-summary-name" title={user.full_name}>{user.full_name}</strong>
+      <span class="user-summary-role">{user.role === 'admin' ? 'Administrator' : 'Siswa Phinisi'}</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul class="sidebar-nav-list">
+      {navItems.map((item) => {
+        const isActive = activeTab === item.id;
+        return (
+          <li>
+            <a
+              href={item.href}
+              class:list={['sidebar-nav-link', { active: isActive }]}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span class="material-symbols-outlined nav-icon">{item.icon}</span>
+              <span class="nav-label">{item.label}</span>
+              {isActive && <span class="active-indicator" aria-hidden="true" />}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+</aside>
+
+<style>
+  .dashboard-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .user-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.1rem 1.2rem;
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
+  }
+
+  .user-avatar-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(8, 26, 58, 0.08);
+  }
+
+  .user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .user-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+  }
+
+  .user-summary-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .user-summary-name {
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-summary-role {
+    font-size: 0.74rem;
+    color: var(--color-muted);
+    font-weight: 500;
+  }
+
+  .sidebar-nav {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: 1.15rem;
+    padding: 0.45rem;
+    box-shadow: 0 2px 10px rgba(8, 26, 58, 0.03);
+  }
+
+  .sidebar-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .sidebar-nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    color: var(--color-ink);
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-size: 0.86rem;
+    font-weight: 600;
+    transition: all 140ms ease;
+  }
+
+  .sidebar-nav-link:hover {
+    background: var(--color-section);
+    color: var(--color-primary);
+  }
+
+  .sidebar-nav-link.active {
+    background: #eff6ff;
+    color: var(--color-primary);
+    font-weight: 800;
+  }
+
+  .sidebar-nav-link .nav-icon {
+    font-size: 1.25rem;
+    color: var(--color-muted);
+    transition: color 140ms ease;
+  }
+
+  .sidebar-nav-link:hover .nav-icon,
+  .sidebar-nav-link.active .nav-icon {
+    color: var(--color-primary);
+  }
+
+  .active-indicator {
+    position: absolute;
+    right: 0.75rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+
+  @media (max-width: 860px) {
+    .dashboard-sidebar {
+      width: 100%;
+    }
+    .sidebar-nav-list {
+      flex-direction: row;
+      overflow-x: auto;
+    }
+    .sidebar-nav-link {
+      white-space: nowrap;
+    }
+    .active-indicator {
+      display: none;
+    }
+  }
+</style>
