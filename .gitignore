@@ -23,3 +23,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# uploaded media and lab files (prevent git bloat and deploy conflicts)
+public/uploads/*
+public/labs/*
+!public/uploads/.gitkeep
+!public/labs/.gitkeep
+

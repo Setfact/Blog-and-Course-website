@@ -1061,6 +1061,23 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
             hiddenImgInput.onchange = async () => {
               if (!hiddenImgInput.files || hiddenImgInput.files.length === 0) return;
               const file = hiddenImgInput.files[0];
+
+              // Validasi batas ukuran klien (Maksimal 5 MB)
+              const maxImgSize = 5 * 1024 * 1024;
+              if (file.size > maxImgSize) {
+                showBanner(`Ukuran berkas (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 5 MB.`, true);
+                hiddenImgInput.value = '';
+                return;
+              }
+
+              // Validasi tipe berkas gambar
+              const validImgTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
+              if (file.type && !validImgTypes.includes(file.type)) {
+                showBanner('Format gambar tidak didukung. Harap gunakan PNG, JPG, WEBP, atau SVG.', true);
+                hiddenImgInput.value = '';
+                return;
+              }
+
               const formData = new FormData();
               formData.append('image', file);
               formData.append('file', file);
@@ -1104,6 +1121,22 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
             hiddenPktInput.onchange = async () => {
               if (!hiddenPktInput.files || hiddenPktInput.files.length === 0) return;
               const file = hiddenPktInput.files[0];
+
+              // Validasi batas ukuran klien (Maksimal 50 MB)
+              const maxLabSize = 50 * 1024 * 1024;
+              if (file.size > maxLabSize) {
+                showBanner(`Ukuran berkas PKT (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 50 MB.`, true);
+                hiddenPktInput.value = '';
+                return;
+              }
+
+              const lowerName = file.name.toLowerCase();
+              if (!lowerName.endsWith('.pkt') && !lowerName.endsWith('.pka')) {
+                showBanner('Berkas harus berekstensi .pkt atau .pka (Cisco Packet Tracer).', true);
+                hiddenPktInput.value = '';
+                return;
+              }
+
               const formData = new FormData();
               formData.append('file', file);
               formData.append('lab', file);
@@ -1150,6 +1183,21 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
             hiddenPdfInput.onchange = async () => {
               if (!hiddenPdfInput.files || hiddenPdfInput.files.length === 0) return;
               const file = hiddenPdfInput.files[0];
+
+              // Validasi batas ukuran klien (Maksimal 50 MB)
+              const maxLabSize = 50 * 1024 * 1024;
+              if (file.size > maxLabSize) {
+                showBanner(`Ukuran berkas PDF (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 50 MB.`, true);
+                hiddenPdfInput.value = '';
+                return;
+              }
+
+              if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showBanner('Berkas panduan harus berformat dokumen PDF (.pdf).', true);
+                hiddenPdfInput.value = '';
+                return;
+              }
+
               const formData = new FormData();
               formData.append('file', file);
               formData.append('lab', file);
@@ -1382,6 +1430,23 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
         hiddenImgInput.onchange = async () => {
           if (!hiddenImgInput.files || hiddenImgInput.files.length === 0) return;
           const file = hiddenImgInput.files[0];
+
+          // Validasi batas ukuran klien (Maksimal 5 MB)
+          const maxImgSize = 5 * 1024 * 1024;
+          if (file.size > maxImgSize) {
+            showBanner(`Ukuran berkas cover (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 5 MB.`, true);
+            hiddenImgInput.value = '';
+            return;
+          }
+
+          // Validasi tipe berkas gambar
+          const validImgTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
+          if (file.type && !validImgTypes.includes(file.type)) {
+            showBanner('Format gambar tidak didukung. Harap gunakan PNG, JPG, WEBP, atau SVG.', true);
+            hiddenImgInput.value = '';
+            return;
+          }
+
           const formData = new FormData();
           formData.append('image', file);
           formData.append('file', file);
