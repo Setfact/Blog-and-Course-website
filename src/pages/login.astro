@@ -106,7 +106,7 @@ if (redirectParam.startsWith('/community')) {
       {errorParam && (
         <div class="error-alert" role="alert">
           <span class="material-symbols-outlined icon">error</span>
-          <p>{decodeURIComponent(errorParam)}</p>
+          <p>Autentikasi belum berhasil. Coba masuk kembali atau periksa tautan verifikasi email.</p>
         </div>
       )}
 
@@ -206,8 +206,9 @@ if (redirectParam.startsWith('/community')) {
                   id="register-password"
                   name="password"
                   required
-                  minlength="8"
-                  placeholder="Password (Minimal 8 Karakter)"
+                  minlength="12"
+                  maxlength="128"
+                  placeholder="Password (Minimal 12 Karakter)"
                   class="form-input clean-input"
                   autocomplete="new-password"
                 />
@@ -233,7 +234,8 @@ if (redirectParam.startsWith('/community')) {
                   id="register-password-confirm"
                   name="password_confirm"
                   required
-                  minlength="8"
+                  minlength="12"
+                  maxlength="128"
                   placeholder="Konfirmasi Password"
                   class="form-input clean-input"
                   autocomplete="new-password"
@@ -754,8 +756,8 @@ if (redirectParam.startsWith('/community')) {
           return;
         }
 
-        if (password.length < 8) {
-          showAlert('Kata sandi harus terdiri dari minimal 8 karakter.');
+        if (password.length < 12) {
+          showAlert('Kata sandi harus terdiri dari minimal 12 karakter.');
           return;
         }
 

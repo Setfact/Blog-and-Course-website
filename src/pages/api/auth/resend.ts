@@ -1,63 +1,33 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServerClient } from '../../../lib/supabase';
-import { translateAuthError } from '../../../lib/auth-errors';
-import { sanitizeRedirectPath, getPublicOrigin } from '../../../lib/security';
+import { HttpError, json, readBody, safeRedirect, getPublicOrigin } from '../../../lib/security';
+import { emailField, limit } from '../../../lib/auth-security';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const supabase = createSupabaseServerClient({ request, cookies });
+export const POST: APIRoute = async (context) => {
+  const body = await readBody(context.request);
+  const email = emailField(body.email);
+
+  await limit(`resend:account:${email}`, 3, 3600);
+
+  const supabase = createSupabaseServerClient(context);
   if (!supabase) {
-    return new Response(JSON.stringify({ error: 'Supabase belum dikonfigurasi pada server.' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    throw new HttpError(503, 'Layanan autentikasi database belum siap.');
   }
 
-  try {
-    const url = new URL(request.url);
-    const body = await request.json().catch(() => ({}));
-    const email = (body.email || '').trim();
-    const targetRedirect = sanitizeRedirectPath(body.redirect, '/dashboard');
-    const publicOrigin = getPublicOrigin(request);
-    const emailRedirectTo = `${publicOrigin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
+  const targetRedirect = safeRedirect(body.redirect, '/dashboard');
+  const publicOrigin = getPublicOrigin(context.request);
+  const emailRedirectTo = `${publicOrigin}/api/auth/callback?redirect=${encodeURIComponent(targetRedirect)}`;
 
-    if (!email) {
-      return new Response(JSON.stringify({ error: 'Alamat email wajib diisi.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+  await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo,
+    },
+  });
 
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: {
-        emailRedirectTo,
-      },
-    });
-
-    if (error) {
-      const friendlyError = translateAuthError(error.message);
-      return new Response(JSON.stringify({ error: friendlyError, rawError: error.message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Tautan konfirmasi baru berhasil dikirimkan ke email Anda. Silakan periksa kotak masuk atau spam di Gmail.',
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  } catch (err: any) {
-    console.error('Error API resend:', err);
-    return new Response(JSON.stringify({ error: 'Terjadi kesalahan sistem saat mengirim ulang email konfirmasi.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  return json({
+    success: true,
+    message: 'Jika akun memerlukan verifikasi, petunjuk baru telah dikirim ke email Anda.',
+  });
 };

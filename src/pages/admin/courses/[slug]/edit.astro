@@ -409,7 +409,7 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
   </div>
 
   <!-- Data Awal Kursus (Injeksi Aman SSR ke Klien) -->
-  <script is:inline type="application/json" id="raw-initial-data" set:html={JSON.stringify(initialCourseData)}></script>
+  <script is:inline type="application/json" id="raw-initial-data" set:html={JSON.stringify(initialCourseData).replace(/</g, '\\u003c')}></script>
 
   <script>
     interface LessonItem {

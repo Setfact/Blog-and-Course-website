@@ -29,4 +29,5 @@ public/uploads/*
 public/labs/*
 !public/uploads/.gitkeep
 !public/labs/.gitkeep
-
+# scratch scripts
+scratch/

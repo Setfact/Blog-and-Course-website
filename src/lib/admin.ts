@@ -1,3 +1,4 @@
+import { searchPattern } from './security';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Profile, AdminAuditLog, UserRole, UserStatus } from '../types/database';
 
@@ -158,7 +159,7 @@ export const getUsersList = async (
         query = query.eq('status', status);
       }
       if (search) {
-        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+        query = query.or(`full_name.ilike.${searchPattern(search)},email.ilike.${searchPattern(search)}`);
       }
 
       const { data, error } = await query;
@@ -188,41 +189,31 @@ export const updateUserRole = async (
   targetUserId: string,
   newRole: UserRole
 ): Promise<boolean> => {
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
-
-      if (!error) {
-        await supabase.from('admin_audit_logs').insert({
-          admin_id: adminId,
-          action: 'UPDATE_ROLE',
-          target_type: 'user',
-          target_id: targetUserId,
-          details: { new_role: newRole },
-        });
-        return true;
-      }
-    } catch (err) {
-      console.error('Error updating user role in Supabase:', err);
-    }
-  }
-
-  const target = inMemoryUsers.find((u) => u.id === targetUserId);
-  if (target) {
-    target.role = newRole;
-    inMemoryAuditLogs.unshift({
-      id: `log-${Date.now()}`,
-      admin_id: adminId,
-      action: 'UPDATE_ROLE',
-      target_type: 'user',
-      target_id: targetUserId,
-      details: { new_role: newRole },
-      created_at: new Date().toISOString(),
+  if (!supabase) return false;
+  try {
+    const { data: rpcSuccess, error: rpcError } = await supabase.rpc('admin_update_user_role', {
+      p_target_user_id: targetUserId,
+      p_new_role: newRole,
     });
-    return true;
+    if (!rpcError && rpcSuccess) return true;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .eq('id', targetUserId);
+
+    if (!updateError) {
+      await supabase.from('admin_audit_logs').insert({
+        admin_id: adminId,
+        action: 'UPDATE_ROLE',
+        target_type: 'user',
+        target_id: targetUserId,
+        details: { new_role: newRole },
+      });
+      return true;
+    }
+  } catch (err) {
+    console.error('Error updating user role in Supabase:', err);
   }
   return false;
 };
@@ -233,41 +224,31 @@ export const updateUserStatus = async (
   targetUserId: string,
   newStatus: UserStatus
 ): Promise<boolean> => {
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
-
-      if (!error) {
-        await supabase.from('admin_audit_logs').insert({
-          admin_id: adminId,
-          action: 'UPDATE_STATUS',
-          target_type: 'user',
-          target_id: targetUserId,
-          details: { new_status: newStatus },
-        });
-        return true;
-      }
-    } catch (err) {
-      console.error('Error updating user status in Supabase:', err);
-    }
-  }
-
-  const target = inMemoryUsers.find((u) => u.id === targetUserId);
-  if (target) {
-    target.status = newStatus;
-    inMemoryAuditLogs.unshift({
-      id: `log-${Date.now()}`,
-      admin_id: adminId,
-      action: 'UPDATE_STATUS',
-      target_type: 'user',
-      target_id: targetUserId,
-      details: { new_status: newStatus },
-      created_at: new Date().toISOString(),
+  if (!supabase) return false;
+  try {
+    const { data: rpcSuccess, error: rpcError } = await supabase.rpc('admin_update_user_status', {
+      p_target_user_id: targetUserId,
+      p_new_status: newStatus,
     });
-    return true;
+    if (!rpcError && rpcSuccess) return true;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', targetUserId);
+
+    if (!updateError) {
+      await supabase.from('admin_audit_logs').insert({
+        admin_id: adminId,
+        action: 'UPDATE_STATUS',
+        target_type: 'user',
+        target_id: targetUserId,
+        details: { new_status: newStatus },
+      });
+      return true;
+    }
+  } catch (err) {
+    console.error('Error updating user status in Supabase:', err);
   }
   return false;
 };
@@ -340,43 +321,37 @@ export const resetUserProgress = async (
   adminId: string,
   targetUserId: string
 ): Promise<boolean> => {
-  if (supabase) {
-    try {
-      await supabase.from('user_lesson_progress').delete().eq('user_id', targetUserId);
-      await supabase
-        .from('profiles')
-        .update({
-          xp: 0,
-          streak: 0,
-          last_study_date: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', targetUserId);
+  if (!supabase) return false;
+  try {
+    const { data: rpcSuccess, error: rpcError } = await supabase.rpc('admin_reset_user_progress', {
+      p_target_user_id: targetUserId,
+    });
+    if (!rpcError && rpcSuccess) return true;
 
-      await supabase.from('admin_audit_logs').insert({
-        admin_id: adminId,
-        action: 'RESET_PROGRESS',
-        target_type: 'user',
-        target_id: targetUserId,
-        details: { reset_at: new Date().toISOString() },
-      });
+    await supabase.from('user_lesson_progress').delete().eq('user_id', targetUserId);
+    await supabase
+      .from('profiles')
+      .update({
+        xp: 0,
+        streak: 0,
+        last_study_date: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', targetUserId);
 
-      return true;
-    } catch (err) {
-      console.error('Error resetting user progress:', err);
-    }
+    await supabase.from('admin_audit_logs').insert({
+      admin_id: adminId,
+      action: 'RESET_PROGRESS',
+      target_type: 'user',
+      target_id: targetUserId,
+      details: { reset_at: new Date().toISOString() },
+    });
+
+    return true;
+  } catch (err) {
+    console.error('Error resetting user progress:', err);
   }
-
-  inMemoryAuditLogs.unshift({
-    id: `log-${Date.now()}`,
-    admin_id: adminId,
-    action: 'RESET_PROGRESS',
-    target_type: 'user',
-    target_id: targetUserId,
-    details: { reset_at: new Date().toISOString() },
-    created_at: new Date().toISOString(),
-  });
-  return true;
+  return false;
 };
 
 export interface CourseAnalyticsData {

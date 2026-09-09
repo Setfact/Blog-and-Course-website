@@ -91,9 +91,11 @@ const navLinks = [
               <span class="admin-email">{user.email}</span>
             </div>
           </div>
-          <a href="/api/auth/signout" class="admin-logout-btn" title="Keluar">
-            <span class="material-symbols-outlined">logout</span>
-          </a>
+          <form method="post" action="/api/auth/signout">
+            <button type="submit" class="admin-logout-btn" title="Keluar">
+              <span class="material-symbols-outlined">logout</span>
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -268,6 +270,9 @@ const navLinks = [
     text-overflow: ellipsis;
   }
   .admin-logout-btn {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
     color: var(--color-muted);
     display: grid;
     place-items: center;

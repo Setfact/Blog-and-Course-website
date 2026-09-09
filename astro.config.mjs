@@ -19,7 +19,8 @@ export default defineConfig({
     enabled: false
   },
   adapter: node({
-    mode: 'standalone'
+    mode: 'standalone',
+    bodySizeLimit: 52 * 1024 * 1024,
   }),
   vite: {
     plugins: [tailwindcss()],

@@ -1,137 +1,184 @@
+import { randomUUID } from 'node:crypto';
 import { defineMiddleware } from 'astro:middleware';
 import { createSupabaseServerClient, getOrCreateUserProfile } from './lib/supabase';
+import {
+  HttpError,
+  assertSameOrigin,
+  json,
+  routeMatches,
+  validBasicAuth,
+} from './lib/security';
+import { limit } from './lib/auth-security';
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  const requestId = randomUUID();
+  context.locals.user = null;
   const url = new URL(context.request.url);
+  const path = decodeURIComponent(url.pathname).replace(/\/{2,}/g, '/');
+  const isApi = path.startsWith('/api/');
 
   // Pengalihan otomatis seluruh rute /en ke versi Bahasa Indonesia
-  if (url.pathname === '/en' || url.pathname.startsWith('/en/')) {
-    const cleanPath = url.pathname.replace(/^\/en(\/|$)/, '/') || '/';
+  if (path === '/en' || path.startsWith('/en/')) {
+    const cleanPath = path.replace(/^\/en(\/|$)/, '/') || '/';
     return context.redirect(cleanPath + url.search, 301);
   }
 
-  // Inisialisasi locals user
-  context.locals.user = null;
+  let response: Response;
 
-  // Coba ambil session pengguna dari cookie Supabase jika terkonfigurasi
-  const supabase = createSupabaseServerClient({
-    request: context.request,
-    cookies: context.cookies,
-  });
+  try {
+    const isCms = routeMatches(path, '/keystatic') || routeMatches(path, '/api/keystatic');
 
-  if (supabase) {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        context.locals.user = await getOrCreateUserProfile(supabase, authUser);
-        if (context.locals.user?.status === 'suspended' && url.pathname !== '/api/auth/signout') {
-          return new Response('Akun Anda sedang ditangguhkan.', { status: 403 });
+    if (!context.isPrerendered) {
+      // 1. Proteksi CSRF & Origin untuk request mutatif
+      assertSameOrigin(context.request);
+
+      const ip =
+        context.request.headers.get('cf-connecting-ip') ||
+        context.clientAddress ||
+        '127.0.0.1';
+
+      // 2. Rate Limiting pada endpoint autentikasi
+      if (routeMatches(path, '/api/auth') && path !== '/api/auth/status') {
+        const isRegister = path === '/api/auth/register';
+        const isResend = path === '/api/auth/resend';
+        const routeLimit = isRegister ? 3 : isResend ? 5 : 30;
+        const windowSec = isRegister || isResend ? 3600 : 900;
+        const limitType = isRegister ? 'register' : isResend ? 'resend' : 'login';
+
+        await limit(`auth:${limitType}:${ip}`, routeLimit, windowSec);
+      }
+
+      // 3. Verifikasi sesi pengguna
+      const skipSessionCheck = path === '/api/auth/signout' || path === '/api/auth/callback';
+      const supabase = skipSessionCheck ? null : createSupabaseServerClient(context);
+
+      if (supabase) {
+        const {
+          data: { user: authUser },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (!userError && authUser) {
+          if (!authUser.email_confirmed_at) {
+            // Sesi ditolak jika email belum diverifikasi
+            context.locals.user = null;
+          } else {
+            const profile = await getOrCreateUserProfile(supabase, authUser);
+            if (profile && profile.status === 'active') {
+              context.locals.user = profile;
+            } else {
+              context.locals.user = null;
+            }
+          }
         }
       }
-    } catch (err) {
-      console.error('Middleware auth check error:', err);
-    }
-  }
 
-  // Proteksi Keystatic CMS & API: Khusus Administrator
-  if (url.pathname.startsWith('/keystatic') || url.pathname.startsWith('/api/keystatic')) {
-    const isLocalDevelopment = import.meta.env.DEV && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
-    if (isLocalDevelopment) {
-      return next();
-    }
-
-    // 1. Izinkan jika user sudah login dan memiliki role admin
-    if (context.locals.user && context.locals.user.role === 'admin') {
-      return next();
-    }
-
-    // 2. Fallback Basic Auth untuk keperluan otomasi / script deploy
-    const authHeader = context.request.headers.get('authorization');
-    const adminUser = process.env.ADMIN_USERNAME || 'calvinadministrator';
-    const adminPass = process.env.ADMIN_PASSWORD || 'calvin126@ganteng';
-
-    if (authHeader) {
-      const allowedCredentials = [
-        `Basic ${Buffer.from(`${adminUser}:${adminPass}`).toString('base64')}`,
-        `Basic ${Buffer.from('calvinadministrator:calvin126@ganteng').toString('base64')}`,
-        `Basic ${Buffer.from('calvin:Calvindea82@').toString('base64')}`,
-      ];
-      if (allowedCredentials.includes(authHeader)) {
-        return next();
+      // 4. Rate Limiting pada mutasi API umum
+      if (isApi && !['GET', 'HEAD', 'OPTIONS'].includes(context.request.method)) {
+        const actorKey = context.locals.user?.id || ip;
+        await limit(`write:${actorKey}`, 60, 60);
       }
     }
 
-    // 3. Jika belum login sama sekali -> arahkan ke halaman login
-    if (!context.locals.user) {
-      if (url.pathname.startsWith('/api/keystatic')) {
-        return new Response(JSON.stringify({ error: 'Akses ditolak: login administrator diperlukan' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+    const user = context.locals.user;
+    const isLocalDev =
+      import.meta.env?.DEV &&
+      (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
+
+    // 5. Pemeriksaan otorisasi Keystatic CMS
+    if (isCms) {
+      if (isLocalDev) {
+        // Akses langsung pada local development
+      } else if (user && user.role === 'admin') {
+        // Admin aktif melalui sesi
+      } else {
+        // Cek Basic Auth resmi dari variabel lingkungan
+        const authHeader = context.request.headers.get('authorization');
+        const adminUser = process.env.ADMIN_USERNAME;
+        const adminPass = process.env.ADMIN_PASSWORD;
+
+        if (adminUser && adminPass && validBasicAuth(authHeader, adminUser, adminPass)) {
+          // Kredensial valid
+        } else {
+          if (isApi || path.startsWith('/api/keystatic')) {
+            return json({ error: 'Akses ditolak: login administrator diperlukan' }, 401);
+          }
+          return context.redirect(`/login?redirect=${encodeURIComponent(path)}`);
+        }
       }
-      return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
     }
 
-    // 4. Jika sudah login tetapi perannya bukan admin (misalnya siswa biasa) -> tolak akses
-    if (url.pathname.startsWith('/api/keystatic')) {
-      return new Response(JSON.stringify({ error: 'Akses terlarang: hanya administrator yang diizinkan' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    return context.redirect('/dashboard?error=unauthorized_keystatic');
-  }
-
-  // Proteksi Rute Komunitas (Wajib Login sesuai arahan)
-  if (url.pathname.startsWith('/community') && !context.locals.user) {
-    return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
-  }
-
-  // Proteksi Rute Dashboard Siswa (Wajib Login)
-  if (url.pathname.startsWith('/dashboard') && !context.locals.user) {
-    return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
-  }
-
-  // Proteksi Rute Administrator (Wajib Login dan Role Admin)
-  if (url.pathname.startsWith('/admin')) {
-    if (!context.locals.user) {
-      return context.redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
-    }
-    if (context.locals.user.role !== 'admin') {
-      return context.redirect('/dashboard?error=unauthorized_admin');
-    }
-  }
-
-  // Validasi Origin untuk request mutatif non-GET/HEAD/OPTIONS
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(context.request.method)) {
-    const origin = context.request.headers.get('origin');
-    const allowedOrigins = new Set([
-      'https://phinisilearn.web.id',
-      'https://www.phinisilearn.web.id',
-      'http://localhost:4321',
-      'http://localhost:3000',
-      'http://127.0.0.1:4321',
-      'http://127.0.0.1:3000',
-      url.origin,
-    ]);
-    if (origin && !allowedOrigins.has(origin)) {
-      if (url.pathname.startsWith('/api/') || context.request.headers.get('accept')?.includes('application/json')) {
-        return new Response(JSON.stringify({ error: 'Origin tidak diizinkan.' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
-        });
+    // 6. Proteksi Rute Panel Administrator
+    const isAdminRoute = routeMatches(path, '/admin') || routeMatches(path, '/api/admin');
+    if (isAdminRoute) {
+      if (!user) {
+        return isApi
+          ? json({ error: 'Harap masuk terlebih dahulu' }, 401)
+          : context.redirect(`/login?redirect=${encodeURIComponent(path)}`);
       }
-      return new Response('Origin tidak diizinkan.', { status: 403 });
+      if (user.role !== 'admin') {
+        return isApi
+          ? json({ error: 'Akses ditolak: hanya administrator yang diizinkan' }, 403)
+          : context.redirect('/dashboard?error=unauthorized_admin');
+      }
     }
+
+    // 7. Proteksi Rute Siswa & Komunitas
+    const isUserRoute =
+      ['/dashboard', '/community', '/api/user', '/api/community'].some((prefix) =>
+        routeMatches(path, prefix)
+      );
+
+    if (isUserRoute && !user) {
+      return isApi
+        ? json({ error: 'Harap masuk terlebih dahulu' }, 401)
+        : context.redirect(`/login?redirect=${encodeURIComponent(path)}`);
+    }
+
+    response = await next();
+  } catch (err: any) {
+    const status = err instanceof HttpError ? err.status : 500;
+    const message =
+      err instanceof HttpError
+        ? err.message
+        : 'Terjadi kesalahan sistem internal. Silakan coba kembali.';
+
+    console.error(
+      JSON.stringify({
+        event: 'request_error',
+        requestId,
+        path,
+        status,
+        message: err?.message,
+      })
+    );
+
+    response = json({ error: message, requestId }, status);
   }
 
-  const response = await next();
+  // 8. Terapkan HTTP Security Headers pada seluruh respons
   const headers = new Headers(response.headers);
-  if (!headers.has('X-Frame-Options')) headers.set('X-Frame-Options', 'DENY');
-  if (!headers.has('X-Content-Type-Options')) headers.set('X-Content-Type-Options', 'nosniff');
-  if (!headers.has('Referrer-Policy')) headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  if (url.protocol === 'https:' && !headers.has('Strict-Transport-Security')) {
+
+  if (!context.isPrerendered) {
+    headers.set('Cache-Control', 'private, no-store');
+  }
+
+  headers.set('X-Request-ID', requestId);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  headers.set(
+    'Content-Security-Policy',
+    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'"
+  );
+
+  if (url.protocol === 'https:' || context.request.headers.get('x-forwarded-proto') === 'https') {
     headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  if (response.status === 429) {
+    headers.set('Retry-After', '900');
   }
 
   return new Response(response.body, {

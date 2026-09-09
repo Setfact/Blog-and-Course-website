@@ -332,26 +332,39 @@ const users = await getUsersList(supabase, { search, role, status });
 
           if (data.completedLessons && data.completedLessons.length > 0) {
             if (lessonsList) {
-              lessonsList.innerHTML = data.completedLessons
-                .map((item: any) => {
-                  const dateStr = new Date(item.completed_at).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
-                  return `
-                    <li class="lesson-history-item">
-                      <span class="material-symbols-outlined icon-check">check_circle</span>
-                      <div class="lesson-history-meta">
-                        <strong>${item.course_slug} / ${item.lesson_id}</strong>
-                        <span>Diselesaikan pada ${dateStr}</span>
-                      </div>
-                    </li>
-                  `;
+              lessonsList.replaceChildren(
+                ...data.completedLessons.map((item: any) => {
+                  const dateStr = item.completed_at
+                    ? new Date(item.completed_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-';
+
+                  const li = document.createElement('li');
+                  li.className = 'lesson-history-item';
+
+                  const icon = document.createElement('span');
+                  icon.className = 'material-symbols-outlined icon-check';
+                  icon.textContent = 'check_circle';
+
+                  const meta = document.createElement('div');
+                  meta.className = 'lesson-history-meta';
+
+                  const title = document.createElement('strong');
+                  title.textContent = `${String(item.course_slug || '')} / ${String(item.lesson_id || '')}`;
+
+                  const dateSpan = document.createElement('span');
+                  dateSpan.textContent = `Diselesaikan pada ${dateStr}`;
+
+                  meta.append(title, dateSpan);
+                  li.append(icon, meta);
+                  return li;
                 })
-                .join('');
+              );
               lessonsList.classList.remove('hidden');
             }
           } else {

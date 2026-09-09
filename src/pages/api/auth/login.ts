@@ -1,92 +1,39 @@
 import type { APIRoute } from 'astro';
-import {
-  createSupabaseServerClient,
-  getOrCreateUserProfile,
-  autoConfirmUserEmail,
-} from '../../../lib/supabase';
-import { translateAuthError } from '../../../lib/auth-errors';
+import { createSupabaseServerClient, getOrCreateUserProfile } from '../../../lib/supabase';
+import { HttpError, json, readBody } from '../../../lib/security';
+import { authFailure, emailField, passwordField, limit } from '../../../lib/auth-security';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const supabase = createSupabaseServerClient({ request, cookies });
+export const POST: APIRoute = async (context) => {
+  const body = await readBody(context.request);
+  const email = emailField(body.email);
+  const password = passwordField(body.password);
+
+  // Rate limiting per akun target
+  await limit(`login:account:${email}`, 20, 900);
+
+  const supabase = createSupabaseServerClient(context);
   if (!supabase) {
-    return new Response(JSON.stringify({ error: 'Supabase belum dikonfigurasi pada server.' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    throw new HttpError(503, 'Layanan autentikasi database belum siap.');
   }
 
-  try {
-    const body = await request.json().catch(() => ({}));
-    let email = (body.email || '').trim();
-    const password = body.password || '';
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (!email || !password) {
-      return new Response(JSON.stringify({ error: 'Email atau username dan kata sandi wajib diisi.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+  // Verifikasi kredensial dan konfirmasi email
+  if (error || !data.session || !data.user?.email_confirmed_at) {
+    if (data.session) {
+      await supabase.auth.signOut({ scope: 'local' });
     }
-
-    // Dukung login dengan username (misal: "calvinadministrator")
-    if (!email.includes('@')) {
-      if (email.toLowerCase() === 'calvinadministrator') {
-        email = 'calvinadministrator@phinisilearn.web.id';
-      } else {
-        email = `${email.toLowerCase()}@phinisilearn.web.id`;
-      }
-    }
-
-    let { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    // Jika ditolak karena email belum dikonfirmasi, lakukan auto-confirm fallback via admin helper
-    if (error && /email not confirmed/i.test(error.message)) {
-      const isConfirmed = await autoConfirmUserEmail(email);
-      if (isConfirmed) {
-        // Coba login kembali setelah dikonfirmasi
-        const retry = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        data = retry.data;
-        error = retry.error;
-      }
-    }
-
-    if (error || !data.session) {
-      const isUnconfirmed = Boolean(error && /email not confirmed/i.test(error.message));
-      const friendlyMessage = translateAuthError(error?.message);
-
-      return new Response(
-        JSON.stringify({
-          error: friendlyMessage,
-          isEmailUnconfirmed: isUnconfirmed,
-          email,
-          rawError: error?.message,
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (data.user) {
-      await getOrCreateUserProfile(supabase, data.user);
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err: any) {
-    console.error('Error API login:', err);
-    return new Response(JSON.stringify({ error: 'Terjadi kesalahan sistem saat masuk.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: authFailure }, 400);
   }
+
+  const profile = await getOrCreateUserProfile(supabase, data.user);
+  if (!profile || profile.status !== 'active') {
+    await supabase.auth.signOut({ scope: 'local' });
+    return json({ error: authFailure }, 400);
+  }
+
+  return json({ success: true });
 };
-

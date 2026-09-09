@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /keystatic/
+
+Sitemap: https://phinisilearn.web.id/sitemap-index.xml
