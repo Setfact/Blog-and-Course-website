@@ -13,7 +13,7 @@ export default defineConfig({
   site: 'https://phinisilearn.web.id',
   output: 'server',
   security: {
-    checkOrigin: true,
+    checkOrigin: false,
   },
   devToolbar: {
     enabled: false

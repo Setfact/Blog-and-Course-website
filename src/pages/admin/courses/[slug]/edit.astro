@@ -1063,19 +1063,28 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
               const file = hiddenImgInput.files[0];
               const formData = new FormData();
               formData.append('image', file);
+              formData.append('file', file);
               btn.disabled = true;
               btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+              showBanner('Mengunggah berkas gambar...');
 
               try {
                 const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.url && textarea) {
-                  insertTextAtCursor(textarea, `\n![${data.alt || 'gambar'}](${data.url})\n`);
-                } else {
-                  alert(data.error || 'Gagal mengunggah gambar.');
+                let data: any = null;
+                try {
+                  data = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas gambar`);
                 }
-              } catch {
-                alert('Terjadi kesalahan jaringan.');
+                if (res.ok && data?.url && textarea) {
+                  insertTextAtCursor(textarea, `\n![${data.alt || 'gambar'}](${data.url})\n`);
+                  showBanner('Gambar berhasil disisipkan ke dalam materi.');
+                } else {
+                  showBanner(data?.error || `Gagal mengunggah gambar (Status ${res.status}).`, true);
+                }
+              } catch (err: any) {
+                showBanner(err.message || 'Terjadi kesalahan saat mengunggah gambar.', true);
               } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined icon-xs">add_photo_alternate</span> <span>+ Unggah Foto / Gambar</span>`;
@@ -1097,22 +1106,31 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
               const file = hiddenPktInput.files[0];
               const formData = new FormData();
               formData.append('file', file);
+              formData.append('lab', file);
               btn.disabled = true;
               btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+              showBanner('Mengunggah berkas Packet Tracer (.pkt)...');
 
               try {
                 const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.url) {
+                let data: any = null;
+                try {
+                  data = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas PKT`);
+                }
+                if (res.ok && data?.url) {
                   const pktUrlInput = document.querySelector('.input-pkt-url') as HTMLInputElement | null;
                   if (pktUrlInput) pktUrlInput.value = data.url;
                   les.pktUrl = data.url;
                   les.fileNameDownloaded = data.fileName;
+                  showBanner('Berkas .pkt berhasil diunggah.');
                 } else {
-                  alert(data.error || 'Gagal mengunggah berkas PKT.');
+                  showBanner(data?.error || `Gagal mengunggah berkas PKT (Status ${res.status}).`, true);
                 }
-              } catch {
-                alert('Terjadi kesalahan jaringan.');
+              } catch (err: any) {
+                showBanner(err.message || 'Terjadi kesalahan saat mengunggah berkas PKT.', true);
               } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined icon-xs">upload_file</span> <span>Unggah .pkt</span>`;
@@ -1134,22 +1152,31 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
               const file = hiddenPdfInput.files[0];
               const formData = new FormData();
               formData.append('file', file);
+              formData.append('lab', file);
               btn.disabled = true;
               btn.innerHTML = `<span class="material-symbols-outlined spin-icon">sync</span> Mengunggah...`;
+              showBanner('Mengunggah berkas panduan PDF...');
 
               try {
                 const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.url) {
+                let data: any = null;
+                try {
+                  data = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas PDF`);
+                }
+                if (res.ok && data?.url) {
                   const pdfUrlInput = document.querySelector('.input-pdf-url') as HTMLInputElement | null;
                   if (pdfUrlInput) pdfUrlInput.value = data.url;
                   les.pdfUrl = data.url;
                   les.pdfFileName = data.fileName;
+                  showBanner('Berkas panduan PDF berhasil diunggah.');
                 } else {
-                  alert(data.error || 'Gagal mengunggah panduan PDF.');
+                  showBanner(data?.error || `Gagal mengunggah panduan PDF (Status ${res.status}).`, true);
                 }
-              } catch {
-                alert('Terjadi kesalahan jaringan.');
+              } catch (err: any) {
+                showBanner(err.message || 'Terjadi kesalahan saat mengunggah panduan PDF.', true);
               } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined icon-xs">picture_as_pdf</span> <span>Unggah PDF</span>`;
@@ -1357,14 +1384,25 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
           const file = hiddenImgInput.files[0];
           const formData = new FormData();
           formData.append('image', file);
+          formData.append('file', file);
+          showBanner('Mengunggah gambar cover kursus...');
           try {
             const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.url && textareaOverview) {
-              insertTextAtCursor(textareaOverview, `\n![${data.alt || 'sampul'}](${data.url})\n`);
+            let data: any = null;
+            try {
+              data = await res.json();
+            } catch {
+              const text = await res.text().catch(() => '');
+              throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas gambar`);
             }
-          } catch {
-            alert('Gagal mengunggah foto.');
+            if (res.ok && data?.url && textareaOverview) {
+              insertTextAtCursor(textareaOverview, `\n![${data.alt || 'sampul'}](${data.url})\n`);
+              showBanner('Foto cover berhasil disisipkan.');
+            } else {
+              showBanner(data?.error || `Gagal mengunggah foto cover (Status ${res.status}).`, true);
+            }
+          } catch (err: any) {
+            showBanner(err.message || 'Gagal mengunggah foto cover.', true);
           } finally {
             hiddenImgInput.value = '';
           }
@@ -1424,8 +1462,15 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
             body: JSON.stringify(payload),
           });
 
-          const data = await res.json();
-          if (res.ok && data.success) {
+          let data: any = null;
+          try {
+            data = await res.json();
+          } catch {
+            const text = await res.text().catch(() => '');
+            throw new Error(text || `HTTP ${res.status}: Gagal memproses data server`);
+          }
+
+          if (res.ok && data?.success) {
             showBanner(`Perubahan pada kursus '${payload.title}' dan seluruh materinya berhasil disimpan!`);
             const displayTitle = document.getElementById('display-course-title');
             if (displayTitle) displayTitle.textContent = payload.title;
@@ -1435,10 +1480,10 @@ const isNewlyCreated = Astro.url.searchParams.get('created') === '1' || Astro.ur
               displayBadge.textContent = payload.status === 'published' ? 'Terpublikasi' : payload.status === 'planned' ? 'Segera Hadir' : 'Draf';
             }
           } else {
-            showBanner(data.error || 'Gagal menyimpan perubahan kursus.', true);
+            showBanner(data?.error || `Gagal menyimpan perubahan kursus (Status ${res.status}).`, true);
           }
         } catch (err: any) {
-          showBanner('Terjadi gangguan jaringan saat menyimpan kursus.', true);
+          showBanner(err.message || 'Terjadi gangguan saat menyimpan kursus.', true);
         } finally {
           saveBtn.disabled = false;
           if (saveBtnLabel) saveBtnLabel.textContent = 'Simpan Semua Perubahan';

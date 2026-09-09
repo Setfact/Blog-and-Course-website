@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
   try {
     const formData = await request.formData();
-    const imageFile = formData.get('image') as File | null;
+    const imageFile = (formData.get('image') || formData.get('file')) as File | null;
 
     if (!imageFile || !(imageFile instanceof File) || imageFile.size === 0) {
       return new Response(JSON.stringify({ error: 'Tidak ada berkas gambar yang diunggah.' }), {
@@ -59,6 +59,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       await fs.mkdir(uploadDir, { recursive: true });
       await fs.writeFile(path.join(uploadDir, cleanName), Buffer.from(buffer));
       imageUrl = `/uploads/courses/${cleanName}`;
+
+      // Salin ke direktori dist/client/uploads/courses agar langsung dapat diakses server standalone tanpa rebuild
+      try {
+        const distDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'courses');
+        await fs.mkdir(distDir, { recursive: true });
+        await fs.writeFile(path.join(distDir, cleanName), Buffer.from(buffer));
+      } catch {}
     } catch (fsErr) {
       console.warn('Peringatan penyimpanan gambar lokal:', fsErr);
     }

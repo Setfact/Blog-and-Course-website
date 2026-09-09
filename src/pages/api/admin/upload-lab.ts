@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     const formData = await request.formData();
-    const labFile = formData.get('file') as File | null;
+    const labFile = (formData.get('file') || formData.get('lab')) as File | null;
 
     if (!labFile || !(labFile instanceof File) || labFile.size === 0) {
       return new Response(JSON.stringify({ error: 'Tidak ada berkas lab yang dipilih.' }), {
@@ -55,6 +55,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const targetDir = path.join(process.cwd(), 'public', 'labs');
     await fs.mkdir(targetDir, { recursive: true });
     await fs.writeFile(path.join(targetDir, cleanFileName), buffer);
+
+    // Salin juga ke dist/client/labs untuk ketersediaan instan di server standalone
+    try {
+      const distTargetDir = path.join(process.cwd(), 'dist', 'client', 'labs');
+      await fs.mkdir(distTargetDir, { recursive: true });
+      await fs.writeFile(path.join(distTargetDir, cleanFileName), buffer);
+    } catch {}
 
     const publicUrl = `/labs/${cleanFileName}`;
     const detectedType = originalExt === '.pdf' ? 'pdf' : 'pkt';

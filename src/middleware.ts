@@ -108,9 +108,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const allowedOrigins = new Set([
       'https://phinisilearn.web.id',
       'https://www.phinisilearn.web.id',
+      'http://localhost:4321',
+      'http://localhost:3000',
+      'http://127.0.0.1:4321',
+      'http://127.0.0.1:3000',
       url.origin,
     ]);
     if (origin && !allowedOrigins.has(origin)) {
+      if (url.pathname.startsWith('/api/') || context.request.headers.get('accept')?.includes('application/json')) {
+        return new Response(JSON.stringify({ error: 'Origin tidak diizinkan.' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
       return new Response('Origin tidak diizinkan.', { status: 403 });
     }
   }

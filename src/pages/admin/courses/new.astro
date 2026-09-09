@@ -902,16 +902,23 @@ Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modu
               const file = fileInput.files?.[0];
               if (!file) return;
               const fd = new FormData();
+              fd.append('image', file);
               fd.append('file', file);
               showBanner('Mengunggah gambar...');
               try {
                 const res = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
-                const json = await res.json();
-                if (json.url) {
+                let json: any = null;
+                try {
+                  json = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas gambar`);
+                }
+                if (res.ok && json?.url) {
                   insertTextAtCursor(textarea, `\n![${file.name.replace(/\.[^/.]+$/, '')}](${json.url})\n`);
                   showBanner('Gambar berhasil disisipkan.');
                 } else {
-                  showBanner(json.error || 'Gagal mengunggah gambar.', true);
+                  showBanner(json?.error || `Gagal mengunggah gambar (Status ${res.status}).`, true);
                 }
               } catch (err: any) {
                 showBanner(err.message || 'Gagal mengunggah gambar.', true);
@@ -947,17 +954,24 @@ Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modu
               if (!file) return;
               const fd = new FormData();
               fd.append('file', file);
+              fd.append('lab', file);
               showBanner('Mengunggah berkas Packet Tracer (.pkt)...');
               try {
                 const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: fd });
-                const json = await res.json();
-                if (json.url) {
+                let json: any = null;
+                try {
+                  json = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas PKT`);
+                }
+                if (res.ok && json?.url) {
                   pktUrlInput.value = json.url;
                   les.pktUrl = json.url;
                   les.fileNameDownloaded = file.name;
                   showBanner('Berkas .pkt berhasil diunggah.');
                 } else {
-                  showBanner(json.error || 'Gagal mengunggah .pkt', true);
+                  showBanner(json?.error || `Gagal mengunggah berkas .pkt (Status ${res.status}).`, true);
                 }
               } catch (err: any) {
                 showBanner(err.message || 'Gagal mengunggah .pkt', true);
@@ -978,17 +992,24 @@ Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modu
               if (!file) return;
               const fd = new FormData();
               fd.append('file', file);
+              fd.append('lab', file);
               showBanner('Mengunggah berkas panduan PDF...');
               try {
                 const res = await fetch('/api/admin/upload-lab', { method: 'POST', body: fd });
-                const json = await res.json();
-                if (json.url) {
+                let json: any = null;
+                try {
+                  json = await res.json();
+                } catch {
+                  const text = await res.text().catch(() => '');
+                  throw new Error(text || `HTTP ${res.status}: Gagal memproses berkas PDF`);
+                }
+                if (res.ok && json?.url) {
                   pdfUrlInput.value = json.url;
                   les.pdfUrl = json.url;
                   les.pdfFileName = file.name;
                   showBanner('Berkas panduan PDF berhasil diunggah.');
                 } else {
-                  showBanner(json.error || 'Gagal mengunggah PDF', true);
+                  showBanner(json?.error || `Gagal mengunggah PDF (Status ${res.status}).`, true);
                 }
               } catch (err: any) {
                 showBanner(err.message || 'Gagal mengunggah PDF', true);
@@ -1161,16 +1182,23 @@ Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modu
           const file = fileInput.files?.[0];
           if (!file) return;
           const fd = new FormData();
+          fd.append('image', file);
           fd.append('file', file);
           showBanner('Mengunggah gambar...');
           try {
             const res = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
-            const json = await res.json();
-            if (json.url) {
+            let json: any = null;
+            try {
+              json = await res.json();
+            } catch {
+              const text = await res.text().catch(() => '');
+              throw new Error(text || `HTTP ${res.status}: Gagal memproses gambar`);
+            }
+            if (res.ok && json?.url) {
               insertTextAtCursor(textareaOv, `\n![${file.name.replace(/\.[^/.]+$/, '')}](${json.url})\n`);
               showBanner('Gambar berhasil disisipkan.');
             } else {
-              showBanner(json.error || 'Gagal mengunggah gambar.', true);
+              showBanner(json?.error || `Gagal mengunggah gambar (Status ${res.status}).`, true);
             }
           } catch (err: any) {
             showBanner(err.message || 'Gagal mengunggah gambar.', true);
@@ -1296,14 +1324,21 @@ Kursus ini dirancang dengan kurikulum berbasis praktik teknis nyata. Setiap modu
           body: JSON.stringify(payload),
         });
 
-        const json = await res.json();
-        if (res.ok && json.success) {
+        let json: any = null;
+        try {
+          json = await res.json();
+        } catch {
+          const text = await res.text().catch(() => '');
+          throw new Error(text || `HTTP ${res.status}: Gagal memproses data server`);
+        }
+
+        if (res.ok && json?.success) {
           showBanner(`Kursus '${json.title}' berhasil dibuat! Mengalihkan ke Studio Editor...`);
           setTimeout(() => {
             window.location.href = `/admin/courses/${json.courseSlug}/edit?created=1`;
           }, 800);
         } else {
-          showBanner(json.error || 'Gagal membuat kursus.', true);
+          showBanner(json?.error || `Gagal membuat kursus (Status ${res.status}).`, true);
           if (btnSave && saveLabel) {
             btnSave.disabled = false;
             saveLabel.textContent = 'Buat Kursus & Simpan Silabus';
