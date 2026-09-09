@@ -4,13 +4,17 @@ import { getRankTier } from '../../../lib/rank';
 export const GET: APIRoute = ({ locals }) => {
   const user = locals.user;
 
+  const rank = user ? getRankTier(user.xp) : null;
+
   const data = user
     ? {
         fullName: user.full_name,
         email: user.email,
         role: user.role,
         xp: user.xp,
-        rankName: getRankTier(user.xp).name,
+        rankName: rank?.name || 'Taruna Bahari',
+        rankIcon: rank?.icon || 'sailing',
+        avatarUrl: user.avatar_url || null,
       }
     : null;
 

@@ -541,6 +541,12 @@ const currentReferralLabel = currentReferralObj ? currentReferralObj.label : '--
       });
 
       window.dispatchEvent(
+        new CustomEvent('account-avatar-updated', {
+          detail: { avatarUrl: data.avatar_url },
+        })
+      );
+
+      window.dispatchEvent(
         new CustomEvent('phinisi-toast', {
           detail: { message: 'Foto profil berhasil diperbarui.', type: 'success' },
         })
@@ -598,6 +604,12 @@ const currentReferralLabel = currentReferralObj ? currentReferralObj.label : '--
 
       removeAvatarBtn.classList.add('hidden');
       setAvatarFeedback('Foto profil berhasil dihapus.', 'success');
+
+      window.dispatchEvent(
+        new CustomEvent('account-avatar-updated', {
+          detail: { avatarUrl: null },
+        })
+      );
 
       window.dispatchEvent(
         new CustomEvent('phinisi-toast', {

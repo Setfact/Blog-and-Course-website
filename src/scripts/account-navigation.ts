@@ -4,6 +4,8 @@ type Account = {
   role: string;
   xp: number;
   rankName: string;
+  rankIcon?: string;
+  avatarUrl?: string | null;
 };
 
 function element(tag: string, className = '', text = '') {
@@ -19,7 +21,29 @@ function link(href: string, text: string, className = '') {
   return node;
 }
 
+function linkWithIcon(href: string, text: string, iconName = '', className = '') {
+  const node = element('a', className) as HTMLAnchorElement;
+  node.href = href;
+  if (iconName) {
+    node.append(element('span', 'material-symbols-outlined', iconName));
+  }
+  node.append(element('span', '', text));
+  return node;
+}
+
 function logout(className: string) {
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = '/api/auth/signout';
+  const button = element('button', className) as HTMLButtonElement;
+  button.type = 'submit';
+  button.append(element('span', 'material-symbols-outlined', 'logout'));
+  button.append(element('span', '', 'Keluar'));
+  form.append(button);
+  return form;
+}
+
+function logoutMobile(className: string) {
   const form = document.createElement('form');
   form.method = 'post';
   form.action = '/api/auth/signout';
@@ -66,31 +90,62 @@ export function renderAccountNavigation(root: ParentNode, user: Account | null, 
 
   const summary = element('summary', 'user-avatar-btn');
   summary.setAttribute('aria-label', 'Menu akun pengguna');
-  summary.append(element('span', 'user-avatar-fallback', user.fullName.slice(0, 1).toUpperCase()));
+
+  if (user.avatarUrl) {
+    const img = document.createElement('img');
+    img.src = user.avatarUrl;
+    img.alt = user.fullName;
+    img.className = 'user-avatar-img';
+    img.width = 36;
+    img.height = 36;
+    img.onerror = () => {
+      img.remove();
+      if (!summary.querySelector('.user-avatar-fallback')) {
+        summary.append(element('span', 'user-avatar-fallback', user.fullName.slice(0, 1).toUpperCase()));
+      }
+    };
+    summary.append(img);
+  } else {
+    summary.append(element('span', 'user-avatar-fallback', user.fullName.slice(0, 1).toUpperCase()));
+  }
 
   const panel = element('div', 'user-dropdown-panel');
   const profile = element('div', 'dropdown-user-header');
   profile.append(element('strong', 'user-name-text', user.fullName), element('span', 'user-email-text', user.email));
 
   const badges = element('div', 'user-header-badges');
-  badges.append(element('span', 'rank-tag', user.rankName), element('span', 'xp-tag', `${user.xp} XP`));
+  const rankTag = element('span', 'rank-tag');
+  if (user.rankIcon) {
+    rankTag.append(element('span', 'material-symbols-outlined icon-micro', user.rankIcon));
+  }
+  rankTag.append(element('span', '', user.rankName));
+  badges.append(rankTag, element('span', 'xp-tag', `${user.xp} XP`));
   profile.append(badges);
 
+  if (user.role === 'admin') {
+    profile.append(element('span', 'badge-admin', 'Admin'));
+  }
+
+  const hr1 = document.createElement('hr');
+  hr1.className = 'dropdown-divider';
+  panel.append(profile, hr1);
+
   panel.append(
-    profile,
-    link('/dashboard', 'Dashboard Siswa', 'dropdown-item'),
-    link('/community', 'Komunitas', 'dropdown-item')
+    linkWithIcon('/dashboard', 'Dashboard Siswa', 'dashboard', 'dropdown-item'),
+    linkWithIcon('/community', 'Komunitas', 'forum', 'dropdown-item')
   );
 
   mobile.replaceChildren(link('/dashboard', `Dashboard (${user.fullName})`));
 
   if (user.role === 'admin') {
-    panel.append(link('/admin', 'Panel Administrator', 'dropdown-item highlight-admin'));
+    panel.append(linkWithIcon('/admin', 'Panel Administrator', 'admin_panel_settings', 'dropdown-item highlight-admin'));
     mobile.append(link('/admin', 'Panel Admin', 'mobile-admin-link'));
   }
 
-  panel.append(logout('dropdown-item text-danger'));
-  mobile.append(logout('mobile-danger-link'));
+  const hr2 = document.createElement('hr');
+  hr2.className = 'dropdown-divider';
+  panel.append(hr2, logout('dropdown-item text-danger'));
+  mobile.append(logoutMobile('mobile-danger-link'));
 
   details.append(summary, panel);
   wrap.append(details);
@@ -99,6 +154,7 @@ export function renderAccountNavigation(root: ParentNode, user: Account | null, 
 }
 
 let installed = false;
+let currentUser: Account | null = null;
 
 export function setupAccountNavigation() {
   if (installed) return;
@@ -125,20 +181,33 @@ export function setupAccountNavigation() {
           typeof user.email !== 'string' ||
           typeof user.rankName !== 'string' ||
           !Number.isFinite(user.xp) ||
-          !['student', 'moderator', 'admin'].includes(user.role))
+          !['student', 'moderator', 'admin'].includes(user.role) ||
+          (user.avatarUrl !== null && user.avatarUrl !== undefined && typeof user.avatarUrl !== 'string'))
       ) {
         throw new Error('Status sesi tidak valid');
       }
 
       if (current === generation) {
+        currentUser = user;
         renderAccountNavigation(document, user);
       }
     } catch {
       if (current === generation) {
+        currentUser = null;
         renderAccountNavigation(document, null, true);
       }
     }
   };
+
+  window.addEventListener('account-avatar-updated', (event: Event) => {
+    const customEvent = event as CustomEvent<{ avatarUrl?: string | null }>;
+    if (currentUser) {
+      currentUser.avatarUrl = customEvent.detail?.avatarUrl ?? null;
+      renderAccountNavigation(document, currentUser);
+    } else {
+      void refresh();
+    }
+  });
 
   void refresh();
   window.addEventListener('pageshow', (event) => {

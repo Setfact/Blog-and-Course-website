@@ -271,3 +271,33 @@ const navItems = [
     }
   }
 </style>
+
+<script>
+  window.addEventListener('account-avatar-updated', (event: Event) => {
+    const customEvent = event as CustomEvent<{ avatarUrl?: string | null }>;
+    const avatarUrl = customEvent.detail?.avatarUrl;
+    const wrap = document.querySelector('.dashboard-sidebar .user-avatar-wrap');
+    if (!wrap) return;
+
+    let img = wrap.querySelector<HTMLImageElement>('.user-avatar-img');
+    let fallback = wrap.querySelector<HTMLElement>('.user-avatar-fallback');
+
+    if (avatarUrl) {
+      if (!img) {
+        img = document.createElement('img');
+        img.className = 'user-avatar-img';
+        img.width = 56;
+        img.height = 56;
+        img.alt = 'Avatar';
+        wrap.insertBefore(img, fallback || null);
+      }
+      img.src = avatarUrl;
+      img.style.display = 'block';
+      if (fallback) fallback.style.display = 'none';
+    } else {
+      if (img) img.style.display = 'none';
+      if (fallback) fallback.style.display = 'flex';
+    }
+  });
+</script>
+
