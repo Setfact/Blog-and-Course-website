@@ -52,6 +52,9 @@ export const getTrustedOrigins = (request?: Request): Set<string> => {
   trusted.add('http://phinisilearn.web.id');
   trusted.add('http://www.phinisilearn.web.id');
 
+  // Asal autentikasi Google Identity Services & OAuth
+  trusted.add('https://accounts.google.com');
+
   // Lingkungan pengembangan lokal
   trusted.add('http://localhost:3000');
   trusted.add('http://localhost:4321');
@@ -67,15 +70,23 @@ export const getTrustedOrigins = (request?: Request): Set<string> => {
 
   if (request) {
     try {
-      trusted.add(new URL(request.url).origin);
+      const reqOrigin = new URL(request.url).origin;
+      if (reqOrigin && reqOrigin !== 'null') {
+        trusted.add(reqOrigin);
+      }
     } catch {}
 
-    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const rawHost = request.headers.get('host');
     const proto = request.headers.get('x-forwarded-proto') || 'https';
-    if (host) {
-      trusted.add(`${proto}://${host}`);
-      trusted.add(`https://${host}`);
-      trusted.add(`http://${host}`);
+
+    for (const hostHeader of [forwardedHost, rawHost]) {
+      if (hostHeader) {
+        const cleanHost = hostHeader.split(',')[0].trim();
+        trusted.add(`${proto}://${cleanHost}`);
+        trusted.add(`https://${cleanHost}`);
+        trusted.add(`http://${cleanHost}`);
+      }
     }
   }
 
@@ -90,21 +101,32 @@ export const assertSameOrigin = (request: Request): void => {
   const referer = request.headers.get('referer');
   const site = request.headers.get('sec-fetch-site');
 
+  // 1. Jika header Origin tersedia, verifikasi terhadap daftar asal tepercaya
   if (origin) {
-    if (!trustedOrigins.has(origin)) {
-      throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+    if (trustedOrigins.has(origin)) {
+      return;
     }
-  } else if (referer) {
     try {
-      const refererOrigin = new URL(referer).origin;
-      if (!trustedOrigins.has(refererOrigin)) {
-        throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+      const parsedOrigin = new URL(origin).origin;
+      if (trustedOrigins.has(parsedOrigin)) {
+        return;
       }
-    } catch {
-      throw new HttpError(403, 'Asal permintaan tidak diizinkan');
-    }
+    } catch {}
+    throw new HttpError(403, 'Asal permintaan tidak diizinkan');
   }
 
+  // 2. Jika Origin tidak disertakan, verifikasi asal melalui Referer
+  if (referer) {
+    try {
+      const refererOrigin = new URL(referer).origin;
+      if (trustedOrigins.has(refererOrigin)) {
+        return;
+      }
+    } catch {}
+    throw new HttpError(403, 'Asal permintaan tidak diizinkan');
+  }
+
+  // 3. Jika Origin dan Referer keduanya tidak ada, cegah mutasi lintas-situs terlarang
   if (site && site === 'cross-site') {
     throw new HttpError(403, 'Asal permintaan tidak diizinkan');
   }

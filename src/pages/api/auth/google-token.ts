@@ -44,7 +44,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Buat atau perbarui profil pengguna di database Supabase
-    await getOrCreateUserProfile(supabase, data.user);
+    const profile = await getOrCreateUserProfile(supabase, data.user);
+    if (!profile || profile.status !== 'active') {
+      await supabase.auth.signOut({ scope: 'local' });
+      return new Response(
+        JSON.stringify({
+          error: 'Akun Anda sedang dinonaktifkan atau ditangguhkan oleh administrator.',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

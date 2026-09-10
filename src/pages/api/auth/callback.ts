@@ -11,6 +11,13 @@ export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   const type = requestUrl.searchParams.get('type') as EmailOtpType | null;
   const targetRedirect = sanitizeRedirectPath(requestUrl.searchParams.get('redirect'), '/dashboard');
 
+  // Periksa apakah terdapat error langsung dari penyedia OAuth (misal: access_denied dari Google)
+  const oauthError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
+  if (oauthError) {
+    const msg = translateAuthError(oauthError);
+    return redirect(`/login?error=${encodeURIComponent(msg)}`);
+  }
+
   const supabase = createSupabaseServerClient({ request, cookies });
   if (!supabase) {
     return redirect('/login?error=' + encodeURIComponent('Layanan autentikasi database belum siap.'));

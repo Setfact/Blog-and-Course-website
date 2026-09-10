@@ -119,17 +119,96 @@ export const getOrCreateUserProfile = async (
       .eq('id', authUser.id)
       .maybeSingle();
 
-    if (
-      error ||
-      !profile ||
-      profile.id !== authUser.id ||
-      !['student', 'moderator', 'admin'].includes(profile.role) ||
-      !['active', 'suspended'].includes(profile.status)
-    ) {
-      return null;
+    const email = (authUser.email || '').toLowerCase().trim();
+    const superAdminEmail = (
+      process.env.SUPERADMIN_EMAIL ||
+      import.meta.env?.SUPERADMIN_EMAIL ||
+      'calvinum26@gmail.com'
+    ).toLowerCase().trim();
+    const isSuperAdmin =
+      email === superAdminEmail ||
+      email === 'calvinadministrator@phinisilearn.web.id';
+
+    if (profile) {
+      if (
+        profile.id !== authUser.id ||
+        !['student', 'moderator', 'admin'].includes(profile.role) ||
+        !['active', 'suspended'].includes(profile.status)
+      ) {
+        return null;
+      }
+
+      // Pastikan akun superadmin selalu memiliki role admin
+      if (isSuperAdmin && profile.role !== 'admin') {
+        const { data: updated } = await supabase
+          .from('profiles')
+          .update({ role: 'admin', updated_at: new Date().toISOString() })
+          .eq('id', authUser.id)
+          .select()
+          .maybeSingle();
+
+        return (updated as Profile) ?? (profile as Profile);
+      }
+
+      return profile as Profile;
     }
 
-    return profile as Profile;
+    // Jika pengguna belum memiliki data di tabel profiles, buat data profil baru
+    const fullName =
+      (authUser.user_metadata?.full_name as string | undefined) ||
+      (authUser.user_metadata?.name as string | undefined) ||
+      (authUser.user_metadata?.user_name as string | undefined) ||
+      (email ? email.split('@')[0] : 'Siswa Phinisi');
+
+    const avatarUrl =
+      (authUser.user_metadata?.avatar_url as string | undefined) ||
+      (authUser.user_metadata?.picture as string | undefined) ||
+      '';
+
+    const newProfile: Profile = {
+      id: authUser.id,
+      email,
+      full_name: fullName,
+      avatar_url: avatarUrl,
+      role: isSuperAdmin ? 'admin' : 'student',
+      status: 'active',
+      xp: 0,
+      streak: 0,
+      last_study_date: null,
+      bio: '',
+      country: 'Indonesia',
+      country_code: 'ID',
+      dial_code: '+62',
+      is_profile_complete: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('profiles')
+      .insert(newProfile)
+      .select()
+      .maybeSingle();
+
+    if (insertError) {
+      console.error('Peringatan saat membuat profil baru:', insertError.message);
+
+      // Cek kembali jika profil sudah dibuat oleh proses paralel
+      const { data: retryProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (retryProfile) {
+        return retryProfile as Profile;
+      }
+
+      // Kembalikan objek profil baru agar sesi pengguna tidak terblokir
+      return newProfile;
+    }
+
+    return (inserted as Profile) ?? newProfile;
   } catch (err) {
     console.error('Error saat mengambil data profil:', err);
     return null;

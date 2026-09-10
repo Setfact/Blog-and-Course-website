@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { isSupabaseConfigured, getGoogleClientId } from '../lib/supabase';
 import { sanitizeRedirectPath } from '../lib/security';
+import { translateAuthError } from '../lib/auth-errors';
 
 const user = Astro.locals.user;
 const redirectParam = sanitizeRedirectPath(Astro.url.searchParams.get('redirect'), '/dashboard');
@@ -106,7 +107,7 @@ if (redirectParam.startsWith('/community')) {
       {errorParam && (
         <div class="error-alert" role="alert">
           <span class="material-symbols-outlined icon">error</span>
-          <p>Autentikasi belum berhasil. Coba masuk kembali atau periksa tautan verifikasi email.</p>
+          <p>{translateAuthError(errorParam)}</p>
         </div>
       )}
 
@@ -575,6 +576,9 @@ if (redirectParam.startsWith('/community')) {
       if (loadingText) loadingText.textContent = 'Memverifikasi akun Google Anda, mohon tunggu...';
       if (formsContainer) formsContainer.style.display = 'none';
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
         const res = await fetch('/api/auth/google-token', {
           method: 'POST',
@@ -583,7 +587,9 @@ if (redirectParam.startsWith('/community')) {
             token: response.credential,
             redirect: targetRedirect,
           }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
 
         const data = await res.json().catch(() => ({}));
 
@@ -593,9 +599,14 @@ if (redirectParam.startsWith('/community')) {
         }
 
         showAlert(data.error || 'Gagal masuk dengan akun Google.');
-      } catch (err) {
+      } catch (err: any) {
+        clearTimeout(timeoutId);
         console.error('Error saat login Google ID Token:', err);
-        showAlert('Terjadi kesalahan jaringan saat memproses login Google.');
+        if (err?.name === 'AbortError') {
+          showAlert('Koneksi ke server memerlukan waktu terlalu lama. Silakan coba kembali.');
+        } else {
+          showAlert('Terjadi kesalahan jaringan saat memproses login Google.');
+        }
       } finally {
         if (loadingBox) loadingBox.style.display = 'none';
         if (formsContainer) formsContainer.style.display = 'flex';

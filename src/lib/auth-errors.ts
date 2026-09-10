@@ -47,5 +47,20 @@ export function translateAuthError(errorMessage: string | null | undefined): str
     return 'Tautan konfirmasi telah kedaluwarsa atau tidak valid. Silakan minta tautan verifikasi baru.';
   }
 
+  // Google OAuth dibatalkan atau akses penguji belum diberikan
+  if (/access_denied/i.test(raw) || /access blocked/i.test(raw) || /tidak diizinkan/i.test(raw)) {
+    return 'Akses login Google dibatalkan atau akun Anda belum ditambahkan sebagai penguji Google oleh pengembang.';
+  }
+
+  // Masalah verifikasi Google ID Token atau penyedia OAuth
+  if (/google id token/i.test(raw) || /provider is not enabled/i.test(raw) || /oauth provider/i.test(raw)) {
+    return 'Penyedia autentikasi Google belum aktif atau kredensial sistem tidak sesuai.';
+  }
+
+  // Masalah CSRF atau Origin
+  if (/asal permintaan tidak diizinkan/i.test(raw)) {
+    return 'Permintaan tidak diizinkan demi keamanan. Silakan muat ulang halaman lalu coba kembali.';
+  }
+
   return raw;
 }
